@@ -34,7 +34,7 @@ public class MechanoGroups {
     private static final DeferredRegister<CreativeModeTab> TAB_REGISTER =
 		DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Mechano.MOD_ID);
 
-    public static final RegistryObject<CreativeModeTab> MAIN_TAB = newTab(() -> MechanoBlocks.ROTOR.asStack(), "main");
+    public static final RegistryObject<CreativeModeTab> MAIN_TAB = newTab(() -> MechanoBlocks.SMALL_ROTOR.asStack(), "main");
 
     public static RegistryObject<CreativeModeTab> newTab(Supplier<ItemStack> icon, String name) {
         return TAB_REGISTER.register(name,

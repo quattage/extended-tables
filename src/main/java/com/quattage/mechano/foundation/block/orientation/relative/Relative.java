@@ -19,20 +19,20 @@ public enum Relative {
     BOTTOM(90, 0, 0, Axis.Y, Direction.DOWN, 114, 176, 159);
 
 
-    private final Quaternionf relative;
+    private final Quaternionf relMatrix;
     private final Axis followingAxis;
     private final Direction defaultDir;
     private final Color debugColor;
 
     private Relative(int x, int y, int z, Axis followingAxis, Direction defaultDir, int r, int g, int b) {
-        this.relative = new Quaternionf().rotateXYZ(x, y, z);
+        this.relMatrix = new Quaternionf().rotateXYZ(x, y, z);
         this.followingAxis = followingAxis;
         this.defaultDir = defaultDir;
         this.debugColor = new Color(r, g, b);
     }
 
     private Relative(int x, int y, int z, Axis followingAxis, Direction defaultDir) {
-        this.relative = new Quaternionf().rotateXYZ(x, y, z);
+        this.relMatrix = new Quaternionf().rotateXYZ(x, y, z);
         this.followingAxis = followingAxis;
         this.defaultDir = defaultDir;
         this.debugColor = null;
@@ -53,8 +53,8 @@ public enum Relative {
         return defaultDir;
     }
 
-    public Quaternionf getRelative() {
-        return relative;
+    public Quaternionf getRelMatrix() {
+        return relMatrix;
     }
 
     public Axis getAxis() {

@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "mechano:rotor"
+          "name": "mechano:small_rotor"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "mechano:blocks/rotor"
+  "random_sequence": "mechano:blocks/small_rotor"
 }

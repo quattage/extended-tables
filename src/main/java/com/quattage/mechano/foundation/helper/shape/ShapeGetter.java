@@ -4,49 +4,58 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.quattage.mechano.Mechano;
+import com.simibubi.create.foundation.placement.PlacementOffset;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class ShapeGetter {
 
-	protected final Level world;
 	protected final int radius;
-	protected final Axis axis;
-	protected final BlockPos centerPos;
+	protected Axis axis;
+	protected BlockPos centerPos;
+	protected boolean isInitialized = true;
 
-	// TODO immutable members
-	// TODO function pass to evaluate during iteration rather than after
-	protected final Map<BlockPos, BlockState> shapeBlocks;
-
-	public ShapeGetter(Level world, int radius, Axis axis, BlockPos centerPos) {
-		this.world = world;
+	public ShapeGetter(Integer radius, Axis axis, BlockPos centerPos) {
 		this.radius = radius;
 		this.axis = axis;
 		this.centerPos = centerPos;
-		shapeBlocks = new HashMap<BlockPos, BlockState>();
 	}
 
-	public abstract ShapeGetter compute();
-
-	public Set<Map.Entry<BlockPos, BlockState>> getBlocks() {
-		return shapeBlocks.entrySet();
+	/***
+	 * Evaluates this ShapeGetter iteratively
+	 * @param action Action to perform at the given BlockPos. Implementations should return a null PlacementOffset to indicate a skipped iteration.
+	 * @return A PlacementOffset at this shape
+	 */
+	public PlacementOffset evaluatePlacement(Function<BlockPos, PlacementOffset> action) {
+		if(!isInitialized) throw new IllegalStateException("Cannot evaluate ShapeGetter before it is initialized!");
+		return evalSafe(action);
 	}
+
+	protected abstract PlacementOffset evalSafe(Function<BlockPos, PlacementOffset> action);
 
 	public static ShapeGetterBuilder ofShape(Class<? extends ShapeGetter> shape) {
 		return new ShapeGetterBuilder(shape);
 	}
 
-	@SuppressWarnings("unused")
+	public ShapeGetter setAxis(Axis axis) {
+		this.axis = axis;
+		return this;
+	}
+
+	public ShapeGetter moveTo(BlockPos centerPos) {
+		this.centerPos = centerPos;
+		return this;
+	}
+
 	public static class ShapeGetterBuilder {
 
 		final Class<? extends ShapeGetter> shape;
-		BlockPos pos;
-		Level world;
+		BlockPos pos = BlockPos.ZERO;
 		int radius = 1;
 		Axis axis = Axis.Y;
 
@@ -54,8 +63,7 @@ public abstract class ShapeGetter {
 			this.shape = shape;
 		}
 
-		public ShapeGetterBuilder at(Level world, BlockPos pos) {
-			this.world = world;
+		public ShapeGetterBuilder at(BlockPos pos) {
 			this.pos = pos;
 			return this;
 		}
@@ -71,16 +79,18 @@ public abstract class ShapeGetter {
 		}
 
 		public ShapeGetter build() {
-
-			if(world == null) throw new IllegalStateException("Error building ShapeGetter of type " + shape.getName() + " - " + " World was not initialized!");
-
 			try {
-				return shape.getDeclaredConstructor().newInstance(world, radius, axis, pos);
+				Class<?>[] args = new Class[3];
+				args[0] = Integer.class;
+				args[1] = Axis.class;
+				args[2] = BlockPos.class;
+
+				return shape.getDeclaredConstructor(args).newInstance(radius, axis, pos);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 
 				// TODO this is dumb
-				Mechano.log("oh no :(");
+				e.printStackTrace();
 				return null;
 			}
 		}

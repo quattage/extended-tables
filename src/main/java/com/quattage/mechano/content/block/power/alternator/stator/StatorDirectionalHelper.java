@@ -1,18 +1,12 @@
 package com.quattage.mechano.content.block.power.alternator.stator;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import javax.annotation.Nullable;
-
 import com.mojang.blaze3d.MethodsReturnNonnullByDefault;
 import com.quattage.mechano.MechanoBlocks;
-import com.quattage.mechano.content.block.power.alternator.rotor.RotorBlock;
-import com.quattage.mechano.content.block.power.alternator.stator.StatorBlock.StatorBlockModelType;
+import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.helper.shape.CircleGetter;
@@ -34,7 +28,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 
 @MethodsReturnNonnullByDefault
@@ -44,6 +37,8 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
 	protected final Property<T> property;
 	protected final Function<BlockState, SimpleOrientation> strictDirFunc;
 	protected BlockPos straightPos = null;
+	protected final ShapeGetter circleGetter = 
+		ShapeGetter.ofShape(CircleGetter.class).withRadius(2).build();
 
     public StatorDirectionalHelper(Predicate<BlockState> statePredicate, Function<BlockState, SimpleOrientation> strictDirFunc, Property<T> property) {
 		this.statePredicate = statePredicate;
@@ -94,7 +89,7 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
     public PlacementOffset getOffset(Player player, Level world, BlockState statorState, BlockPos statorPos, BlockHitResult ray) {
 		BlockPos frontPos = statorPos.relative(statorState.getValue(SimpleOrientedBlock.ORIENTATION).getCardinal());
 		BlockState frontState = world.getBlockState(frontPos);
-		if(frontState.getBlock() == MechanoBlocks.ROTOR.get() && statorState.getValue(SimpleOrientedBlock.ORIENTATION).getOrient() == frontState.getValue(RotorBlock.AXIS)) {
+		if(frontState.getBlock() == MechanoBlocks.SMALL_ROTOR.get() && statorState.getValue(SimpleOrientedBlock.ORIENTATION).getOrient() == frontState.getValue(AbstractRotorBlock.AXIS)) {
 			PlacementOffset checkRotor = getRotoredOffset(world, frontPos, frontState, statorPos, statorState);	
 			if(checkRotor.isSuccessful()) return checkRotor;
 		} 
@@ -102,24 +97,16 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
 	}
 
 	private PlacementOffset getRotoredOffset(Level world, BlockPos rotorPos, BlockState rotorState, BlockPos statorPos, BlockState statorState) {
-		Axis revolvingAxis = rotorState.getValue(RotorBlock.AXIS);
-		Direction initialDir = statorState.getValue(SimpleOrientedBlock.ORIENTATION).getCardinal();
-		Axis initialAxis = statorState.getValue(SimpleOrientedBlock.ORIENTATION).getOrient();
+		Axis revolvingAxis = rotorState.getValue(AbstractRotorBlock.AXIS);
 
+		return circleGetter.moveTo(rotorPos).setAxis(revolvingAxis).evaluatePlacement(perimeterPos -> {
+			final BlockState targetState = world.getBlockState(perimeterPos);
 
-		ShapeGetter circle = 
-			ShapeGetter.ofShape(CircleGetter.class)
-				.at(world, rotorPos)
-				.withRadius(1)
-				.onAxis(revolvingAxis).build();
-		
-		circle.compute();
-		
-		for(Map.Entry<BlockPos, BlockState> entry : circle.getBlocks()) {
-			
-		}
+			if(targetState.getBlock() == MechanoBlocks.STATOR.get()) return null;
+			if(!targetState.canBeReplaced()) return PlacementOffset.fail();
 
-		return PlacementOffset.fail();
+			return PlacementOffset.success(perimeterPos, state -> state.setValue(StatorBlock.ORIENTATION, SimpleOrientation.combine(Direction.UP, revolvingAxis)));
+		});
 	}
 
     public Direction getDirectionTo(Level world, BlockPos fromPos, BlockPos centerPos, Axis rotationAxis) {
@@ -178,13 +165,5 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
 
 	private List<Direction> getDirectionsForPlacement(BlockState state, BlockPos pos, BlockHitResult ray) {
 		return IPlacementHelper.orderedByDistance(pos, ray.getLocation(), state.getValue(SimpleOrientedBlock.ORIENTATION).getOrient());
-	}
-
-	private static <T> void reverseList(List<T> list) {
-		if (list.size() <= 1 || list == null)
-            return;
-        T value = list.remove(0);
-        reverseList(list);
-        list.add(value);
 	}
 }

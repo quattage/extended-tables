@@ -16,25 +16,24 @@ import net.minecraft.util.StringRepresentable;
  * when facing straight up or down, but don't need as much control as a CombinedOrientation.
  */
 public enum SimpleOrientation implements StringRepresentable {
-    DOWN_X("down_x", Direction.DOWN, Axis.X),
-    DOWN_Z("down_z", Direction.DOWN, Axis.Z),
+    DOWN_X(Direction.DOWN, Axis.X),
+    DOWN_Z(Direction.DOWN, Axis.Z),
 
-    UP_X("up_x", Direction.UP, Axis.X),
-    UP_Z("up_z", Direction.UP, Axis.Z),
+    UP_X(Direction.UP, Axis.X),
+    UP_Z(Direction.UP, Axis.Z),
 
-    NORTH_Y("north_y", Direction.NORTH, Axis.Y),
-    NORTH_X("north_x", Direction.NORTH, Axis.X),
+    NORTH_Y(Direction.NORTH, Axis.Y),
+    NORTH_X(Direction.NORTH, Axis.X),
 
-    SOUTH_Y("south_y", Direction.SOUTH, Axis.Y),
-    SOUTH_X("south_x", Direction.SOUTH, Axis.X),
+    SOUTH_Y(Direction.SOUTH, Axis.Y),
+    SOUTH_X(Direction.SOUTH, Axis.X),
 
-    EAST_Y("east_y", Direction.EAST, Axis.Y),
-    EAST_Z("east_z", Direction.EAST, Axis.Z),
+    EAST_Y(Direction.EAST, Axis.Y),
+    EAST_Z(Direction.EAST, Axis.Z),
 
-    WEST_Y("west_y", Direction.WEST, Axis.Y),
-    WEST_Z("west_z", Direction.WEST, Axis.Z);
+    WEST_Y(Direction.WEST, Axis.Y),
+    WEST_Z(Direction.WEST, Axis.Z);
 
-    private final String name;
     private final Direction cardinal;
     private final Axis orient;
     private static final Int2ObjectMap<SimpleOrientation> COMBINED_LOOKUP = Util.make(new Int2ObjectOpenHashMap<>(values().length), (boysmell) -> {
@@ -43,8 +42,7 @@ public enum SimpleOrientation implements StringRepresentable {
         }
     });
 
-    private SimpleOrientation(String name, Direction cardinal, Axis orient) {
-        this.name = name;
+    private SimpleOrientation(Direction cardinal, Axis orient) {
         this.cardinal = cardinal;
         this.orient = orient;
     }

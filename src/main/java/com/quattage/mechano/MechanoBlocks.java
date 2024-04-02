@@ -4,7 +4,9 @@ import com.quattage.mechano.content.block.integrated.toolStation.ToolStationBloc
 import com.quattage.mechano.content.block.integrated.toolStation.ToolStationGenerator;
 import com.quattage.mechano.content.block.integrated.toolStation.UpgradeBlock;
 import com.quattage.mechano.content.block.power.alternator.collector.CollectorBlock;
-import com.quattage.mechano.content.block.power.alternator.rotor.RotorBlock;
+import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
+import com.quattage.mechano.content.block.power.alternator.rotor.BigRotorBlock;
+import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.stator.StatorBlock;
 import com.quattage.mechano.content.block.power.transfer.adapter.CouplingNodeBlock;
 import com.quattage.mechano.content.block.power.transfer.adapter.TransmissionNodeBlock;
@@ -17,22 +19,26 @@ import com.quattage.mechano.content.block.power.transfer.connector.transmission.
 import com.quattage.mechano.content.block.power.transfer.test.TestBlock;
 import com.quattage.mechano.content.block.power.transfer.voltometer.VoltometerBlock;
 import com.quattage.mechano.content.block.simple.diagonalGirder.DiagonalGirderBlock;
+import com.quattage.mechano.foundation.block.hitbox.HitboxProvider;
 import com.quattage.mechano.foundation.block.orientation.DynamicStateGenerator;
 import com.simibubi.create.content.kinetics.BlockStressDefaults;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import static com.quattage.mechano.Mechano.REGISTRATE;
+import static com.quattage.mechano.Mechano.HITBOXES;
 import static com.quattage.mechano.Mechano.defer;
 import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 
-
-//This is where blocks go to get registered
 public class MechanoBlocks {
+
     static {
 		REGISTRATE.setCreativeTab(MechanoGroups.MAIN_TAB);
 	}
@@ -61,7 +67,7 @@ public class MechanoBlocks {
         .transform(customItemModel("tool_station", "base"))
         .register();
 
-    public static final BlockEntry<RotorBlock> ROTOR = REGISTRATE.block("rotor", RotorBlock::new)
+    public static final BlockEntry<SmallRotorBlock> SMALL_ROTOR = REGISTRATE.block("small_rotor", SmallRotorBlock::new)
         .initialProperties(CommonProperties::ductile)
         .properties(props -> props
             .sound(SoundType.NETHERITE_BLOCK)
@@ -69,9 +75,22 @@ public class MechanoBlocks {
         )
         .transform(BlockStressDefaults.setImpact(48.0))
         .transform(pickaxeOnly())
-        .blockstate(new DynamicStateGenerator(RotorBlock.MODEL_TYPE)::generate)
+        .blockstate(new DynamicStateGenerator(AbstractRotorBlock.MODEL_TYPE).in("rotor")::generate)
         .item()
-        .transform(customItemModel("rotor", "single"))
+        .transform(customItemModel("rotor", "small_rotor/single"))
+        .register();
+
+    public static final BlockEntry<BigRotorBlock> BIG_ROTOR = REGISTRATE.block("big_rotor", BigRotorBlock::new)
+        .initialProperties(CommonProperties::ductile)
+        .properties(props -> props
+            .sound(SoundType.NETHERITE_BLOCK)
+            .noOcclusion()
+        )
+        .transform(BlockStressDefaults.setImpact(48.0))
+        .transform(pickaxeOnly())
+        .blockstate(new DynamicStateGenerator(AbstractRotorBlock.MODEL_TYPE).in("rotor")::generate)
+        .item()
+        .transform(customItemModel("rotor", "big_rotor/single"))
         .register();
 
     public static final BlockEntry<CollectorBlock> COLLECTOR = REGISTRATE.block("collector", CollectorBlock::new)
@@ -94,6 +113,7 @@ public class MechanoBlocks {
             .noOcclusion()
         )
         .transform(pickaxeOnly())
+        .transform(HITBOXES.flag(StatorBlock.MODEL_TYPE, StatorBlock.ORIENTATION))
         .blockstate(new DynamicStateGenerator(StatorBlock.MODEL_TYPE)::generate)
         .item()
         .transform(customItemModel("stator", "base"))

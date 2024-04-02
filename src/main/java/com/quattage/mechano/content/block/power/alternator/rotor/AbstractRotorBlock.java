@@ -1,15 +1,13 @@
 package com.quattage.mechano.content.block.power.alternator.rotor;
 
-import java.util.ArrayList;
 import java.util.Locale;
 import java.util.function.Predicate;
 
 import com.google.common.base.Predicates;
-import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
-import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.placement.IPlacementHelper;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
 import com.simibubi.create.foundation.placement.PlacementOffset;
@@ -30,18 +28,18 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class RotorBlock extends RotatedPillarKineticBlock implements IBE<RotorBlockEntity> {
+@SuppressWarnings("deprecation")
+public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock {
 
     public static final EnumProperty<RotorModelType> MODEL_TYPE = EnumProperty.create("model", RotorModelType.class);
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
 
-    public RotorBlock(Properties properties) {
+    public AbstractRotorBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(defaultBlockState().setValue(MODEL_TYPE, RotorModelType.SINGLE));
     }
@@ -60,66 +58,38 @@ public class RotorBlock extends RotatedPillarKineticBlock implements IBE<RotorBl
         }
     }
 
+    abstract boolean isRotor(Block block);
+
     @Override
     public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, world, pos, block, fromPos, isMoving);
-        ArrayList<BlockState> adjacentBlockStates = getAdjacentShaftBlocks(state.getValue(AXIS), pos, world); // front block = 0, rear block = 1
-        String neighborStatus = getRotorStatus(adjacentBlockStates);
-        if(neighborStatus == "BOTH")
-            setModel(world, pos, state, RotorModelType.MIDDLE);
-        else if(neighborStatus == "FRONT")
-            setModel(world, pos, state, RotorModelType.END_B);
-        else if(neighborStatus == "REAR")
-            setModel(world, pos, state, RotorModelType.END_A);
-        else if(neighborStatus == "NONE")
-            setModel(world, pos, state, RotorModelType.SINGLE);
+
+        Direction facing = DirectionTransformer.getForward(state);
+
+        boolean hasRear = this.isRotor(world.getBlockState(pos.relative(facing)).getBlock());
+        boolean hasFront = this.isRotor(world.getBlockState(pos.relative(facing.getOpposite())).getBlock());
+
+        if(hasFront && hasRear) setModel(world, pos, state, RotorModelType.MIDDLE);
+        else if(hasFront) setModel(world, pos, state, RotorModelType.END_B);
+        else if(hasRear)setModel(world, pos, state, RotorModelType.END_A);
+        else setModel(world, pos, state, RotorModelType.SINGLE);
     }
 
     private void setModel(Level world, BlockPos pos, BlockState state, RotorModelType bType) {
-        if(state.getValue(MODEL_TYPE) != bType) {
-            world.setBlock(pos, state.setValue(MODEL_TYPE, bType), Block.UPDATE_ALL);
-        }
-    }
-
-    //FRONT, REAR, BOTH, NONE;
-    private String getRotorStatus(ArrayList<BlockState> adjacentBlockStates) {
-        boolean hasFrontRotor = adjacentBlockStates.get(0).getBlock() == MechanoBlocks.ROTOR.get();
-        boolean hasRearRotor = adjacentBlockStates.get(1).getBlock() == MechanoBlocks.ROTOR.get();
-        
-        if(hasFrontRotor && hasRearRotor)
-            return "BOTH";
-        if(hasFrontRotor && !hasRearRotor)
-            return "FRONT";
-        if(!hasFrontRotor && hasRearRotor)
-            return "REAR";
-        return "NONE";
-    }
-
-    private ArrayList<BlockState> getAdjacentShaftBlocks(Axis rotationAxis, BlockPos currentPos, Level world) {
-        ArrayList<BlockState> out = new ArrayList<BlockState>(2);
-        if(rotationAxis == Axis.Z) {
-            out.add(world.getBlockState(currentPos.north()));
-            out.add(world.getBlockState(currentPos.south()));
-        } else if(rotationAxis == Axis.X) {
-            out.add(world.getBlockState(currentPos.east()));
-            out.add(world.getBlockState(currentPos.west()));
-        } else {
-            return null;
-        }
-        return out;
+        world.setBlock(pos, state.setValue(MODEL_TYPE, bType), Block.UPDATE_ALL);
     }
 
     @Override
 	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand,
 		BlockHitResult ray) {
-        if (player.isShiftKeyDown() || !player.mayBuild()) return InteractionResult.PASS;
+        if(player.isShiftKeyDown() || !player.mayBuild()) return InteractionResult.PASS;
 
         IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
         ItemStack heldItem = player.getItemInHand(hand);
 
         if (helper.matchesItem(heldItem))
             return helper.getOffset(player, world, state, pos, ray)
-                .placeInWorld(world, (BlockItem) heldItem.getItem(), player, hand, ray);
+                .placeInWorld(world, (BlockItem)heldItem.getItem(), player, hand, ray);
 
         return InteractionResult.PASS;
     }
@@ -140,28 +110,10 @@ public class RotorBlock extends RotatedPillarKineticBlock implements IBE<RotorBl
 	}
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {    // This makes sure rotors can't be placed on the Y axis. Remove this for vertical alternators
-        Axis ax = state.getValue(AXIS); 
-        if(ax == Axis.Y)
-            return false;
-        return super.canSurvive(state, world, pos);
-    }
-
-    @Override
-    public Class<RotorBlockEntity> getBlockEntityClass() {
-        return RotorBlockEntity.class;
-    }
-
-    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(MODEL_TYPE);
     }
-
-    @Override
-    public BlockEntityType<? extends RotorBlockEntity> getBlockEntityType() {
-        return MechanoBlockEntities.ROTOR.get();
-    }    
 
     @Override
     public float getShadeBrightness(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
@@ -171,18 +123,18 @@ public class RotorBlock extends RotatedPillarKineticBlock implements IBE<RotorBl
     @MethodsReturnNonnullByDefault
 	private static class PlacementHelper extends PoleHelper<Direction.Axis> {
 		private PlacementHelper() {
-			super(state -> state.getBlock() instanceof RotorBlock, state -> state.getValue(AXIS), AXIS);
+			super(state -> state.getBlock() instanceof AbstractRotorBlock, state -> state.getValue(AXIS), AXIS);
 		}
 
 		@Override
 		public Predicate<ItemStack> getItemPredicate() {
 			return i -> i.getItem() instanceof BlockItem
-				&& ((BlockItem) i.getItem()).getBlock() instanceof RotorBlock;
+				&& ((BlockItem) i.getItem()).getBlock() instanceof AbstractRotorBlock;
 		}
 
 		@Override
 		public Predicate<BlockState> getStatePredicate() {
-			return Predicates.or(MechanoBlocks.ROTOR::has);
+			return Predicates.or(MechanoBlocks.SMALL_ROTOR::has);
 		}
 
 		@Override

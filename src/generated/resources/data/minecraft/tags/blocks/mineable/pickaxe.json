@@ -2,7 +2,8 @@
   "values": [
     "mechano:tool_forge",
     "mechano:tool_station",
-    "mechano:rotor",
+    "mechano:small_rotor",
+    "mechano:big_rotor",
     "mechano:collector",
     "mechano:stator",
     "mechano:coupling_node",

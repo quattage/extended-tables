@@ -7,7 +7,6 @@ import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.foundation.block.CombinedOrientedBlock;
 import com.quattage.mechano.foundation.block.UpgradableBlock;
 import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
-import com.quattage.mechano.foundation.helper.ShapeBuilder;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.utility.VoxelShaper;
 
@@ -24,11 +23,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class ConnectorStackedTier1Block extends UpgradableBlock implements IBE<ConnectorStackedTier1BlockEntity>, CreativeTabExcludable {
-
-    public static final VoxelShaper SHAPE = ShapeBuilder
-            .newShape(2, 0, 3, 14, 6, 13)
-            .add(5, 6, 5, 11, 20, 11)
-            .defaultUp();
 
     public ConnectorStackedTier1Block(Properties properties) {
         super(properties, MechanoBlocks.CONNECTOR_STACKED_ZERO.get(), 1);

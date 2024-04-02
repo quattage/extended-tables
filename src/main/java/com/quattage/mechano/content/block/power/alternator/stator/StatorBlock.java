@@ -2,22 +2,21 @@ package com.quattage.mechano.content.block.power.alternator.stator;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
-import com.quattage.mechano.content.block.power.alternator.rotor.RotorBlockEntity;
+import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlockEntity;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
+import com.quattage.mechano.foundation.block.hitbox.Hitbox;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
-import com.quattage.mechano.foundation.helper.ShapeBuilder;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.placement.IPlacementHelper;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
 import com.simibubi.create.foundation.placement.PlacementOffset;
-import com.simibubi.create.foundation.utility.VoxelShaper;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -35,45 +34,24 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.Locale;
-
+@SuppressWarnings("deprecation")
 public class StatorBlock extends SimpleOrientedBlock implements IBE<StatorBlockEntity> {
 
     public static final EnumProperty<StatorBlockModelType> MODEL_TYPE = EnumProperty.create("model", StatorBlockModelType.class);  // BASE or CORNER
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
-    public static final VoxelShaper BASE_SHAPE = ShapeBuilder.newShape(0, 0, 0, 16, 11, 16).defaultUp();
-    public static final VoxelShaper CORNER_SHAPE = ShapeBuilder.newShape(0, 0, 0, 16, 11, 7).add(0, 9, 5, 16, 16, 16).defaultUp();
+    private static Hitbox<SimpleOrientation> hitbox;
 
-    public enum StatorBlockModelType implements StringRepresentable {
-        BASE, CORNER;
-
-        @Override
-        public String getSerializedName() {
-            return name().toLowerCase(Locale.ROOT);
-        }
-
-        @Override
-        public String toString() {
-            return getSerializedName();
-        }
+    public StatorBlock(Properties properties) {
+        super(properties);
+        this.registerDefaultState(this.defaultBlockState()
+            .setValue(MODEL_TYPE, StatorBlockModelType.BASE_MIDDLE)
+        );
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        Axis orient = state.getValue(ORIENTATION).getOrient();
-        Direction cardinal = state.getValue(ORIENTATION).getCardinal();
-        if(state.getValue(MODEL_TYPE) == StatorBlockModelType.BASE) {
-            return BASE_SHAPE.get(cardinal);
-        } // TODO ADDRESS WEIRDNESS
-        return CORNER_SHAPE.get(cardinal);
-    }
-
-    ////////
-    public StatorBlock(Properties properties) {
-        super(properties);
-        this.registerDefaultState(this.defaultBlockState()
-            .setValue(MODEL_TYPE, StatorBlockModelType.BASE)
-        );
+        if(hitbox == null) hitbox = Mechano.HITBOXES.get(ORIENTATION, state.getValue(MODEL_TYPE), this);
+        return hitbox.getRotated(state.getValue(ORIENTATION));
     }
 
     @Override
@@ -81,8 +59,6 @@ public class StatorBlock extends SimpleOrientedBlock implements IBE<StatorBlockE
         updateRotorsAround(pLevel, pPos, pState);
         super.onPlace(pState, pLevel, pPos, pOldState, pIsMoving);
     }
-
-
 
     @Override
     public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
@@ -96,11 +72,43 @@ public class StatorBlock extends SimpleOrientedBlock implements IBE<StatorBlockE
         BlockPos corner1 = pPos.offset(axis == Axis.Z ? 1 : 0,1, axis == Axis.X ? 1 : 0);
         BlockPos corner2 =  pPos.offset(axis == Axis.Z ? -1 : 0,-1, axis == Axis.X ? -1 : 0);
         BlockPos.betweenClosed(corner1, corner2).forEach(pos -> {
-            if (pLevel.getBlockEntity(pos) instanceof RotorBlockEntity rotor)
+            if (pLevel.getBlockEntity(pos) instanceof SmallRotorBlockEntity rotor)
                 rotor.updateStatorCount();
         });
     }
 
+    @Override
+    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean pIsMoving) {
+
+        Direction cardinal = state.getValue(StatorBlock.ORIENTATION).getCardinal();
+        Axis orientation = state.getValue(StatorBlock.ORIENTATION).getOrient();
+
+        BlockState rear = world.getBlockState(pos.relative(cardinal));
+        BlockState front = world.getBlockState(pos.relative(cardinal.getOpposite()));
+
+        boolean hasRear = this.isStator(rear.getBlock()) && rear.getValue(StatorBlock.ORIENTATION).getOrient() == orientation;
+        boolean hasFront = this.isStator(front.getBlock()) && front.getValue(StatorBlock.ORIENTATION).getOrient() == orientation;
+
+        StatorBlockModelType type = state.getValue(StatorBlock.MODEL_TYPE);
+        StatorBlockModelType typeNew = type.copy();
+
+        if(hasFront && hasRear) typeNew.toMiddle();
+        else if(hasFront) typeNew.toEndB();
+        else if(hasRear) typeNew.toEndA();
+        else typeNew.toSingle();
+
+        if(typeNew != type) setModel(world, pos, state, typeNew);
+
+        super.neighborChanged(state, world, pos, block, fromPos, pIsMoving);
+    }
+
+    public boolean isStator(Block block) {
+        return block == MechanoBlocks.STATOR.get();
+    }
+
+    private void setModel(Level world, BlockPos pos, BlockState state, StatorBlockModelType bType) {
+        world.setBlock(pos, state.setValue(MODEL_TYPE, bType), Block.UPDATE_ALL);
+    }
 
     @Override
     public Class<StatorBlockEntity> getBlockEntityClass() {
@@ -138,13 +146,13 @@ public class StatorBlock extends SimpleOrientedBlock implements IBE<StatorBlockE
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-        if(state.getValue(MODEL_TYPE) == StatorBlockModelType.CORNER)
+        if(state.getValue(MODEL_TYPE).isCorner())
             return InteractionResult.PASS;
         return super.onWrenched(state, context);
     }
 
     public boolean hasSegmentTowards(BlockPos pos, Direction dir, Level world) {
-        return world.getBlockState(pos.relative(dir)).getBlock() == MechanoBlocks.ROTOR.get();
+        return world.getBlockState(pos.relative(dir)).getBlock() == MechanoBlocks.SMALL_ROTOR.get();
 	}
 
     public static BlockState getStatorOrientation(BlockState originalState, BlockState stateForPlacement, Level level, BlockPos pos) {

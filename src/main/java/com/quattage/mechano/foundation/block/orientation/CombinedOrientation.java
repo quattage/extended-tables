@@ -2,8 +2,6 @@ package com.quattage.mechano.foundation.block.orientation;
 
 import java.util.Locale;
 
-import com.quattage.mechano.foundation.block.orientation.relative.XY;
-
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.Util;
@@ -11,7 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 /***
  * A CombinedOrientation is an implementation of Minecraft's BlockState enums that
  * combines two Direction objects, called localUp and localForward. LocalUp represents the 
@@ -20,49 +18,52 @@ import net.minecraft.world.phys.Vec2;
  * block in Minecraft.
  */
 public enum CombinedOrientation implements StringRepresentable {
-    DOWN_NORTH("down_north", Direction.DOWN, Direction.NORTH),      // 0
-    DOWN_EAST("down_east", Direction.DOWN, Direction.EAST),
-    DOWN_SOUTH("down_south", Direction.DOWN, Direction.SOUTH),
-    DOWN_WEST("down_west", Direction.DOWN, Direction.WEST),
+    DOWN_NORTH(new Vec3(180, 180, 0), Direction.DOWN, Direction.NORTH),      // 0
+    DOWN_EAST(new Vec3(180, 270, 0), Direction.DOWN, Direction.EAST),
+    DOWN_SOUTH(new Vec3(180, 0, 0), Direction.DOWN, Direction.SOUTH),
+    DOWN_WEST(new Vec3(180, 90, 0), Direction.DOWN, Direction.WEST),
 
-    UP_NORTH("up_north", Direction.UP, Direction.NORTH),             // 4
-    UP_WEST("up_west", Direction.UP, Direction.WEST),
-    UP_SOUTH("up_south", Direction.UP, Direction.SOUTH),
-    UP_EAST("up_east", Direction.UP, Direction.EAST),
+    UP_NORTH(new Vec3(0, 0, 0), Direction.UP, Direction.NORTH),             // 4
+    UP_WEST(new Vec3(0, 270, 0), Direction.UP, Direction.WEST),
+    UP_SOUTH(new Vec3(0, 180, 0), Direction.UP, Direction.SOUTH),
+    UP_EAST(new Vec3(0, 90, 0), Direction.UP, Direction.EAST),
 
-    NORTH_UP("north_up", Direction.NORTH, Direction.UP),             // 8
-    NORTH_EAST("north_east", Direction.NORTH, Direction.EAST),
-    NORTH_DOWN("north_down", Direction.NORTH, Direction.DOWN),
-    NORTH_WEST("north_west", Direction.NORTH, Direction.WEST),
+    NORTH_UP(new Vec3(270, 270, 0), Direction.NORTH, Direction.UP),             // 8
+    NORTH_EAST(new Vec3(180, 270, 0), Direction.NORTH, Direction.EAST),
+    NORTH_DOWN(new Vec3(90, 270, 0), Direction.NORTH, Direction.DOWN),
+    NORTH_WEST(new Vec3(0, 270, 0), Direction.NORTH, Direction.WEST),
 
-    EAST_UP("east_up", Direction.EAST, Direction.UP),                // 16
-    EAST_SOUTH("east_south", Direction.EAST, Direction.SOUTH),
-    EAST_DOWN("east_down", Direction.EAST, Direction.DOWN),
-    EAST_NORTH("east_north", Direction.EAST, Direction.NORTH),
+    EAST_UP(new Vec3(270, 0, 0), Direction.EAST, Direction.UP),                // 16
+    EAST_SOUTH(new Vec3(180, 0, 0), Direction.EAST, Direction.SOUTH),
+    EAST_DOWN(new Vec3(90, 0, 0), Direction.EAST, Direction.DOWN),
+    EAST_NORTH(new Vec3(0, 0, 0), Direction.EAST, Direction.NORTH),
 
-    SOUTH_UP("south_up", Direction.SOUTH, Direction.UP),             // 12
-    SOUTH_WEST("south_west", Direction.SOUTH, Direction.WEST),
-    SOUTH_DOWN("south_down", Direction.SOUTH, Direction.DOWN),
-    SOUTH_EAST("south_east", Direction.SOUTH, Direction.EAST),
+    SOUTH_UP(new Vec3(270, 90, 0), Direction.SOUTH, Direction.UP),             // 12
+    SOUTH_WEST(new Vec3(180, 270, 0), Direction.SOUTH, Direction.WEST),
+    SOUTH_DOWN(new Vec3(90, 90, 0), Direction.SOUTH, Direction.DOWN),
+    SOUTH_EAST(new Vec3(180, 90, 0), Direction.SOUTH, Direction.EAST),
 
-    WEST_UP("west_up", Direction.WEST, Direction.UP),               // 20
-    WEST_NORTH("west_north", Direction.WEST, Direction.NORTH),
-    WEST_DOWN("west_down", Direction.WEST, Direction.DOWN),
-    WEST_SOUTH("west_south", Direction.WEST, Direction.SOUTH);
+    WEST_UP(new Vec3(270, 180, 0), Direction.WEST, Direction.UP),               // 20
+    WEST_NORTH(new Vec3(180, 180, 0), Direction.WEST, Direction.NORTH),
+    WEST_DOWN(new Vec3(90, 180, 0), Direction.WEST, Direction.DOWN),
+    WEST_SOUTH(new Vec3(0, 180, 0), Direction.WEST, Direction.SOUTH);
 
-    private final String name;
     private final Direction localUp;
     private final Direction localForward;
-    private static final Int2ObjectMap<CombinedOrientation> COMBINED_LOOKUP = Util.make(new Int2ObjectOpenHashMap<>(values().length), (boysmell) -> {
+
+
+    private final Vec3 rotation;
+
+    private static final Int2ObjectMap<CombinedOrientation> COMBINED_LOOKUP = Util.make(new Int2ObjectOpenHashMap<>(values().length), b -> {
         for(CombinedOrientation direction : values()) {
-            boysmell.put(lookupKey(direction.localUp, direction.localForward), direction);
+            b.put(lookupKey(direction.localUp, direction.localForward), direction);
         }
     });
 
-    private CombinedOrientation(String name, Direction localUp, Direction localForward) {
-        this.name = name;
+    private CombinedOrientation(Vec3 rotation, Direction localUp, Direction localForward) {
         this.localUp = localUp;
         this.localForward = localForward;
+        this.rotation = rotation;
     }
 
     private static int lookupKey(Direction localUp, Direction localForward) {
@@ -152,132 +153,8 @@ public enum CombinedOrientation implements StringRepresentable {
         return getGroupIndex(in) * 4;
     }
 
-    public XY getRotation() {
-        XY out = new XY();
-        switch(this) {
-            case DOWN_EAST:
-                out.setX(180);
-                out.setY(270);
-                return out;
-
-            case DOWN_NORTH:
-                out.setX(180);
-                out.setY(180);
-                return out;
-
-            case DOWN_SOUTH:
-                out.setX(180);
-                out.setY();
-                return out;
-
-            case DOWN_WEST:
-                out.setX(180);
-                out.setY(90);
-                return out;
-            ////
-            case EAST_DOWN:
-                out.setX(90);
-                out.setY();
-                return out;
-
-            case EAST_NORTH:
-                out.setX();
-                out.setY();
-                return out;
-
-            case EAST_SOUTH:
-                out.setX(180);
-                out.setY();
-                return out;
-
-            case EAST_UP:
-                out.setX(270);
-                out.setY();
-                return out;
-            ////
-            case NORTH_DOWN:
-                out.setX(90);
-                out.setY(270);
-                return out;
-
-            case NORTH_EAST:
-                out.setX(180);
-                out.setY(270);
-                return out;
-
-            case NORTH_UP:
-                out.setX(270);
-                out.setY(270);
-                return out;
-
-            case NORTH_WEST:
-                out.setX();
-                out.setY(270);
-                return out;
-            ////
-            case SOUTH_DOWN:
-                out.setX(90);
-                out.setY(90);
-                return out;
-
-            case SOUTH_EAST:
-                out.setX();
-                out.setY(90);
-                return out;
-
-            case SOUTH_UP:
-                out.setX(270);
-                out.setY(90);
-                return out;
-
-            case SOUTH_WEST:
-                out.setX(180);
-                out.setY(90);
-                return out;
-            ////
-            case UP_EAST:
-                out.setX();
-                out.setY(90);
-                return out;
-
-            case UP_NORTH:
-                out.setX();
-                out.setY();
-                return out;
-
-            case UP_SOUTH:
-                out.setX();
-                out.setY(180);
-                return out;
-
-            case UP_WEST:
-                out.setX();
-                out.setY(270);
-                return out;
-            ////
-            case WEST_DOWN:
-                out.setX(90);
-                out.setY(180);
-                return out;
-
-            case WEST_NORTH:
-                out.setX(180);
-                out.setY(180);
-                return out;
-
-            case WEST_SOUTH:
-                out.setX();
-                out.setY(180);
-                return out;
-
-            case WEST_UP:
-                out.setX(270);
-                out.setY(180);
-                return out;
-
-            default:
-                throw new IllegalArgumentException("CombinedOrientation named '" + name() + "' is invalid!");
-        }
+    public Vec3 getRotation() {
+        return rotation;
     }
 
     /**

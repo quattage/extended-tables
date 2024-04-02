@@ -1,4 +1,5 @@
 {
+  "block.mechano.big_rotor": "Big Rotor",
   "block.mechano.collector": "Collector",
   "block.mechano.connector_stacked_one": "Connector Stacked One",
   "block.mechano.connector_stacked_three": "Connector Stacked Three",
@@ -7,7 +8,7 @@
   "block.mechano.connector_transmission": "Connector Transmission",
   "block.mechano.coupling_node": "Coupling Node",
   "block.mechano.diagonal_girder": "Diagonal Girder",
-  "block.mechano.rotor": "Rotor",
+  "block.mechano.small_rotor": "Small Rotor",
   "block.mechano.stator": "Stator",
   "block.mechano.test_block": "Test Block",
   "block.mechano.tool_forge": "Tool Forge",

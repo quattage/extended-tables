@@ -11,7 +11,10 @@ import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoClientEvents;
-import com.quattage.mechano.foundation.helper.ShapeBuilder;
+import com.quattage.mechano.foundation.block.hitbox.Hitbox;
+import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
+import com.quattage.mechano.foundation.block.hitbox.VoxelShapeBuilder;
+import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
@@ -50,54 +53,25 @@ import com.simibubi.create.foundation.utility.Pair;
 public class DiagonalGirderBlock extends DirectionalBlock implements IBE<DiagonalGirderBlockEntity> {
     public static final EnumProperty<DiagonalGirderModelType> MODEL_TYPE = EnumProperty.create("model", DiagonalGirderModelType.class);
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
+    private static Hitbox<Direction> hitbox;
     
-    public static final VoxelShaper MIDDLE = ShapeBuilder
-        .newShape(5, 0, 0, 11, 4, 4)
-        .add(5, 4, 4, 11, 8, 8)
-        .add(5, 8, 8, 11, 12, 12)
-        .add(5, 12, 12, 11, 16, 16)
-        .add(5, 9.75, 12, 11, 12, 14.25)
-        .add(5, 5.75, 8, 11, 8, 10.25)
-        .add(5, 1.75, 4, 11, 4, 6.25)
-        .add(5, 4, 1.75, 11, 6.25, 4)
-        .add(5, 8, 5.75, 11, 10.25, 8)
-        .add(5, 12, 9.75, 11, 14.25, 12)
-    .defaultUp();
+    public static final VoxelShaper BOX_LONG_DOWN_FLAT = 
+        VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3, -4.5, -5.75, 13.1, 0, 5.25), Direction.UP);
+    public static final VoxelShaper BOX_LONG_DOWN_VERT = 
+        VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3.1, -5.5, -4.85, 13.2, 5.5, -0.35), Direction.UP);
+    public static final VoxelShaper BOX_LONG_UP_FLAT = 
+        VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3, 16, 10.75, 13.1, 20.5, 21.75), Direction.UP);
+    public static final VoxelShaper BOX_LONG_UP_VERT = 
+        VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3.1, 10.5, 16.35, 13.2, 21.5, 20.85), Direction.UP);
 
-    public static final VoxelShaper SHORT = ShapeBuilder
-        .newShape(5, 2, 2, 11, 6, 6)
-        .add(5, 4, 4, 11, 8, 8)
-        .add(5, 8, 8, 11, 12, 12)
-        .add(5, 10, 10, 11, 14, 14)
-        .add(5, 5.75, 8, 11, 8, 10.25)
-        .add(5, 8, 5.75, 11, 10.25, 8)
-    .defaultUp();
-
-    public static final VoxelShaper LONG = ShapeBuilder
-        .newShape(5, -2, -2, 11, 2, 2)
-        .add(5, 2, 2, 11, 6, 6)
-        .add(5, 6, 6, 11, 10, 10)
-        .add(5, 4, 4, 11, 8, 8)
-        .add(5, 0, 0, 11, 4, 4)
-        .add(5, 10, 10, 11, 14, 14)
-        .add(5, 8, 8, 11, 12, 12)
-        .add(5, 12, 12, 11, 16, 16)
-        .add(5, 14, 14, 11, 18, 18)
-        .add(5, 18, 15.75, 11, 20.25, 18)
-        .add(5, 15.75, 18, 11, 18, 20.25)
-        .add(5, -2, -4.25, 11, 0.25, -2)
-        .add(5, -4.25, -2, 11, -2, 0.25)
-    .defaultUp();
-
-    public static final VoxelShaper BOX_LONG_DOWN_FLAT = ShapeBuilder.newShape(3, -4.5, -5.75, 13.1, 0, 5.25).defaultUp();
-    public static final VoxelShaper BOX_LONG_DOWN_VERT = ShapeBuilder.newShape(3.1, -5.5, -4.85, 13.2, 5.5, -0.35).defaultUp();
-    public static final VoxelShaper BOX_LONG_UP_FLAT = ShapeBuilder.newShape(3, 16, 10.75, 13.1, 20.5, 21.75).defaultUp();
-    public static final VoxelShaper BOX_LONG_UP_VERT = ShapeBuilder.newShape(3.1, 10.5, 16.35, 13.2, 21.5, 20.85).defaultUp();
-
-    public static final VoxelShaper BOX_SHORT_DOWN_FLAT = ShapeBuilder.newShape(3, 0, -1, 13.1, 4.5, 10).defaultUp();
-    public static final VoxelShaper BOX_SHORT_DOWN_VERT = ShapeBuilder.newShape(3, -1, 0, 13.1, 10, 4.5).defaultUp();
-    public static final VoxelShaper BOX_SHORT_UP_FLAT = ShapeBuilder.newShape(3, 11.5, 6, 13.1, 16, 17).defaultUp();
-    public static final VoxelShaper BOX_SHORT_UP_VERT = ShapeBuilder.newShape(3, 6, 11.5, 13.1, 17, 16).defaultUp();
+    public static final VoxelShaper BOX_SHORT_DOWN_FLAT = 
+        VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3, 0, -1, 13.1, 4.5, 10), Direction.UP);
+    public static final VoxelShaper BOX_SHORT_DOWN_VERT = 
+        VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3, -1, 0, 13.1, 10, 4.5), Direction.UP);
+    public static final VoxelShaper BOX_SHORT_UP_FLAT = 
+        VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3, 11.5, 6, 13.1, 16, 17), Direction.UP);
+    public static final VoxelShaper BOX_SHORT_UP_VERT = 
+        VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3, 6, 11.5, 13.1, 17, 16), Direction.UP);
 
 
     // public static final VoxelShaper DOUBLE_DOWN = ShapeBuilder
@@ -105,15 +79,26 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
     //     .add()
     // .forDirectional();
 
-    public enum DiagonalGirderModelType implements StringRepresentable {
-        LONG_DOUBLE,         // there are girders, walls, fences, etc. (non-full blocks) on both ends of the diagonal
-        LONG_END_UP,            // there's a girder, wall, fence, etc. on one end of the diagonal
-        LONG_END_DOWN,            // there's a girder, wall, fence, etc. on one end of the diagonal
-        MIDDLE,              // there are other diagonal girders on both ends of the diagonal 
-        SHORT_END_UP,           // there's a full block on one end of the diagonal
-        SHORT_END_DOWN,           // there's a full block on one end of the diagonal
-        SHORT_DOUBLE;        // there's a full block on both ends of the diagonal
+    public enum DiagonalGirderModelType implements StringRepresentable, HitboxNameable {
+        LONG_DOUBLE("LONG"),         // there are girders, walls, fences, etc. (non-full blocks) on both ends of the diagonal
+        LONG_END_UP("LONG"),            // there's a girder, wall, fence, etc. on one end of the diagonal
+        LONG_END_DOWN("LONG"),            // there's a girder, wall, fence, etc. on one end of the diagonal
+        MIDDLE("MIDDLE"),              // there are other diagonal girders on both ends of the diagonal 
+        SHORT_END_UP("SHORT"),           // there's a full block on one end of the diagonal
+        SHORT_END_DOWN("SHORT"),           // there's a full block on one end of the diagonal
+        SHORT_DOUBLE("SHORT");        // there's a full block on both ends of the diagonal
         // CROSS; // Optional manually assigned X shape
+
+        private final String hitboxName;
+
+        private DiagonalGirderModelType(String hitboxName) {
+            this.hitboxName = hitboxName;
+        }
+
+        @Override
+        public String getHitboxName() {
+            return hitboxName;
+        }
     
         @Override
         public String getSerializedName() {
@@ -128,14 +113,8 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        Direction facing = state.getValue(FACING);
-
-        DiagonalGirderModelType type = state.getValue(MODEL_TYPE);
-        if(type.ordinal() < 3)
-            return LONG.get(facing.getOpposite());
-        if(type.ordinal() > 3)
-            return SHORT.get(facing.getOpposite());
-        return MIDDLE.get(facing.getOpposite()); 
+        if(hitbox == null) hitbox = Mechano.HITBOXES.get(state.getValue(MODEL_TYPE), MechanoBlocks.DIAGONAL_GIRDER.getId());
+        return hitbox.getRotated(state.getValue(FACING));
     }
 
     public DiagonalGirderBlock(Properties pProperties) {

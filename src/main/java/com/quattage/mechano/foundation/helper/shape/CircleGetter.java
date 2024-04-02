@@ -1,42 +1,57 @@
 package com.quattage.mechano.foundation.helper.shape;
 
+import java.util.function.Function;
+
+import com.simibubi.create.foundation.placement.PlacementOffset;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 
 public class CircleGetter extends ShapeGetter {
 
-    public CircleGetter(Level world, int radius, Axis axis, BlockPos centerPos) {
-        super(world, radius, axis, centerPos);
+    public CircleGetter(Integer radius, Axis axis, BlockPos centerPos) {
+        super(radius, axis, centerPos);
     }
-
-
-    // all of this is completely untested and i wrote it at 3am good luck
 
     @Override
-    public ShapeGetter compute() {
-        // if(radius <= 1) {}
-        makeCircle();
-        return this;
+    protected PlacementOffset evalSafe(Function<BlockPos, PlacementOffset> action) {
+        return makeCircle(action);
     }
 
-    private void makeCircle() {
+    private PlacementOffset makeCircle(Function<BlockPos, PlacementOffset> action) {
         int iterX = this.radius;
         int iterY = 0;
-        int step = 0;
+        int step = 1 - iterX;
 
 		while(iterX >= iterY) {
 
-            addBlock(iterX, iterY);
-            addBlock(iterY, iterX);
-            addBlock(-iterY, iterX);
-            addBlock(-iterX, iterY);
-            addBlock(-iterX, -iterY);
-            addBlock(-iterY, -iterX);
-            addBlock(iterY, -iterX);
-            addBlock(iterX, -iterY);
-			
+            PlacementOffset current;
+            
+            // lol
+            current = evalBlock(action, iterX, iterY);
+            if(current != null) return current;
+
+            current = evalBlock(action, -iterX, iterY);
+            if(current != null) return current;
+
+            current = evalBlock(action, iterX, -iterY);
+            if(current != null) return current;
+
+            current = evalBlock(action, -iterX, -iterY);
+            if(current != null) return current;
+
+            current = evalBlock(action, iterY, iterX);
+            if(current != null) return current;
+
+            current = evalBlock(action, -iterY, iterX);
+            if(current != null) return current;
+
+            current = evalBlock(action, iterY, -iterX);
+            if(current != null) return current;
+
+            current = evalBlock(action, -iterY, -iterX);
+            if(current != null) return current;
+
 			if(step <= 0) {
                 iterY++;
                 step += 2 * iterY + 1;
@@ -45,20 +60,22 @@ public class CircleGetter extends ShapeGetter {
                 step -= 2 * iterX + 1;
             }
 		}
+
+        return PlacementOffset.fail();
     }
 
-    private void addBlock(int stepX, int stepY) {
+    private PlacementOffset evalBlock(Function<BlockPos, PlacementOffset> action, int stepX, int stepY) {
 
 		int x = this.centerPos.getX();
         int y = this.centerPos.getY();
         int z = this.centerPos.getZ();
-
+        
         BlockPos checkPos;
+
         if(this.axis == Axis.X) checkPos = new BlockPos(x, y + stepX, z + stepY);
-        else if(this.axis == Axis.Y) checkPos = new BlockPos(x + stepX, y, z + stepY); 
+        else if(this.axis == Axis.Y) checkPos = new BlockPos(x + stepX, y, z + stepY);
         else checkPos = new BlockPos(x + stepX, y + stepY, z);
 
-        BlockState state = this.world.getBlockState(checkPos);
-        shapeBlocks.put(checkPos, state);
+        return action.apply(checkPos);
 	}
 }

@@ -10,7 +10,6 @@ import com.quattage.mechano.foundation.block.CombinedOrientedBlock;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.core.DirectionalEnergyStorable;
-import com.quattage.mechano.foundation.helper.ShapeBuilder;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.utility.VoxelShaper;
@@ -35,11 +34,11 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+@SuppressWarnings("deprecation")
 public class TransmissionConnectorBlock extends DirectionalBlock implements IBE<TransmissionConnectorBlockEntity> {
     
 
     public static final EnumProperty<HeapConnectorModelType> MODEL_TYPE = EnumProperty.create("model", HeapConnectorModelType.class);
-    public static final VoxelShaper BASE_SHAPE = ShapeBuilder.newShape(5.5, 0, 5.5, 10.5, 15, 10.5).defaultUp();
 
     private static final VoxelShape checkBoxX = Block.box(0,7,7,10,9,9);
     private static final VoxelShape checkBoxZ = Block.box(7,7,0,9,9,10);
@@ -101,12 +100,6 @@ public class TransmissionConnectorBlock extends DirectionalBlock implements IBE<
                 return;
             }
         }
-    }
-    
-    private Direction dirFromAxis(Direction.Axis ax) {
-        if(ax == Direction.Axis.Y) return Direction.UP;
-        if(ax == Direction.Axis.Z) return Direction.NORTH;
-        return Direction.EAST;
     }
 
     @Override

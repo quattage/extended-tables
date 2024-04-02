@@ -2,7 +2,8 @@ package com.quattage.mechano;
 
 import com.quattage.mechano.content.block.integrated.toolStation.ToolStationBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.collector.CollectorBlockEntity;
-import com.quattage.mechano.content.block.power.alternator.rotor.RotorBlockEntity;
+import com.quattage.mechano.content.block.power.alternator.rotor.BigRotorBlockEntity;
+import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.stator.StatorBlockEntity;
 import com.quattage.mechano.content.block.power.transfer.adapter.CouplingNodeBlockEntity;
 
@@ -32,83 +33,90 @@ import net.minecraftforge.eventbus.api.IEventBus;
 public class MechanoBlockEntities {
 
     public static final BlockEntityEntry<ToolStationBlockEntity> TOOL_STATION = Mechano.REGISTRATE
-            .blockEntity("tool_station", ToolStationBlockEntity::new)
-            .validBlocks(MechanoBlocks.TOOL_STATION)
-            .register();
+		.blockEntity("tool_station", ToolStationBlockEntity::new)
+		.validBlocks(MechanoBlocks.TOOL_STATION)
+		.register();
 
-    public static final BlockEntityEntry<RotorBlockEntity> ROTOR = Mechano.REGISTRATE
-            .blockEntity("rotor", RotorBlockEntity::new)
-            .instance(() -> CutoutRotatingInstance::new, false)
-            .validBlocks(MechanoBlocks.ROTOR)
-            .renderer(() -> KineticBlockEntityRenderer::new)
-            .register();
+    public static final BlockEntityEntry<SmallRotorBlockEntity> SMALL_ROTOR = Mechano.REGISTRATE
+		.blockEntity("rotor", SmallRotorBlockEntity::new)
+		.instance(() -> CutoutRotatingInstance::new, false)
+		.validBlocks(MechanoBlocks.SMALL_ROTOR)
+		.renderer(() -> KineticBlockEntityRenderer::new)
+		.register();
+
+	public static final BlockEntityEntry<BigRotorBlockEntity> BIG_ROTOR = Mechano.REGISTRATE
+		.blockEntity("rotor", BigRotorBlockEntity::new)
+		.instance(() -> CutoutRotatingInstance::new, false)
+		.validBlocks(MechanoBlocks.BIG_ROTOR)
+		.renderer(() -> KineticBlockEntityRenderer::new)
+		.register();
 
     public static final BlockEntityEntry<CollectorBlockEntity> COLLECTOR = Mechano.REGISTRATE
-            .blockEntity("collector", CollectorBlockEntity::new)
-            .instance(() -> CutoutRotatingInstance::new, false)
-            .validBlocks(MechanoBlocks.COLLECTOR)
-            .renderer(() -> KineticBlockEntityRenderer::new)
-            .register();
+		.blockEntity("collector", CollectorBlockEntity::new)
+		.instance(() -> CutoutRotatingInstance::new, false)
+		.validBlocks(MechanoBlocks.COLLECTOR)
+		.renderer(() -> KineticBlockEntityRenderer::new)
+		.register();
 
     public static final BlockEntityEntry<StatorBlockEntity> STATOR = Mechano.REGISTRATE
-            .blockEntity("stator", StatorBlockEntity::new)
-            .validBlocks(MechanoBlocks.STATOR)
-            .register();
+		.blockEntity("stator", StatorBlockEntity::new)
+		.validBlocks(MechanoBlocks.STATOR)
+		.register();
 
     public static final BlockEntityEntry<CouplingNodeBlockEntity> COUPLING_NODE = Mechano.REGISTRATE
-            .blockEntity("coupling_node", CouplingNodeBlockEntity::new)
-            .validBlocks(MechanoBlocks.COUPLING_NODE)
-            .register();
+		.blockEntity("coupling_node", CouplingNodeBlockEntity::new)
+		.validBlocks(MechanoBlocks.COUPLING_NODE)
+		.register();
 
     public static final BlockEntityEntry<TransmissionConnectorBlockEntity> TRANSMISSION_CONNECTOR = Mechano.REGISTRATE
-            .blockEntity("transmission_connector", TransmissionConnectorBlockEntity::new)
-            .validBlocks(MechanoBlocks.CONNECTOR_TRANSMISSION)
-            .renderer(() -> TransmissionConnectorRenderer::new)
-            .register();
+		.blockEntity("transmission_connector", TransmissionConnectorBlockEntity::new)
+		.validBlocks(MechanoBlocks.CONNECTOR_TRANSMISSION)
+		.renderer(() -> TransmissionConnectorRenderer::new)
+		.register();
 
     public static final BlockEntityEntry<ConnectorStackedTier0BlockEntity> STACKED_CONNECTOR_ZERO = Mechano.REGISTRATE
-            .blockEntity("stacked_connector_zero", ConnectorStackedTier0BlockEntity::new)
-            .validBlocks(MechanoBlocks.CONNECTOR_STACKED_ZERO)
-            .renderer(() -> ConnectorStackedTier0Renderer::new)
-            .register();
+		.blockEntity("stacked_connector_zero", ConnectorStackedTier0BlockEntity::new)
+		.validBlocks(MechanoBlocks.CONNECTOR_STACKED_ZERO)
+		.renderer(() -> ConnectorStackedTier0Renderer::new)
+		.register();
 
     public static final BlockEntityEntry<ConnectorStackedTier1BlockEntity> STACKED_CONNECTOR_ONE = Mechano.REGISTRATE
-            .blockEntity("stacked_connector_one", ConnectorStackedTier1BlockEntity::new)
-            .validBlocks(MechanoBlocks.CONNECTOR_STACKED_ONE)
-            .renderer(() -> ConnectorStackedTier1Renderer::new)
-            .register();
+		.blockEntity("stacked_connector_one", ConnectorStackedTier1BlockEntity::new)
+		.validBlocks(MechanoBlocks.CONNECTOR_STACKED_ONE)
+		.renderer(() -> ConnectorStackedTier1Renderer::new)
+		.register();
 
     public static final BlockEntityEntry<ConnectorStackedTier2BlockEntity> STACKED_CONNECTOR_TWO = Mechano.REGISTRATE
-            .blockEntity("stacked_connector_two", ConnectorStackedTier2BlockEntity::new)
-            .validBlocks(MechanoBlocks.CONNECTOR_STACKED_TWO)
-            .renderer(() -> ConnectorStackedTier2Renderer::new)
-            .register();
+		.blockEntity("stacked_connector_two", ConnectorStackedTier2BlockEntity::new)
+		.validBlocks(MechanoBlocks.CONNECTOR_STACKED_TWO)
+		.renderer(() -> ConnectorStackedTier2Renderer::new)
+		.register();
 
     public static final BlockEntityEntry<ConnectorStackedTier3BlockEntity> STACKED_CONNECTOR_THREE = Mechano.REGISTRATE
-        .blockEntity("stacked_connector_three", ConnectorStackedTier3BlockEntity::new)
-        .validBlocks(MechanoBlocks.CONNECTOR_STACKED_THREE)
-        .renderer(() -> ConnectorStackedTier3Renderer::new)
-        .register();
+		.blockEntity("stacked_connector_three", ConnectorStackedTier3BlockEntity::new)
+		.validBlocks(MechanoBlocks.CONNECTOR_STACKED_THREE)
+		.renderer(() -> ConnectorStackedTier3Renderer::new)
+		.register();
 
 
     public static final BlockEntityEntry<DiagonalGirderBlockEntity> DIAGONAL_GIRDER = Mechano.REGISTRATE
-            .blockEntity("diagonal_girder", DiagonalGirderBlockEntity::new)
-            .validBlocks(MechanoBlocks.DIAGONAL_GIRDER)
-            .renderer(() -> DiagonalGirderRenderer::new)
-            .register();
+		.blockEntity("diagonal_girder", DiagonalGirderBlockEntity::new)
+		.validBlocks(MechanoBlocks.DIAGONAL_GIRDER)
+		.renderer(() -> DiagonalGirderRenderer::new)
+		.register();
 
     public static final BlockEntityEntry<VoltometerBlockEntity> VOLTOMETER = Mechano.REGISTRATE
-            .blockEntity("voltometer", VoltometerBlockEntity::new)
-            .validBlocks(MechanoBlocks.VOLTOMETER)
-            .register();
+		.blockEntity("voltometer", VoltometerBlockEntity::new)
+		.validBlocks(MechanoBlocks.VOLTOMETER)
+		.register();
 
     public static final BlockEntityEntry<TestBlockEntity> TEST_BLOCK = Mechano.REGISTRATE
-            .blockEntity("test", TestBlockEntity::new)
-            .validBlocks(MechanoBlocks.TEST_BLOCK)
-            .renderer(() -> TestBlockRenderer::new)
-            .register();
+		.blockEntity("test", TestBlockEntity::new)
+		.validBlocks(MechanoBlocks.TEST_BLOCK)
+		.renderer(() -> TestBlockRenderer::new)
+		.register();
 
     public static void register(IEventBus event) {
-        Mechano.logReg("block entities");
+	Mechano.logReg("block entities");
     }
 }

@@ -39,11 +39,11 @@ public class WireTextureProvider extends SimplePreparableReloadListener<Map<Reso
     private final Object2ObjectMap<ResourceLocation, ResourceLocation> textureCache = new Object2ObjectOpenHashMap<>(64);
 
     @Override
-    protected Map<ResourceLocation, JsonModel> prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
-        return load(resourceManager);
+    protected Map<ResourceLocation, JsonModel> prepare(ResourceManager manager, ProfilerFiller profiler) {
+        return load(manager);
     }
 
-    public Map<ResourceLocation, JsonModel> load(ResourceManager manager) {
+    private Map<ResourceLocation, JsonModel> load(ResourceManager manager) {
 
         Map<ResourceLocation, JsonModel> out = new HashMap<>();
         for (WireSpool spoolType : WireSpool.getAllTypes()) {

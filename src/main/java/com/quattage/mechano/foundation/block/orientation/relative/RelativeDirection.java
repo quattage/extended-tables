@@ -5,7 +5,6 @@ import org.joml.Quaternionf;
 
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
-import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.simibubi.create.foundation.utility.Color;
 
 import net.minecraft.core.Direction;
@@ -43,7 +42,7 @@ public class RelativeDirection {
             return this;
         }
 
-        Matrix4f fac = toMatrix(rel.getRelative());
+        Matrix4f fac = toMatrix(rel.getRelMatrix());
         if(dir.getLocalForward().getAxis() == Axis.Y) {
             fac.rotate(dir.getLocalUp().getOpposite().getRotation());
             facingDir = Direction.rotate(fac, dir.getLocalForward());
@@ -52,14 +51,14 @@ public class RelativeDirection {
 
         if(dir.getLocalUp().getAxis() != Axis.Y) {
             if(rel == Relative.RIGHT) {
-                if(DirectionTransformer.isPositive(dir.getLocalForward())) {
+                if(dir.getLocalForward().getAxisDirection() == Direction.AxisDirection.POSITIVE) {
                     facingDir = Direction.UP;
                     return this;
                 } 
                 facingDir = Direction.DOWN;
                 return this;
             }
-            if(DirectionTransformer.isPositive(dir.getLocalForward())) {
+            if(dir.getLocalForward().getAxisDirection() == Direction.AxisDirection.POSITIVE) {
                 facingDir = Direction.DOWN;
                 return this;
             } 

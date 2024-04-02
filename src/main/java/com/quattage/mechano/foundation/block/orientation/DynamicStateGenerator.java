@@ -15,37 +15,36 @@ import net.minecraftforge.client.model.generators.ModelFile;
 public class DynamicStateGenerator extends SpecialBlockStateGen {
 
     private final @Nullable EnumProperty<?> typeDelegate;
-    private final @Nullable String customFolder;
+    private @Nullable String[] customIn;
+    private @Nullable String[] customSub;
 
-
-    public DynamicStateGenerator(EnumProperty<?> typeDelegate, String customFolder) {
-        this.typeDelegate = typeDelegate;
-        this.customFolder = customFolder;
-    }
 
     public DynamicStateGenerator(EnumProperty<?> typeDelegate) {
         this.typeDelegate = typeDelegate;
-        customFolder = null;
-    }
-
-    public DynamicStateGenerator(String customFolder) {
-        this.typeDelegate = null;
-        this.customFolder = customFolder;
     }
 
     public DynamicStateGenerator() {
         this.typeDelegate = null;
-        customFolder = null;
+    }
+
+    public DynamicStateGenerator in(String... customIn) {
+        this.customIn = customIn;
+        return this;
+    }
+
+    public DynamicStateGenerator sub(String... customSub) {
+        this.customSub = customSub;
+        return this;
     }
 
     @Override
     protected int getXRotation(BlockState state) {
-        return DirectionTransformer.getRotation(state).x();
+        return (int)DirectionTransformer.getRotation(state).x();
     }
 
     @Override
     protected int getYRotation(BlockState state) {
-        return DirectionTransformer.getRotation(state).y();
+        return (int)DirectionTransformer.getRotation(state).y();
     }
 
     @Override
@@ -60,12 +59,6 @@ public class DynamicStateGenerator extends SpecialBlockStateGen {
             DirectionTransformer.isHorizontal(state)) 
             ? "_side" : "";
 
-        if(customFolder == null)
-            return provider.models().getExistingFile(Mechano.extend(ctx, 
-                typeName + orientSuffix));
-
-        return provider.models().getExistingFile(Mechano.extend(ctx, 
-            customFolder, typeName + orientSuffix));
-
+        return provider.models().getExistingFile(Mechano.extend(ctx, "block", customIn, customSub, typeName + orientSuffix));
     }
 }

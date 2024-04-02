@@ -2,11 +2,13 @@ package com.quattage.mechano.content.block.power.transfer.voltometer;
 
 import java.util.Locale;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
-import com.quattage.mechano.foundation.helper.ShapeBuilder;
+import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.foundation.block.hitbox.Hitbox;
+import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
-import com.simibubi.create.foundation.utility.VoxelShaper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -30,30 +32,15 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public class VoltometerBlock extends HorizontalDirectionalBlock implements IBE<VoltometerBlockEntity>, IWrenchable {
     
     public static final EnumProperty<VoltometerModelType> MODEL_TYPE = EnumProperty.create("model", VoltometerModelType.class);
+    private static Hitbox<Direction> hitbox;
 
-    public static final VoxelShaper BASE = ShapeBuilder
-        .newShape(1, 0, 1, 15, 2, 15)
-        .add(2, 2, 2, 14, 14, 14)
-        .add(-2.75, 4, 4, 18.75, 12, 12)
-        .add(-4, 5.5, 5.5, 20, 10.5, 10.5)
-        .defaultHorizontal(Direction.NORTH);
+    public enum VoltometerModelType implements StringRepresentable, HitboxNameable {
+        FLOOR, WALL, CEILING;
 
-    public static final VoxelShaper SIDE = ShapeBuilder
-        .newShape(1, 1, 0, 15, 15, 2)
-        .add(2, 2, 2, 14, 14, 14)
-        .add(-2.75, 4, 4, 18.75, 12, 12)
-        .add(-4, 5.5, 5.5, 20, 10.5, 10.5)
-        .defaultHorizontal(Direction.NORTH);
-
-    public static final VoxelShaper INVERTED = ShapeBuilder
-        .newShape(1, 14, 1, 15, 16, 15)
-        .add(2, 2, 2, 14, 14, 14)
-        .add(-2.75, 4, 4, 18.75, 12, 12)
-        .add(-4, 5.5, 5.5, 20, 10.5, 10.5)
-        .defaultHorizontal(Direction.NORTH);
-
-    public enum VoltometerModelType implements StringRepresentable {
-        BASE, SIDE, INVERTED;
+        @Override
+        public String getHitboxName() {
+            return toString();
+        }
 
         @Override
         public String getSerializedName() {
@@ -77,17 +64,13 @@ public class VoltometerBlock extends HorizontalDirectionalBlock implements IBE<V
         super(properties);
         this.registerDefaultState(defaultBlockState()
             .setValue(FACING, Direction.NORTH)
-            .setValue(MODEL_TYPE, VoltometerModelType.BASE));
+            .setValue(MODEL_TYPE, VoltometerModelType.FLOOR));
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        Direction facing = state.getValue(FACING);
-        if(state.getValue(MODEL_TYPE) == VoltometerModelType.SIDE)
-            return SIDE.get(facing.getOpposite());
-        if(state.getValue(MODEL_TYPE) == VoltometerModelType.INVERTED)
-            return INVERTED.get(facing);
-        return BASE.get(facing);
+        if(hitbox == null) hitbox = Mechano.HITBOXES.get(state.getValue(MODEL_TYPE), MechanoBlocks.STATOR.getId());
+        return hitbox.getRotated(state.getValue(FACING));
     }
 
     @Override
@@ -110,13 +93,13 @@ public class VoltometerBlock extends HorizontalDirectionalBlock implements IBE<V
 
         if(facing == Direction.UP) {
             facing = context.getHorizontalDirection().getOpposite();
-            return out.setValue(FACING, facing).setValue(MODEL_TYPE, VoltometerModelType.BASE);
+            return out.setValue(FACING, facing).setValue(MODEL_TYPE, VoltometerModelType.FLOOR);
         }
         if(facing == Direction.DOWN) {
             facing = context.getHorizontalDirection().getOpposite();
-            return out.setValue(FACING, facing).setValue(MODEL_TYPE, VoltometerModelType.INVERTED);
+            return out.setValue(FACING, facing).setValue(MODEL_TYPE, VoltometerModelType.CEILING);
         }
-        return out.setValue(FACING, facing).setValue(MODEL_TYPE, VoltometerModelType.SIDE);
+        return out.setValue(FACING, facing).setValue(MODEL_TYPE, VoltometerModelType.WALL);
     }
 
     @Override

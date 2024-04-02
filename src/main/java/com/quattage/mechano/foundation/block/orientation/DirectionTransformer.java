@@ -5,17 +5,19 @@ import javax.annotation.Nullable;
 import com.quattage.mechano.foundation.block.CombinedOrientedBlock;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.VerticallyOrientedBlock;
-import com.quattage.mechano.foundation.block.orientation.relative.XY;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.phys.Vec3;
 
 /***
  * This class is designed to deal with all of the differing (and sometimes conflicting) 
@@ -109,6 +111,34 @@ public class DirectionTransformer {
         return null;
     }
 
+    @Nullable
+    public static <R extends Enum<R> & StringRepresentable> Direction getForward(Property<R> group, R prop) {
+        if(prop instanceof CombinedOrientation o) return o.getLocalForward();
+        if(prop instanceof VerticalOrientation o) return o.getLocalFacing();
+        if(prop instanceof SimpleOrientation o) return toDirection(o.getOrient());
+        if(prop instanceof Direction.Axis o) return toDirection(o);
+        if(prop instanceof Direction o) return o;
+        return null;
+    }
+
+    @Nullable
+    public static <R extends Enum<R> & StringRepresentable> Direction getUp(Property<R> group, R prop) {
+        if(prop instanceof CombinedOrientation o) return o.getLocalUp();
+        if(prop instanceof VerticalOrientation o) return o.getLocalVertical();
+        if(prop instanceof SimpleOrientation o) return o.getCardinal();
+        if(prop instanceof Direction.Axis o) {
+            if(group.getPossibleValues().size() > 2)
+                return toDirection(o);
+            else return Direction.UP;
+        }
+        if(prop instanceof Direction o) {
+            if(group.getPossibleValues().size() > 4) 
+                return o;
+            else return Direction.UP;
+        }
+        return null;
+    }
+
     /***
      * Converts a Direction, SimpleOrientation, or VerticalOrientation into a
      * CombinedDirection.
@@ -178,46 +208,37 @@ public class DirectionTransformer {
         return CombinedOrientation.NORTH_UP;
     }
 
-    public static XY getRotation(BlockState state) {
+    public static Vec3 getRotation(BlockState state) {
         if(state.getBlock() instanceof CombinedOrientedBlock)
             return state.getValue(CombinedOrientedBlock.ORIENTATION).getRotation();
 
         Direction up = getUp(state);
         Direction forward = getForward(state);
+        if(forward == up) return dir2Vec(up);
 
-        if(forward == up) {
-            XY out = new XY();
-
-            switch(up) {
-                case DOWN:
-                    out.setX(180);
-                    out.setY();
-                    return out;
-                case EAST:
-                    out.setX(90);
-                    out.setY(90);
-                    return out;
-                case NORTH:
-                    out.setX(90);
-                    out.setY();
-                    return out;
-                case SOUTH:
-                    out.setX(270);
-                    out.setY();
-                    return out;
-                case UP:
-                    out.setX();
-                    out.setY();
-                    return out;
-                case WEST:
-                    out.setX(270);
-                    out.setY(90);
-                    return out;
-                default:
-                    break;
-            }
-        }
         return CombinedOrientation.combine(up, forward).getRotation();
+    }
+
+    public static  <R extends Enum<R> & StringRepresentable> Vec3 getRotation(Property<R> group, R prop) {
+        
+        if(prop instanceof CombinedOrientation orient)
+            return orient.getRotation();
+
+        Direction up = getUp(group, prop);
+        Direction forward = getForward(group, prop);
+
+        if(forward == up) return dir2Vec(up);
+        
+        return CombinedOrientation.combine(up, forward).getRotation();
+    }
+
+    private static Vec3 dir2Vec(Direction dir) {
+        if(dir == Direction.DOWN) return new Vec3(180, 0, 0);
+        if(dir == Direction.EAST) return new Vec3(90, 90, 0);
+        if(dir == Direction.NORTH) return new Vec3(90, 0, 0);
+        if(dir == Direction.SOUTH) return new Vec3(270, 0, 0);
+        if(dir == Direction.UP) return new Vec3(0, 0, 0);
+        return new Vec3(270, 90, 0);
     }
 
     public static boolean sharesLocalUp(BlockState first, BlockState second) {

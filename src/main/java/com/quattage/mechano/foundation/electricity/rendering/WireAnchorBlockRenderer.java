@@ -2,12 +2,9 @@ package com.quattage.mechano.foundation.electricity.rendering;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoRenderTypes;
 import com.quattage.mechano.foundation.electricity.AnchorPointBank;
-import com.quattage.mechano.foundation.electricity.BatteryBank;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.ForgeEnergyJunction;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.power.features.GID;
 import com.quattage.mechano.foundation.electricity.spool.WireSpool;
@@ -28,7 +25,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -91,7 +87,6 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
         if(player == null) return;
         Level world = player.level();
         if(!world.isClientSide()) return;
-        if(!(be instanceof WireAnchorBlockEntity wbe)) return;
         if(!instance.options.getCameraType().isFirstPerson()) return;
 
         // spool sanity checks
@@ -106,7 +101,7 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
 
         // anchor sanity checks
         if(targetAnchor == null || targetAnchor.getFirst() == null) return;
-        if(!wbe.equals(targetAnchor.getSecond())) return;
+        if(!be.equals(targetAnchor.getSecond())) return;
 
         Vec3 fromPos = targetAnchor.getFirst().getPos();
         Vec3 fromOffset = targetAnchor.getFirst().getLocalOffset();
@@ -139,7 +134,7 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
         float angleY = -(float)Math.atan2(wireOrigin.z(), wireOrigin.x());
         matrixStack.mulPose(new Quaternionf().rotateXYZ(0, angleY, 0));
 
-        WireModelRenderer.INSTANCE.renderDynamic(buffer, matrixStack, wireOrigin, 1, 15, 4, 15, !isAnchored, (int)((Math.sin(wbe.getAnchorBank().tickTime(pTicks) * 3.1) * 89f) + 60f));
+        WireModelRenderer.INSTANCE.renderDynamic(buffer, matrixStack, wireOrigin, 1, 15, 4, 15, !isAnchored, (int)((Math.sin(be.getAnchorBank().tickTime(pTicks) * 3.1) * 89f) + 60f));
         matrixStack.popPose();
 
         oldToPos = toPos;
@@ -210,16 +205,6 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
                 closestDist = dist;
                 selectedAnchor = near;
             }
-        }
-    }
-
-    private void showInteractionDebug(Player player, T be, float pTicks) {
-        if(!(be instanceof WireAnchorBlockEntity wbe)) return;
-
-        BlockPos pos = wbe.getBlockPos();
-
-        for(ForgeEnergyJunction junction : wbe.batteryBank.getRawInteractions()) {
-            VectorHelper.drawDebugBox(pos.relative(junction.getDirection()).getCenter(), junction.getColor());
         }
     }
 

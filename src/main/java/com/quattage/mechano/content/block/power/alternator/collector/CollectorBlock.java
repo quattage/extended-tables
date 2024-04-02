@@ -1,11 +1,12 @@
 package com.quattage.mechano.content.block.power.alternator.collector;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
-import com.quattage.mechano.foundation.helper.ShapeBuilder;
+import com.quattage.mechano.foundation.block.hitbox.Hitbox;
+import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
-import com.simibubi.create.foundation.utility.VoxelShaper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -29,15 +30,16 @@ import java.util.Locale;
 
 public class CollectorBlock extends DirectionalKineticBlock implements IBE<CollectorBlockEntity> {
 
+    private static Hitbox<Direction> hitbox;
+
     public static final EnumProperty<CollectorBlockModelType> MODEL_TYPE = EnumProperty.create("model", CollectorBlockModelType.class);
-    public static final VoxelShaper SHAPE = ShapeBuilder.newShape(2, 5, 5, 9, 11, 11).add(9, 2, 2, 16, 14, 14).defaultUp();
 
     public CollectorBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(defaultBlockState().setValue(MODEL_TYPE, CollectorBlockModelType.BASE));
     }
 
-    public enum CollectorBlockModelType implements StringRepresentable {
+    public enum CollectorBlockModelType implements StringRepresentable, HitboxNameable {
         BASE, ROTORED;
 
         @Override
@@ -58,9 +60,8 @@ public class CollectorBlock extends DirectionalKineticBlock implements IBE<Colle
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        Direction facing = state.getValue(FACING).getOpposite();
-        if(facing.getAxis() == Axis.Y) return SHAPE.get(facing);
-        return SHAPE.get(facing.getCounterClockWise());
+        if(hitbox == null) hitbox = Mechano.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
+        return hitbox.getRotated(state.getValue(FACING));
     }
 
     @Override
@@ -99,11 +100,12 @@ public class CollectorBlock extends DirectionalKineticBlock implements IBE<Colle
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void neighborChanged(BlockState state, Level world, BlockPos pos, Block pBlock, BlockPos pFromPos, boolean pIsMoving) {
         super.neighborChanged(state, world, pos, pBlock, pFromPos, pIsMoving);
         if(state.getValue(MODEL_TYPE) == CollectorBlockModelType.ROTORED) {
             Direction ax = state.getValue(FACING);
-            if(world.getBlockState(pos.relative(ax)).getBlock() != MechanoBlocks.ROTOR.get())
+            if(world.getBlockState(pos.relative(ax)).getBlock() != MechanoBlocks.SMALL_ROTOR.get())
                 world.destroyBlock(pos, true);
         }
     }
@@ -112,14 +114,16 @@ public class CollectorBlock extends DirectionalKineticBlock implements IBE<Colle
         Direction ax = state.getValue(FACING);
         if(state.getValue(MODEL_TYPE) == CollectorBlockModelType.ROTORED)
             return true;
-        if(world.getBlockState(pos.relative(ax)).getBlock() == MechanoBlocks.ROTOR.get()) {
+        if(world.getBlockState(pos.relative(ax)).getBlock() == MechanoBlocks.SMALL_ROTOR.get()) {
             world.setBlock(pos, state.setValue(MODEL_TYPE, CollectorBlockModelType.ROTORED), Block.UPDATE_ALL);
             return true;
         }
         return false;
     }
 
+    
     @Override
+    @SuppressWarnings("deprecation")
     public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
         Direction ax = state.getValue(FACING);
         if(ax.getAxis() == Axis.Y)

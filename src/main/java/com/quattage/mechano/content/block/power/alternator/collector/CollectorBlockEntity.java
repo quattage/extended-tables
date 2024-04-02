@@ -1,6 +1,6 @@
 package com.quattage.mechano.content.block.power.alternator.collector;
 
-import com.quattage.mechano.content.block.power.alternator.rotor.RotorBlockEntity;
+import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlockEntity;
 import com.quattage.mechano.foundation.block.orientation.relative.Relative;
 import com.quattage.mechano.foundation.electricity.ElectroKineticBlockEntity;
 import com.quattage.mechano.foundation.electricity.IBatteryBank;
@@ -20,7 +20,7 @@ import java.util.List;
 public class CollectorBlockEntity extends ElectroKineticBlockEntity {
 
     public static final int MAX_ROTORS = 10;
-    private final List<RotorBlockEntity> rotors=new ArrayList<>();
+    private final List<SmallRotorBlockEntity> rotors=new ArrayList<>();
     private int statorCount;
 
     public CollectorBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
@@ -68,7 +68,7 @@ public class CollectorBlockEntity extends ElectroKineticBlockEntity {
         Direction rotorDirection = getBlockState().getValue(CollectorBlock.FACING);
         for(int i = 1; i<MAX_ROTORS; i++){
             BlockPos rotorPos = worldPosition.relative(rotorDirection, i);
-            if(level.getBlockEntity(rotorPos) instanceof RotorBlockEntity rotor){
+            if(level.getBlockEntity(rotorPos) instanceof SmallRotorBlockEntity rotor){
                 rotors.add(rotor);
                 rotor.setCollector(this);
             }
@@ -92,7 +92,7 @@ public class CollectorBlockEntity extends ElectroKineticBlockEntity {
     }
 
     private void updateStatorCount() {
-        statorCount = rotors.stream().mapToInt(RotorBlockEntity::getStatorCount).sum();
+        statorCount = rotors.stream().mapToInt(SmallRotorBlockEntity::getStatorCount).sum();
     }
 
     @Override

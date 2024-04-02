@@ -1,6 +1,7 @@
 package com.quattage.mechano;
 
 import com.mojang.logging.LogUtils;
+import com.quattage.mechano.foundation.block.hitbox.HitboxCache;
 import com.quattage.mechano.foundation.electricity.power.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.power.GlobalTransferGridProvider;
 import com.quattage.mechano.foundation.electricity.power.GridClientCache;
@@ -8,19 +9,16 @@ import com.quattage.mechano.foundation.electricity.power.GridClientCacheProvider
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.providers.DataGenContext;
 
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -43,6 +41,7 @@ public class Mechano {
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(Mechano.MOD_ID);
     public static final Capability<GlobalTransferGrid> SERVER_GRID_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
     public static final Capability<GridClientCache> CLIENT_CACHE_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
+    public static final HitboxCache HITBOXES = new HitboxCache();
 
     public static final SimpleChannel network = NetworkRegistry.ChannelBuilder
         .named(Mechano.asResource("mechanoNetwork"))
@@ -130,17 +129,26 @@ public class Mechano {
         return new ResourceLocation(resource);
     }
 
-    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String folder) {
-        return extend(ctx, "block", folder);
+    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String rootType, String item) {
+        return new ResourceLocation(ctx.getId().getNamespace(), rootType + "/" + ctx.getId().getPath() + "/" + item);
     }
 
-    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String root, String folder) {
-        String path = root + "/" + ctx.getId().getPath() + "/" + folder;
-        return new ResourceLocation(ctx.getId().getNamespace(), path);
-    }
+    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String rootType, String[] in, String[] sub, String item) {
+        
+        String path = rootType;
 
-    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String root, String sub, String folder) {
-        String path = root + "/" + sub + "/" + folder;
+        if(in != null) {
+            for(String s : in) path += "/" + s;
+        }
+
+        path += "/" + ctx.getName();
+        
+        if(sub != null) {
+            for(String s : sub) path += "/" + s;
+        }
+
+        path += "/" + item;
+
         return new ResourceLocation(ctx.getId().getNamespace(), path);
     }
 
