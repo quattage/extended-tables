@@ -1,11 +1,15 @@
 package com.quattage.mechano.foundation.electricity.core.anchor;
 
+import javax.annotation.Nullable;
+
 import org.joml.Vector3f;
 
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
+import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /***
@@ -17,13 +21,18 @@ public class AnchorTransform {
     private final Vector3f baseOffset;
     private Vector3f realOffset;
 
-    public AnchorTransform(int xOffset, int yOffset, int zOffset) {
+    public AnchorTransform(int xOffset, int yOffset, int zOffset, @Nullable BlockState parentState) {
         this.baseOffset = new Vector3f(
             toFloatMeasurement(xOffset), 
             toFloatMeasurement(yOffset), 
             toFloatMeasurement(zOffset)
         );
-        this.realOffset = this.baseOffset;
+
+        if(parentState == null) 
+            realOffset = baseOffset;
+        else {
+            rotateToFace(DirectionTransformer.extract(parentState));
+        }
     }
 
     private float toFloatMeasurement(int x) {
@@ -42,12 +51,9 @@ public class AnchorTransform {
         return realOffset;
     }
 
-    // you cannot stop me
     public void rotateToFace(CombinedOrientation dir) {
         realOffset = VectorHelper.rotate(baseOffset, dir);
     }
-
-
 
     private String describeVector(Vector3f vec) {
         return "[" + vec.x + "," + vec.y + ", " + vec.z + "]";

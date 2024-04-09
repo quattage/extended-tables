@@ -1,13 +1,7 @@
 package com.quattage.mechano.foundation.helper.shape;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
-
-import com.quattage.mechano.Mechano;
 import com.simibubi.create.foundation.placement.PlacementOffset;
 
 import net.minecraft.core.BlockPos;

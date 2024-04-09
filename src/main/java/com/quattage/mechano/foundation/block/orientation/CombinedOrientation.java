@@ -2,14 +2,16 @@ package com.quattage.mechano.foundation.block.orientation;
 
 import java.util.Locale;
 
+import org.joml.Quaternionf;
+
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.Util;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.Vec3i;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.phys.Vec3;
 /***
  * A CombinedOrientation is an implementation of Minecraft's BlockState enums that
  * combines two Direction objects, called localUp and localForward. LocalUp represents the 
@@ -18,41 +20,44 @@ import net.minecraft.world.phys.Vec3;
  * block in Minecraft.
  */
 public enum CombinedOrientation implements StringRepresentable {
-    DOWN_NORTH(new Vec3(180, 180, 0), Direction.DOWN, Direction.NORTH),      // 0
-    DOWN_EAST(new Vec3(180, 270, 0), Direction.DOWN, Direction.EAST),
-    DOWN_SOUTH(new Vec3(180, 0, 0), Direction.DOWN, Direction.SOUTH),
-    DOWN_WEST(new Vec3(180, 90, 0), Direction.DOWN, Direction.WEST),
+    DOWN_NORTH(new Vec3i(180, 180, 0), new Vec3i(2, 2, 0),  Direction.DOWN, Direction.NORTH),      // 0
+    DOWN_EAST(new Vec3i(180, 270, 0), new Vec3i(2, -1, 0), Direction.DOWN, Direction.EAST),
+    DOWN_SOUTH(new Vec3i(180, 0, 0), new Vec3i(2, 0, 0), Direction.DOWN, Direction.SOUTH),
+    DOWN_WEST(new Vec3i(180, 90, 0), new Vec3i(2, 1, 0), Direction.DOWN, Direction.WEST),
 
-    UP_NORTH(new Vec3(0, 0, 0), Direction.UP, Direction.NORTH),             // 4
-    UP_WEST(new Vec3(0, 270, 0), Direction.UP, Direction.WEST),
-    UP_SOUTH(new Vec3(0, 180, 0), Direction.UP, Direction.SOUTH),
-    UP_EAST(new Vec3(0, 90, 0), Direction.UP, Direction.EAST),
+    UP_NORTH(new Vec3i(0, 0, 0), new Vec3i(0, 0, 0), Direction.UP, Direction.NORTH),             // 4
+    UP_WEST(new Vec3i(0, 270, 0), new Vec3i(0, -1, 0), Direction.UP, Direction.WEST),
+    UP_SOUTH(new Vec3i(0, 180, 0), new Vec3i(0, 2, 0), Direction.UP, Direction.SOUTH),
+    UP_EAST(new Vec3i(0, 90, 0), new Vec3i(0, 1, 0), Direction.UP, Direction.EAST),
 
-    NORTH_UP(new Vec3(270, 270, 0), Direction.NORTH, Direction.UP),             // 8
-    NORTH_EAST(new Vec3(180, 270, 0), Direction.NORTH, Direction.EAST),
-    NORTH_DOWN(new Vec3(90, 270, 0), Direction.NORTH, Direction.DOWN),
-    NORTH_WEST(new Vec3(0, 270, 0), Direction.NORTH, Direction.WEST),
 
-    EAST_UP(new Vec3(270, 0, 0), Direction.EAST, Direction.UP),                // 16
-    EAST_SOUTH(new Vec3(180, 0, 0), Direction.EAST, Direction.SOUTH),
-    EAST_DOWN(new Vec3(90, 0, 0), Direction.EAST, Direction.DOWN),
-    EAST_NORTH(new Vec3(0, 0, 0), Direction.EAST, Direction.NORTH),
+    //                           TODO       (0, 0, 0) values below are temporary and need to be fixed if CombinedOrientation is to be used with hitboxes
+    NORTH_UP(new Vec3i(270, 270, 0), new Vec3i(0, 0, 0), Direction.NORTH, Direction.UP),             // 8
+    NORTH_EAST(new Vec3i(180, 270, 0), new Vec3i(0, 0, 0), Direction.NORTH, Direction.EAST),
+    NORTH_DOWN(new Vec3i(90, 270, 0), new Vec3i(-1, 0, 0), Direction.NORTH, Direction.DOWN),
+    NORTH_WEST(new Vec3i(0, 270, 90), new Vec3i(-1, 0, -1), Direction.NORTH, Direction.WEST),
 
-    SOUTH_UP(new Vec3(270, 90, 0), Direction.SOUTH, Direction.UP),             // 12
-    SOUTH_WEST(new Vec3(180, 270, 0), Direction.SOUTH, Direction.WEST),
-    SOUTH_DOWN(new Vec3(90, 90, 0), Direction.SOUTH, Direction.DOWN),
-    SOUTH_EAST(new Vec3(180, 90, 0), Direction.SOUTH, Direction.EAST),
+    EAST_UP(new Vec3i(270, 0, 0), new Vec3i(0, 0, 0), Direction.EAST, Direction.UP),                // 12
+    EAST_SOUTH(new Vec3i(180, 0, 0), new Vec3i(0, 1, -1), Direction.EAST, Direction.SOUTH),
+    EAST_DOWN(new Vec3i(90, 0, 90), new Vec3i(1, 1, 0), Direction.EAST, Direction.DOWN),
+    EAST_NORTH(new Vec3i(0, 0, 0), new Vec3i(0, 0, 0), Direction.EAST, Direction.NORTH),
 
-    WEST_UP(new Vec3(270, 180, 0), Direction.WEST, Direction.UP),               // 20
-    WEST_NORTH(new Vec3(180, 180, 0), Direction.WEST, Direction.NORTH),
-    WEST_DOWN(new Vec3(90, 180, 0), Direction.WEST, Direction.DOWN),
-    WEST_SOUTH(new Vec3(0, 180, 0), Direction.WEST, Direction.SOUTH);
+    SOUTH_UP(new Vec3i(270, 90, 0), new Vec3i(0, 0, 0), Direction.SOUTH, Direction.UP),             // 16
+    SOUTH_WEST(new Vec3i(180, 90, 0), new Vec3i(1, 0, 1), Direction.SOUTH, Direction.WEST),
+    SOUTH_DOWN(new Vec3i(90, 90, 0), new Vec3i(1, 0, 0), Direction.SOUTH, Direction.DOWN),
+    SOUTH_EAST(new Vec3i(0, 90, 0), new Vec3i(0, 0, 0), Direction.SOUTH, Direction.EAST),
+
+    WEST_UP(new Vec3i(270, 180, 0), new Vec3i(0, 0, 0), Direction.WEST, Direction.UP),               // 20
+    WEST_NORTH(new Vec3i(180, 180, 0), new Vec3i(0, 0, 0), Direction.WEST, Direction.NORTH),
+    WEST_DOWN(new Vec3i(90, 180, 0), new Vec3i(1, 1, 2), Direction.WEST, Direction.DOWN),
+    WEST_SOUTH(new Vec3i(0, 180, 0), new Vec3i(0, 0, 1), Direction.WEST, Direction.SOUTH);
 
     private final Direction localUp;
     private final Direction localForward;
 
 
-    private final Vec3 rotation;
+    private final Vec3i stateRotation;
+    private final Vec3i absRotation;
 
     private static final Int2ObjectMap<CombinedOrientation> COMBINED_LOOKUP = Util.make(new Int2ObjectOpenHashMap<>(values().length), b -> {
         for(CombinedOrientation direction : values()) {
@@ -60,10 +65,11 @@ public enum CombinedOrientation implements StringRepresentable {
         }
     });
 
-    private CombinedOrientation(Vec3 rotation, Direction localUp, Direction localForward) {
+    private CombinedOrientation(Vec3i stateRotation, Vec3i normal, Direction localUp, Direction localForward) {
         this.localUp = localUp;
         this.localForward = localForward;
-        this.rotation = rotation;
+        this.stateRotation = stateRotation;
+        this.absRotation = normal;
     }
 
     private static int lookupKey(Direction localUp, Direction localForward) {
@@ -153,8 +159,12 @@ public enum CombinedOrientation implements StringRepresentable {
         return getGroupIndex(in) * 4;
     }
 
-    public Vec3 getRotation() {
-        return rotation;
+    public Vec3i getStateRotation() {
+        return stateRotation;
+    }
+
+    public Vec3i getAbsoluteRotation() {
+        return absRotation;
     }
 
     /**

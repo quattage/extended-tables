@@ -19,7 +19,7 @@ import java.util.List;
  * ElectricBlockEntity provides a basic ForgeEnergy implementation with no
  * bells & whistles.
 */
-public abstract class ElectricBlockEntity extends SmartBlockEntity implements IBatteryBank{
+public abstract class ElectricBlockEntity extends SmartBlockEntity implements IBatteryBank {
 
     public final BatteryBank<ElectricBlockEntity> batteryBank;
 
@@ -37,6 +37,7 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements IB
      */
     public void reOrient() {
         batteryBank.reflectStateChange(this.getBlockState());
+        this.level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
 
     public boolean isConnectedExternally() {

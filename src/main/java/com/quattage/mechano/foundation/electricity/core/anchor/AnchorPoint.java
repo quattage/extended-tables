@@ -2,7 +2,6 @@ package com.quattage.mechano.foundation.electricity.core.anchor;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
@@ -172,12 +171,10 @@ public class AnchorPoint {
 
     public void nullifyParticipant() {
         this.participant = null;
-        Mechano.log("PARTICIPANT NULLIFIED");
     }
 
     public void setParticipant(GridVertex participant) {
         this.participant = participant;
-        Mechano.log("PARTICIPANT: " + this.participant);
     }
 
     public GridVertex getParticipant() {

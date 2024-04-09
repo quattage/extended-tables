@@ -4,12 +4,21 @@
       "model": "mechano:block/collector/base",
       "x": 180
     },
+    "facing=down,model=big_rotored": {
+      "model": "mechano:block/collector/big_rotored",
+      "x": 180
+    },
     "facing=down,model=rotored": {
       "model": "mechano:block/collector/rotored",
       "x": 180
     },
     "facing=east,model=base": {
       "model": "mechano:block/collector/base",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,model=big_rotored": {
+      "model": "mechano:block/collector/big_rotored",
       "x": 90,
       "y": 90
     },
@@ -22,12 +31,20 @@
       "model": "mechano:block/collector/base",
       "x": 90
     },
+    "facing=north,model=big_rotored": {
+      "model": "mechano:block/collector/big_rotored",
+      "x": 90
+    },
     "facing=north,model=rotored": {
       "model": "mechano:block/collector/rotored",
       "x": 90
     },
     "facing=south,model=base": {
       "model": "mechano:block/collector/base",
+      "x": 270
+    },
+    "facing=south,model=big_rotored": {
+      "model": "mechano:block/collector/big_rotored",
       "x": 270
     },
     "facing=south,model=rotored": {
@@ -37,11 +54,19 @@
     "facing=up,model=base": {
       "model": "mechano:block/collector/base"
     },
+    "facing=up,model=big_rotored": {
+      "model": "mechano:block/collector/big_rotored"
+    },
     "facing=up,model=rotored": {
       "model": "mechano:block/collector/rotored"
     },
     "facing=west,model=base": {
       "model": "mechano:block/collector/base",
+      "x": 270,
+      "y": 90
+    },
+    "facing=west,model=big_rotored": {
+      "model": "mechano:block/collector/big_rotored",
       "x": 270,
       "y": 90
     },

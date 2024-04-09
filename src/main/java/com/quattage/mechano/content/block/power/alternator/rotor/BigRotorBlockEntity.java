@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class BigRotorBlockEntity extends SmallRotorBlockEntity {
+public class BigRotorBlockEntity extends AbstractRotorBlockEntity {
 
     public BigRotorBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -16,4 +16,13 @@ public class BigRotorBlockEntity extends SmallRotorBlockEntity {
         return 10;
     }
 
+    @Override
+    protected int getStatorCircumference() {
+        return 2;
+    }
+
+    @Override
+    protected int getStatorRadius() {
+        return 12;
+    }
 }

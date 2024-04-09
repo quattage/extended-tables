@@ -5,6 +5,7 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import com.simibubi.create.foundation.utility.VecHelper;
 
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -25,6 +26,13 @@ public class VoxelShapeBuilder {
 		return Block.box(x1, y1, z1, x2, y2, z2);
 	}
 
+	public static VoxelShape newBox(Vec3 v1, Vec3 v2) {
+		return Block.box(
+			Math.min(v1.x, v2.x), Math.min(v1.y, v2.y), Math.min(v1.z, v2.z),
+			Math.max(v1.x, v2.x), Math.max(v1.y, v2.y), Math.max(v1.z, v2.z)
+		);
+	}
+
 	public VoxelShapeBuilder() {
 		this.shape = null;
 	}
@@ -37,7 +45,7 @@ public class VoxelShapeBuilder {
 		if(shape == null) {
 			this.shape = newBox(x1, y1, z1, x2, y2, z2);
 		} else 
-			this.shape = Shapes.or(this.shape, newBox(x1, y1, z1, x2, y2, z2));
+			this.shape = Shapes.join(this.shape, newBox(x1, y1, z1, x2, y2, z2), BooleanOp.OR);
 		return this;
 	}
 
@@ -47,8 +55,9 @@ public class VoxelShapeBuilder {
 	}
 
 	// copied from create (protected in voxelshaper)
-	protected VoxelShape getRotatedCopy(Vec3 rotation) {
-		if (rotation.equals(Vec3.ZERO))
+	protected VoxelShape getRotatedCopy(Vec3i rotation) {
+
+		if ((!hasFeatures()) ||rotation.equals(Vec3i.ZERO))
 			return this.shape;
 
 		MutableObject<VoxelShape> result = new MutableObject<>(Shapes.empty());
@@ -59,33 +68,22 @@ public class VoxelShapeBuilder {
 				.subtract(center);
 			Vec3 v2 = new Vec3(x2, y2, z2).scale(16)
 				.subtract(center);
-
-			v1 = VecHelper.rotate(v1, (float) rotation.x, Axis.X);
-			v1 = VecHelper.rotate(v1, (float) rotation.y, Axis.Y);
-			v1 = VecHelper.rotate(v1, (float) rotation.z, Axis.Z)
+			
+			v1 = VecHelper.rotate(v1, (float) rotation.getX() * 90, Axis.X);
+			v1 = VecHelper.rotate(v1, (float) rotation.getY() * 90, Axis.Y);
+			v1 = VecHelper.rotate(v1, (float) rotation.getZ() * 90, Axis.Z)
 				.add(center);
 
-			v2 = VecHelper.rotate(v2, (float) rotation.x, Axis.X);
-			v2 = VecHelper.rotate(v2, (float) rotation.y, Axis.Y);
-			v2 = VecHelper.rotate(v2, (float) rotation.z, Axis.Z)
+			v2 = VecHelper.rotate(v2, (float) rotation.getX() * 90, Axis.X);
+			v2 = VecHelper.rotate(v2, (float) rotation.getY() * 90, Axis.Y);
+			v2 = VecHelper.rotate(v2, (float) rotation.getZ() * 90, Axis.Z)
 				.add(center);
 
-			VoxelShape rotated = blockBox(v1, v2);
-			result.setValue(Shapes.or(result.getValue(), rotated));
+			VoxelShape rotated = newBox(v1, v2);
+			result.setValue(Shapes.join(result.getValue(), rotated, BooleanOp.OR));
 		});
 
 		return result.getValue();
-	}
-
-    private VoxelShape blockBox(Vec3 v1, Vec3 v2) {
-		return Block.box(
-				Math.min(v1.x, v2.x),
-				Math.min(v1.y, v2.y),
-				Math.min(v1.z, v2.z),
-				Math.max(v1.x, v2.x),
-				Math.max(v1.y, v2.y),
-				Math.max(v1.z, v2.z)
-		);
 	}
 
 	public void optimize() {

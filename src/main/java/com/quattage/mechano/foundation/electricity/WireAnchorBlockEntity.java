@@ -2,9 +2,7 @@ package com.quattage.mechano.foundation.electricity;
 
 import java.util.List;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.electricity.builder.AnchorBankBuilder;
-import com.quattage.mechano.foundation.electricity.power.GlobalTransferGrid;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
 import net.minecraft.core.BlockPos;

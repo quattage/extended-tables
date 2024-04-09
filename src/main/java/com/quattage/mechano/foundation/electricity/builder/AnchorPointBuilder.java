@@ -2,9 +2,6 @@ package com.quattage.mechano.foundation.electricity.builder;
 
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorTransform;
 
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.entity.BlockEntity;
-
 /***
  * A fluent builder class that makes creating AnchorPoint instances safer
  * and somewhat more intuitive.
@@ -26,15 +23,14 @@ public class AnchorPointBuilder {
      * you would use:
      * <pre> AnchorPointBuilder.at(8, 8, 8); </pre>
      * Since pixel measurements are used here, you can just copy/paste coordinates directly from Blockbench.
-     * These pixel measurements are permitted to exist outside of a standard Minecraft block's collider. 
-     * (Measurements greater than 16 are permitted) 
+     * Coordinates greater than 16 or less than 0 are permitted.
      * @param x x Offset from center (as an int or double)
      * @param y y Offset from center (as an int or double)
      * @param z z Offset from center (as an int or double)
      * @return this ElectircNodeBuilder with the modified value.
      */
     public AnchorPointBuilder at(int x, int y, int z) {
-        location = new AnchorTransform(x, y, z);
+        location = new AnchorTransform(x, y, z, activeBuilder.getTarget().getBlockState());
         return this;
     }
     

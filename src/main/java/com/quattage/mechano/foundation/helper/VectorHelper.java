@@ -2,7 +2,6 @@ package com.quattage.mechano.foundation.helper;
 
 import org.joml.Vector3f;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.simibubi.create.AllSpecialTextures;
 import com.simibubi.create.CreateClient;
@@ -271,6 +270,7 @@ public class VectorHelper {
      * @param magnitude Magnitude to normalize to
      * @return a normalized Vector3f.
      */
+    @SuppressWarnings("deprecation")
     public static Vector3f normalizeToLength(Vector3f vec, float magnitude) {
         float scalar = (float)(Mth.fastInvSqrt(Math.fma(vec.x(), vec.x(), Math.fma(vec.y(), vec.y(), vec.z() * vec.z()))) * magnitude);
         return new Vector3f(
@@ -315,45 +315,7 @@ public class VectorHelper {
         );
     }
 
-    // i cannot find an equivalent way to do this properly with joml or minecraft math so this is here now
-    public static double[][] calculateRotationMatrix(Vec3 axis) {
-        double cosTheta = Math.cos(getNorm(axis));
-        double sinTheta = Math.sin(getNorm(axis));
-
-        double x = axis.x;
-        double y = axis.y;
-        double z = axis.z;
-
-        double[][] rotationMatrix = new double[3][3];
-
-        rotationMatrix[0][0] = cosTheta + x * x * (1 - cosTheta);
-        rotationMatrix[0][1] = x * y * (1 - cosTheta) - z * sinTheta;
-        rotationMatrix[0][2] = x * z * (1 - cosTheta) + y * sinTheta;
-
-        rotationMatrix[1][0] = y * x * (1 - cosTheta) + z * sinTheta;
-        rotationMatrix[1][1] = cosTheta + y * y * (1 - cosTheta);
-        rotationMatrix[1][2] = y * z * (1 - cosTheta) - x * sinTheta;
-
-        rotationMatrix[2][0] = z * x * (1 - cosTheta) - y * sinTheta;
-        rotationMatrix[2][1] = z * y * (1 - cosTheta) + x * sinTheta;
-        rotationMatrix[2][2] = cosTheta + z * z * (1 - cosTheta);
-
-        return rotationMatrix;
-    }
-
-    public static double[] multiplyMatrixVector(double[][] matrix, double[] vector) {
-        double[] result = new double[3];
-
-        for (int i = 0; i < 3; i++) {
-            result[i] = 0;
-            for (int j = 0; j < 3; j++) {
-                result[i] += matrix[i][j] * vector[j];
-            }
-        }
-
-        return result;
-    }
-
+    // you cannot stop me
     public static Vector3f rotate(Vector3f vec, CombinedOrientation dir) {
         switch(dir) {
             case DOWN_EAST:

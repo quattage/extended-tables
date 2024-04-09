@@ -19,6 +19,8 @@ import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.util.profiling.ProfilerFiller;
 
+import static com.quattage.mechano.MechanoClient.HITBOXES;
+
 public class HitboxProvider extends SimplePreparableReloadListener<ResourceLocation>{
 
 
@@ -29,7 +31,7 @@ public class HitboxProvider extends SimplePreparableReloadListener<ResourceLocat
     @SuppressWarnings("unchecked")
     protected ResourceLocation prepare(ResourceManager manager, ProfilerFiller profiler) {
         
-        for(UnbuiltHitbox<? extends StringRepresentable> unbuilt : Mechano.HITBOXES.getAllUnbuilt()) {
+        for(UnbuiltHitbox<? extends StringRepresentable> unbuilt : HITBOXES.getAllUnbuilt()) {
             manager.getResource(unbuilt.getRawPath()).ifPresentOrElse(resource -> {
                 Reader reader;
                 try {
@@ -62,7 +64,7 @@ public class HitboxProvider extends SimplePreparableReloadListener<ResourceLocat
                         }
                     }
 
-                    Mechano.HITBOXES.putNew(unbuilt, boxes);
+                    HITBOXES.putNew(unbuilt, boxes);
 
                 } catch (IOException | ClassCastException e) {
                     Mechano.LOGGER.error("Exception loading hitbox at '" + unbuilt.getRawPath() + "' - JSON parsing threw the following error: \n" + e.getMessage());

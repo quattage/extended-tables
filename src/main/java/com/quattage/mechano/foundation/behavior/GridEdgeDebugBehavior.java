@@ -2,12 +2,10 @@ package com.quattage.mechano.foundation.behavior;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
 import java.util.Map;
 
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
@@ -15,7 +13,6 @@ import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.power.GridClientCache;
 import com.quattage.mechano.foundation.electricity.power.features.GID;
 import com.quattage.mechano.foundation.electricity.power.features.GIDPair;
-import com.quattage.mechano.foundation.electricity.power.features.GridClientEdge;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.foundation.utility.Pair;
@@ -63,7 +60,7 @@ public class GridEdgeDebugBehavior extends ClientBehavior {
 
         // Mechano.log("AAA" + GridClientCache.INSTANCE.getAllPaths());
 
-        for(Map.Entry<GIDPair, GID[]> ids : GridClientCache.getInstance().getAllPaths().entrySet()) {
+        for(Map.Entry<GIDPair, GID[]> ids : GridClientCache.ofInstance().getAllPaths().entrySet()) {
             GID[] steps = ids.getValue();
 
             for(int x = 0; x < steps.length; x++) {

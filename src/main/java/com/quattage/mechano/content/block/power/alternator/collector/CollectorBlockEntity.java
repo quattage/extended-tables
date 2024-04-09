@@ -7,7 +7,6 @@ import com.quattage.mechano.foundation.electricity.IBatteryBank;
 import com.quattage.mechano.foundation.electricity.builder.BatteryBankBuilder;
 import com.simibubi.create.foundation.utility.Lang;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -31,7 +30,6 @@ public class CollectorBlockEntity extends ElectroKineticBlockEntity {
     @Override
     public void initialize() {
         super.initialize();
-        updateRotorAndStatorCount();
     }
 
     @Override
@@ -51,33 +49,12 @@ public class CollectorBlockEntity extends ElectroKineticBlockEntity {
     @Override
     protected void read(CompoundTag compound, boolean clientPacket) {
         super.read(compound, clientPacket);
-        if(clientPacket)
-            updateRotorAndStatorCount();
     }
 
     @Override
 	protected AABB createRenderBoundingBox() {
 		return new AABB(worldPosition).inflate(1);
 	}
-
-
-    public void updateRotorAndStatorCount(){
-        if(level == null)
-            return;
-        rotors.clear();
-        Direction rotorDirection = getBlockState().getValue(CollectorBlock.FACING);
-        for(int i = 1; i<MAX_ROTORS; i++){
-            BlockPos rotorPos = worldPosition.relative(rotorDirection, i);
-            if(level.getBlockEntity(rotorPos) instanceof SmallRotorBlockEntity rotor){
-                rotors.add(rotor);
-                rotor.setCollector(this);
-            }
-            else
-                break;
-        }
-        updateStatorCount();
-        sendData();
-    }
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
@@ -89,10 +66,6 @@ public class CollectorBlockEntity extends ElectroKineticBlockEntity {
         Lang.text("Energy Stored: "+batteryBank.battery.getEnergyStored()).forGoggles(tooltip);
         Lang.text("Energy Capacity: "+batteryBank.battery.getMaxEnergyStored()).forGoggles(tooltip);
         return true;
-    }
-
-    private void updateStatorCount() {
-        statorCount = rotors.stream().mapToInt(SmallRotorBlockEntity::getStatorCount).sum();
     }
 
     @Override

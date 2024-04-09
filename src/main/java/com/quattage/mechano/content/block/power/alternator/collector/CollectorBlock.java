@@ -1,8 +1,9 @@
 package com.quattage.mechano.content.block.power.alternator.collector;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
-import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
+import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
 import com.quattage.mechano.foundation.block.hitbox.Hitbox;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
@@ -11,8 +12,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.util.StringRepresentable;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -40,7 +39,17 @@ public class CollectorBlock extends DirectionalKineticBlock implements IBE<Colle
     }
 
     public enum CollectorBlockModelType implements StringRepresentable, HitboxNameable {
-        BASE, ROTORED;
+        BASE(false), ROTORED(true), BIG_ROTORED(true);
+
+        final boolean isRotored;
+
+        private CollectorBlockModelType(boolean isRotored) {
+            this.isRotored = isRotored;
+        }
+
+        public boolean isRotored() {
+            return this.isRotored;
+        }
 
         @Override
         public String getSerializedName() {
@@ -60,7 +69,7 @@ public class CollectorBlock extends DirectionalKineticBlock implements IBE<Colle
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if(hitbox == null) hitbox = Mechano.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
+        if(hitbox == null) hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(FACING));
     }
 
@@ -76,13 +85,6 @@ public class CollectorBlock extends DirectionalKineticBlock implements IBE<Colle
 		return defaultBlockState().setValue(FACING, preferred);
     }
 
-
-    @Override
-    public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {
-        withBlockEntityDo(level, pos, CollectorBlockEntity::updateRotorAndStatorCount);
-        super.onNeighborChange(state, level, pos, neighbor);
-    }
-
     @Override
 	public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction dir) {
 		return dir.getAxis() == state.getValue(FACING).getAxis();
@@ -94,56 +96,44 @@ public class CollectorBlock extends DirectionalKineticBlock implements IBE<Colle
 	}
 
     @Override
-    public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
-        super.setPlacedBy(world, pos, state, placer, stack);
-        doRotorCheck(world, pos, state);
+    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, world, pos, oldState, isMoving);
+        updateRotorType(world, pos, state);
     }
 
     @Override
     @SuppressWarnings("deprecation")
     public void neighborChanged(BlockState state, Level world, BlockPos pos, Block pBlock, BlockPos pFromPos, boolean pIsMoving) {
         super.neighborChanged(state, world, pos, pBlock, pFromPos, pIsMoving);
-        if(state.getValue(MODEL_TYPE) == CollectorBlockModelType.ROTORED) {
-            Direction ax = state.getValue(FACING);
-            if(world.getBlockState(pos.relative(ax)).getBlock() != MechanoBlocks.SMALL_ROTOR.get())
+        if(state.getValue(MODEL_TYPE).isRotored()) {
+            if(!getRotoredType(world, pos, state).isRotored()) 
                 world.destroyBlock(pos, true);
         }
+        else updateRotorType(world, pos, state);
     }
 
-    private boolean doRotorCheck(Level world, BlockPos pos, BlockState state) {
+    private void updateRotorType(Level world, BlockPos pos, BlockState state) {
+        CollectorBlockModelType result = getRotoredType(world, pos, state);
+        if(result != state.getValue(MODEL_TYPE))
+            world.setBlock(pos, state.setValue(MODEL_TYPE, result), 3);
+    }
+
+    private CollectorBlockModelType getRotoredType(Level world, BlockPos pos, BlockState state) {
         Direction ax = state.getValue(FACING);
-        if(state.getValue(MODEL_TYPE) == CollectorBlockModelType.ROTORED)
-            return true;
-        if(world.getBlockState(pos.relative(ax)).getBlock() == MechanoBlocks.SMALL_ROTOR.get()) {
-            world.setBlock(pos, state.setValue(MODEL_TYPE, CollectorBlockModelType.ROTORED), Block.UPDATE_ALL);
-            return true;
-        }
-        return false;
-    }
-
-    
-    @Override
-    @SuppressWarnings("deprecation")
-    public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
-        Direction ax = state.getValue(FACING);
-        if(ax.getAxis() == Axis.Y)
-            return false;
-        if(world.getBlockState(pos.relative(ax)).getBlock() == MechanoBlocks.COLLECTOR.get())
-            return false;
-        if(world.getBlockState(pos.relative(ax.getOpposite())).getBlock() == MechanoBlocks.COLLECTOR.get())
-            return false;
-        return super.canSurvive(state, world, pos);
-    }
-
-    @Override
-    public Class<CollectorBlockEntity> getBlockEntityClass() {
-        return CollectorBlockEntity.class;
+        if(world.getBlockState(pos.relative(ax)).getBlock() instanceof AbstractRotorBlock rb)
+            return rb instanceof SmallRotorBlock ? CollectorBlockModelType.ROTORED : CollectorBlockModelType.BIG_ROTORED;
+        return CollectorBlockModelType.BASE;
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(MODEL_TYPE);
+    }
+
+    @Override
+    public Class<CollectorBlockEntity> getBlockEntityClass() {
+        return CollectorBlockEntity.class;
     }
 
     @Override

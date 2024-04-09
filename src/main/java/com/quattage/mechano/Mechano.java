@@ -1,7 +1,7 @@
 package com.quattage.mechano;
 
 import com.mojang.logging.LogUtils;
-import com.quattage.mechano.foundation.block.hitbox.HitboxCache;
+import com.quattage.mechano.foundation.block.upgradable.UpgradeCache;
 import com.quattage.mechano.foundation.electricity.power.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.power.GlobalTransferGridProvider;
 import com.quattage.mechano.foundation.electricity.power.GridClientCache;
@@ -13,18 +13,17 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -32,44 +31,34 @@ import org.slf4j.Logger;
 public class Mechano {
     
     public static final String MOD_ID = "mechano";
-    public static final String ROOT = "com.quattage." + MOD_ID;
     public static final String ESC = "\u001b";
-
-    private static final String NET_VERSION = "0.1";
 
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(Mechano.MOD_ID);
     public static final Capability<GlobalTransferGrid> SERVER_GRID_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
     public static final Capability<GridClientCache> CLIENT_CACHE_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
-    public static final HitboxCache HITBOXES = new HitboxCache();
+    public static final UpgradeCache UPGRADES = new UpgradeCache();
 
-    public static final SimpleChannel network = NetworkRegistry.ChannelBuilder
-        .named(Mechano.asResource("mechanoNetwork"))
-        .clientAcceptedVersions(NET_VERSION::equals)
-        .serverAcceptedVersions(NET_VERSION::equals)
-        .networkProtocolVersion(() -> NET_VERSION)
-        .simpleChannel();
 
     public Mechano() {
         Mechano.LOGGER.info("loading mechano");
-        IEventBus bussy = FMLJavaModLoadingContext.get().getModEventBus();
-        REGISTRATE.registerEventListeners(bussy);
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
-        MechanoBlocks.register(bussy);
-        MechanoItems.register(bussy);
-        MechanoGroups.register(bussy);
-        MechanoMenus.register(bussy);
-        MechanoBlockEntities.register(bussy);
-        MechanoRecipes.register(bussy);
-        MechanoSounds.register(bussy);
+        REGISTRATE.registerEventListeners(modBus);
 
-        //DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> bussy.addListener(this::onClientSetup));
-        bussy.addListener(this::onCommonSetup);
-        MinecraftForge.EVENT_BUS.addGenericListener(Level.class, this::addWorldCapabilities);
-    }
+        MechanoBlocks.register(modBus);
+        MechanoItems.register(modBus);
+        MechanoGroups.register(modBus);
+        MechanoMenus.register(modBus);
+        MechanoBlockEntities.register(modBus);
+        MechanoRecipes.register(modBus);
+        MechanoSounds.register(modBus);
 
-    public void onClientSetup(final FMLClientSetupEvent event) {
-        MechanoPartials.register();
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MechanoClient.init(modBus, forgeBus));
+
+        modBus.addListener(this::onCommonSetup);
+        forgeBus.addGenericListener(Level.class, this::addWorldCapabilities);
     }
 
     public void onCommonSetup(final FMLCommonSetupEvent event) {

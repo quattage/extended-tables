@@ -39,12 +39,12 @@ public class DynamicStateGenerator extends SpecialBlockStateGen {
 
     @Override
     protected int getXRotation(BlockState state) {
-        return (int)DirectionTransformer.getRotation(state).x();
+        return (int)DirectionTransformer.getRotation(state).getX();
     }
 
     @Override
     protected int getYRotation(BlockState state) {
-        return (int)DirectionTransformer.getRotation(state).y();
+        return (int)DirectionTransformer.getRotation(state).getY();
     }
 
     @Override

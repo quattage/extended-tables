@@ -15,7 +15,6 @@ import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.power.features.GID;
 import com.quattage.mechano.foundation.electricity.power.features.GIDPair;
-import com.quattage.mechano.foundation.electricity.power.features.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.power.features.GridEdge;
 import com.quattage.mechano.foundation.electricity.power.features.GridPath;
 import com.quattage.mechano.foundation.electricity.power.features.GridVertex;

@@ -39,7 +39,7 @@ public class GridVertDestroySyncS2CPacket implements Packetable {
         context.enqueueWork(() -> {
             switch(type) {
                 case REMOVE:
-                    GridClientCache.getInstance().clearAllOccurancesOf(pos);
+                    GridClientCache.ofInstance().clearAllOccurancesOf(pos);
                     Mechano.log("RECIEVED PACKET AND DESTROYED VERTEX");
                     break;
                 default:

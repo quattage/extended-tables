@@ -7,9 +7,12 @@ import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.VerticallyOrientedBlock;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
+import com.simibubi.create.foundation.utility.Pair;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.Vec3i;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DirectionalBlock;
@@ -17,7 +20,6 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.phys.Vec3;
 
 /***
  * This class is designed to deal with all of the differing (and sometimes conflicting) 
@@ -208,37 +210,37 @@ public class DirectionTransformer {
         return CombinedOrientation.NORTH_UP;
     }
 
-    public static Vec3 getRotation(BlockState state) {
+    public static Vec3i getRotation(BlockState state) {
         if(state.getBlock() instanceof CombinedOrientedBlock)
-            return state.getValue(CombinedOrientedBlock.ORIENTATION).getRotation();
+            return state.getValue(CombinedOrientedBlock.ORIENTATION).getStateRotation();
 
         Direction up = getUp(state);
         Direction forward = getForward(state);
         if(forward == up) return dir2Vec(up);
 
-        return CombinedOrientation.combine(up, forward).getRotation();
+        return CombinedOrientation.combine(up, forward).getStateRotation();
     }
 
-    public static  <R extends Enum<R> & StringRepresentable> Vec3 getRotation(Property<R> group, R prop) {
+    public static  <R extends Enum<R> & StringRepresentable> Vec3i getRotation(Property<R> group, R prop) {
         
         if(prop instanceof CombinedOrientation orient)
-            return orient.getRotation();
+            return orient.getAbsoluteRotation();
 
         Direction up = getUp(group, prop);
         Direction forward = getForward(group, prop);
 
         if(forward == up) return dir2Vec(up);
         
-        return CombinedOrientation.combine(up, forward).getRotation();
+        return CombinedOrientation.combine(up, forward).getAbsoluteRotation();
     }
 
-    private static Vec3 dir2Vec(Direction dir) {
-        if(dir == Direction.DOWN) return new Vec3(180, 0, 0);
-        if(dir == Direction.EAST) return new Vec3(90, 90, 0);
-        if(dir == Direction.NORTH) return new Vec3(90, 0, 0);
-        if(dir == Direction.SOUTH) return new Vec3(270, 0, 0);
-        if(dir == Direction.UP) return new Vec3(0, 0, 0);
-        return new Vec3(270, 90, 0);
+    private static Vec3i dir2Vec(Direction dir) {
+        if(dir == Direction.DOWN) return new Vec3i(180, 0, 0);
+        if(dir == Direction.EAST) return new Vec3i(90, 90, 0);
+        if(dir == Direction.NORTH) return new Vec3i(90, 0, 0);
+        if(dir == Direction.SOUTH) return new Vec3i(270, 0, 0);
+        if(dir == Direction.UP) return new Vec3i(0, 0, 0);
+        return new Vec3i(270, 90, 0);
     }
 
     public static boolean sharesLocalUp(BlockState first, BlockState second) {
@@ -294,7 +296,33 @@ public class DirectionTransformer {
         return up.getAxis().isHorizontal();
     }
 
-    
+    public static Direction[] getAxisDirections(Axis axis) {
+        Direction[] out = new Direction[4];
+        if(axis == Axis.Z) {
+            out[0] = Direction.DOWN;
+            out[1] = Direction.EAST;
+            out[2] = Direction.UP;
+            out[3] = Direction.WEST;
+        } else if(axis == Axis.Y) {
+            out[0] = Direction.NORTH;
+            out[1] = Direction.EAST;
+            out[2] = Direction.SOUTH;
+            out[3] = Direction.WEST;
+        } else {
+            out[0] = Direction.DOWN;
+            out[1] = Direction.NORTH;
+            out[2] = Direction.UP;
+            out[3] = Direction.SOUTH;
+        }
+        return out;
+    }
+
+    public static Pair<BlockPos, BlockPos> getCorners(BlockPos center, Axis axis) {
+        Direction[] plane = getAxisDirections(axis);
+        BlockPos c1 = center.relative(plane[0]).relative(plane[1]);
+        BlockPos c2 = center.relative(plane[2]).relative(plane[3]);
+        return Pair.of(c1, c2);
+    }
 
     public static Direction toDirection(Axis ax) {
         if(ax == Axis.Y) return Direction.DOWN;

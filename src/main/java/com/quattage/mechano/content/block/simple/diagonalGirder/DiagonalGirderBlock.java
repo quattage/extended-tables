@@ -7,14 +7,13 @@ import java.util.Locale;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.mojang.blaze3d.MethodsReturnNonnullByDefault;
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.MechanoClientEvents;
 import com.quattage.mechano.foundation.block.hitbox.Hitbox;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.hitbox.VoxelShapeBuilder;
-import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
@@ -80,13 +79,13 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
     // .forDirectional();
 
     public enum DiagonalGirderModelType implements StringRepresentable, HitboxNameable {
-        LONG_DOUBLE("LONG"),         // there are girders, walls, fences, etc. (non-full blocks) on both ends of the diagonal
-        LONG_END_UP("LONG"),            // there's a girder, wall, fence, etc. on one end of the diagonal
-        LONG_END_DOWN("LONG"),            // there's a girder, wall, fence, etc. on one end of the diagonal
-        MIDDLE("MIDDLE"),              // there are other diagonal girders on both ends of the diagonal 
-        SHORT_END_UP("SHORT"),           // there's a full block on one end of the diagonal
-        SHORT_END_DOWN("SHORT"),           // there's a full block on one end of the diagonal
-        SHORT_DOUBLE("SHORT");        // there's a full block on both ends of the diagonal
+        LONG_DOUBLE("long"),         // there are girders, walls, fences, etc. (non-full blocks) on both ends of the diagonal
+        LONG_END_UP("long"),            // there's a girder, wall, fence, etc. on one end of the diagonal
+        LONG_END_DOWN("long"),            // there's a girder, wall, fence, etc. on one end of the diagonal
+        MIDDLE("middle"),              // there are other diagonal girders on both ends of the diagonal 
+        SHORT_END_UP("short"),           // there's a full block on one end of the diagonal
+        SHORT_END_DOWN("short"),           // there's a full block on one end of the diagonal
+        SHORT_DOUBLE("short");        // there's a full block on both ends of the diagonal
         // CROSS; // Optional manually assigned X shape
 
         private final String hitboxName;
@@ -113,7 +112,7 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if(hitbox == null) hitbox = Mechano.HITBOXES.get(state.getValue(MODEL_TYPE), MechanoBlocks.DIAGONAL_GIRDER.getId());
+        if(hitbox == null) hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(FACING));
     }
 
@@ -146,12 +145,14 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, world, pos, block, fromPos, isMoving);
         forceUpdate(world, pos, state);
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
         forceUpdate(world, pos, state);
         super.onPlace(state, world, pos, oldState, isMoving);

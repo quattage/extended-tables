@@ -1,19 +1,11 @@
 package com.quattage.mechano.content.block.power.alternator.rotor;
 
 import java.util.Locale;
-import java.util.function.Predicate;
-
-import com.google.common.base.Predicates;
-import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
-import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
 import com.simibubi.create.foundation.placement.IPlacementHelper;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
-import com.simibubi.create.foundation.placement.PlacementOffset;
-import com.simibubi.create.foundation.placement.PoleHelper;
 
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -37,7 +29,6 @@ import net.minecraft.world.phys.BlockHitResult;
 public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock {
 
     public static final EnumProperty<RotorModelType> MODEL_TYPE = EnumProperty.create("model", RotorModelType.class);
-    public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
 
     public AbstractRotorBlock(Properties properties) {
         super(properties);
@@ -84,7 +75,7 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock {
 		BlockHitResult ray) {
         if(player.isShiftKeyDown() || !player.mayBuild()) return InteractionResult.PASS;
 
-        IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
+        IPlacementHelper helper = PlacementHelpers.get(getPlacementHelperId());
         ItemStack heldItem = player.getItemInHand(hand);
 
         if (helper.matchesItem(heldItem))
@@ -111,8 +102,8 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder);
         builder.add(MODEL_TYPE);
+        super.createBlockStateDefinition(builder);
     }
 
     @Override
@@ -120,32 +111,5 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock {
         return 1f;
     }
 
-    @MethodsReturnNonnullByDefault
-	private static class PlacementHelper extends PoleHelper<Direction.Axis> {
-		private PlacementHelper() {
-			super(state -> state.getBlock() instanceof AbstractRotorBlock, state -> state.getValue(AXIS), AXIS);
-		}
-
-		@Override
-		public Predicate<ItemStack> getItemPredicate() {
-			return i -> i.getItem() instanceof BlockItem
-				&& ((BlockItem) i.getItem()).getBlock() instanceof AbstractRotorBlock;
-		}
-
-		@Override
-		public Predicate<BlockState> getStatePredicate() {
-			return Predicates.or(MechanoBlocks.SMALL_ROTOR::has);
-		}
-
-		@Override
-		public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos,
-			BlockHitResult ray) {
-			PlacementOffset offset = super.getOffset(player, world, state, pos, ray);
-			if (offset.isSuccessful()) {
-				offset.withTransform(offset.getTransform()
-					.andThen(newState -> ShaftBlock.pickCorrectShaftType(newState, world, offset.getBlockPos())));
-            }
-			return offset;
-		}
-	}
+    protected abstract int getPlacementHelperId();
 }

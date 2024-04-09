@@ -37,13 +37,13 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
 	protected final Property<T> property;
 	protected final Function<BlockState, SimpleOrientation> strictDirFunc;
 	protected BlockPos straightPos = null;
-	protected final ShapeGetter circleGetter = 
-		ShapeGetter.ofShape(CircleGetter.class).withRadius(2).build();
+	protected final ShapeGetter circleGetter;
 
-    public StatorDirectionalHelper(Predicate<BlockState> statePredicate, Function<BlockState, SimpleOrientation> strictDirFunc, Property<T> property) {
+    public StatorDirectionalHelper(int radius, Predicate<BlockState> statePredicate, Function<BlockState, SimpleOrientation> strictDirFunc, Property<T> property) {
 		this.statePredicate = statePredicate;
 		this.strictDirFunc = strictDirFunc;
 		this.property = property;
+		circleGetter = ShapeGetter.ofShape(CircleGetter.class).withRadius(radius).build();
 	}
 
     @Override
@@ -60,7 +60,6 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
     public boolean isMatchingOrient(BlockState state, SimpleOrientation dir) {
 		if (!statePredicate.test(state))
 			return false;
-
 		return strictDirFunc.apply(state) == dir;
 	}
 
@@ -102,44 +101,12 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
 		return circleGetter.moveTo(rotorPos).setAxis(revolvingAxis).evaluatePlacement(perimeterPos -> {
 			final BlockState targetState = world.getBlockState(perimeterPos);
 
-			if(targetState.getBlock() == MechanoBlocks.STATOR.get()) return null;
+			if(targetState.getBlock() instanceof AbstractStatorBlock) return null;
 			if(!targetState.canBeReplaced()) return PlacementOffset.fail();
 
-			return PlacementOffset.success(perimeterPos, state -> state.setValue(StatorBlock.ORIENTATION, SimpleOrientation.combine(Direction.UP, revolvingAxis)));
+			return PlacementOffset.success(perimeterPos, state -> state.setValue(SmallStatorBlock.ORIENTATION, SimpleOrientation.combine(Direction.UP, revolvingAxis)));
 		});
 	}
-
-    public Direction getDirectionTo(Level world, BlockPos fromPos, BlockPos centerPos, Axis rotationAxis) {
-        Direction[] directions = getAxisDirections(rotationAxis);
-		for (Direction dir : directions) {
-            BlockPos checkPos = fromPos.relative(dir);
-            if(checkPos.equals(centerPos)) return dir;
-        }
-        return null;
-    }
-
-    public static Direction[] getAxisDirections(Axis axis) {
-        Direction[] out = new Direction[4];
-        if(axis == Axis.Z) {
-            out[0] = Direction.DOWN;
-            out[1] = Direction.EAST;
-            out[2] = Direction.UP;
-            out[3] = Direction.WEST;
-        } else if(axis == Axis.Y) {
-            out[0] = Direction.NORTH;
-            out[1] = Direction.EAST;
-            out[2] = Direction.SOUTH;
-            out[3] = Direction.WEST;
-        } else {
-            out[0] = Direction.DOWN;
-            out[1] = Direction.NORTH;
-            out[2] = Direction.UP;
-            out[3] = Direction.SOUTH;
-        }
-        return out;
-    }
-
-
 
 	private PlacementOffset getFreehandOffset(Player player, Level world, BlockState strictState, BlockPos pos, BlockHitResult ray) {
 		List<Direction> directions = getDirectionsForPlacement(strictState, pos, ray);
@@ -158,7 +125,7 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
 			BlockState newState = world.getBlockState(newPos);
 
 			if (newState.canBeReplaced())
-				return PlacementOffset.success(newPos, bState -> bState.setValue(property, strictState.getValue(property)).setValue(StatorBlock.MODEL_TYPE, strictState.getValue(StatorBlock.MODEL_TYPE)));
+				return PlacementOffset.success(newPos, bState -> bState.setValue(property, strictState.getValue(property)).setValue(SmallStatorBlock.MODEL_TYPE, strictState.getValue(SmallStatorBlock.MODEL_TYPE)));
 		}
 		return PlacementOffset.fail();
 	}

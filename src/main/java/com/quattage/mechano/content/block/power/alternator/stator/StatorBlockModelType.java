@@ -16,17 +16,7 @@ public enum StatorBlockModelType implements StringRepresentable, HitboxNameable 
     CORNER_SINGLE(true),
     CORNER_END_A(true),     
     CORNER_END_B(true),     
-    CORNER_MIDDLE(true),    
-
-    BASE_BIG_SINGLE(false),
-    BASE_BIG_END_A(false),  
-    BASE_BIG_END_B(false),  
-    BASE_BIG_MIDDLE(false), 
-
-    CORNER_BIG_SINGLE(false),
-    CORNER_BIG_END_A(false),  
-    CORNER_BIG_END_B(false),  
-    CORNER_BIG_MIDDLE(false); 
+    CORNER_MIDDLE(true);
 
     final boolean isCorner;
 

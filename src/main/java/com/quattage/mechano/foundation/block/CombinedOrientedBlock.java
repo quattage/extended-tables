@@ -1,8 +1,7 @@
 package com.quattage.mechano.foundation.block;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
-import com.quattage.mechano.foundation.electricity.core.IElectricWrenchable;
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
 import net.minecraft.core.Direction;
@@ -16,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 
-public class CombinedOrientedBlock extends Block implements IElectricWrenchable {
+public class CombinedOrientedBlock extends Block implements IWrenchable {
 
     public static final EnumProperty<CombinedOrientation> ORIENTATION = EnumProperty.create("orientation", CombinedOrientation.class);
     
@@ -47,7 +46,6 @@ public class CombinedOrientedBlock extends Block implements IElectricWrenchable 
 			return InteractionResult.PASS;
         
         KineticBlockEntity.switchToBlockState(world, context.getClickedPos(), updateAfterWrenched(rotated, context));
-        confirmWrench(state, context);
 
 		return InteractionResult.SUCCESS;
     }

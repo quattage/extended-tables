@@ -6,9 +6,9 @@ import javax.annotation.Nullable;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.item.ItemHelper;
 
@@ -42,7 +42,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 
 
-public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<ToolStationBlockEntity> {
+public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<ToolStationBlockEntity>, CreativeTabExcludable {
     public static final EnumProperty<WideBlockModelType> MODEL_TYPE = EnumProperty.create("model", WideBlockModelType.class);
     protected static final VoxelShape BLOCK_NORTH = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
     protected static final VoxelShape BLOCK_SOUTH = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);

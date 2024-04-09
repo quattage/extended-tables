@@ -1,48 +1,48 @@
 {
   "variants": {
-    "facing=east,model=base": {
-      "model": "mechano:block/voltometer/base",
+    "facing=east,model=ceiling": {
+      "model": "mechano:block/voltometer/ceiling",
       "y": 90
     },
-    "facing=east,model=inverted": {
-      "model": "mechano:block/voltometer/inverted",
+    "facing=east,model=floor": {
+      "model": "mechano:block/voltometer/floor",
       "y": 90
     },
-    "facing=east,model=side": {
-      "model": "mechano:block/voltometer/side",
+    "facing=east,model=wall": {
+      "model": "mechano:block/voltometer/wall",
       "y": 90
     },
-    "facing=north,model=base": {
-      "model": "mechano:block/voltometer/base"
+    "facing=north,model=ceiling": {
+      "model": "mechano:block/voltometer/ceiling"
     },
-    "facing=north,model=inverted": {
-      "model": "mechano:block/voltometer/inverted"
+    "facing=north,model=floor": {
+      "model": "mechano:block/voltometer/floor"
     },
-    "facing=north,model=side": {
-      "model": "mechano:block/voltometer/side"
+    "facing=north,model=wall": {
+      "model": "mechano:block/voltometer/wall"
     },
-    "facing=south,model=base": {
-      "model": "mechano:block/voltometer/base",
+    "facing=south,model=ceiling": {
+      "model": "mechano:block/voltometer/ceiling",
       "y": 180
     },
-    "facing=south,model=inverted": {
-      "model": "mechano:block/voltometer/inverted",
+    "facing=south,model=floor": {
+      "model": "mechano:block/voltometer/floor",
       "y": 180
     },
-    "facing=south,model=side": {
-      "model": "mechano:block/voltometer/side",
+    "facing=south,model=wall": {
+      "model": "mechano:block/voltometer/wall",
       "y": 180
     },
-    "facing=west,model=base": {
-      "model": "mechano:block/voltometer/base",
+    "facing=west,model=ceiling": {
+      "model": "mechano:block/voltometer/ceiling",
       "y": 270
     },
-    "facing=west,model=inverted": {
-      "model": "mechano:block/voltometer/inverted",
+    "facing=west,model=floor": {
+      "model": "mechano:block/voltometer/floor",
       "y": 270
     },
-    "facing=west,model=side": {
-      "model": "mechano:block/voltometer/side",
+    "facing=west,model=wall": {
+      "model": "mechano:block/voltometer/wall",
       "y": 270
     }
   }

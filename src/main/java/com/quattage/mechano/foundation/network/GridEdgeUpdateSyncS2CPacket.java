@@ -40,10 +40,10 @@ public class GridEdgeUpdateSyncS2CPacket implements Packetable {
         context.enqueueWork(() -> {
             switch(type) {
                 case ADD:
-                    GridClientCache.getInstance().addToQueue(edge);
+                    GridClientCache.ofInstance().addToQueue(edge);
                     break;
                 case REMOVE:
-                    GridClientCache.getInstance().removeFromQueue(edge);
+                    GridClientCache.ofInstance().removeFromQueue(edge);
                     Mechano.log("RECEIVED PACKET AND REMOVED EDGE");
                     break;
                 default:

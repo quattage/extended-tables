@@ -18,7 +18,6 @@ import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.power.features.GID;
 import com.quattage.mechano.foundation.electricity.power.features.GIDPair;
 import com.quattage.mechano.foundation.electricity.power.features.GridClientEdge;
-import com.quattage.mechano.foundation.electricity.power.features.GridPath;
 import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer;
 import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer.BakedModelHashKey;
 import com.quattage.mechano.foundation.electricity.spool.WireSpool;
@@ -28,7 +27,6 @@ import com.simibubi.create.foundation.utility.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
@@ -73,7 +71,7 @@ public class GridClientCache {
     }
 
     @SuppressWarnings("resource")
-    public static GridClientCache getInstance() {
+    public static GridClientCache ofInstance() {
         return GridClientCache.of(Minecraft.getInstance().level);
     }
 
@@ -193,7 +191,7 @@ public class GridClientCache {
                 
             }
 
-            if(failed) Mechano.LOGGER.info("Non-Fatal error rendering edge at " + sectionCenter + " - most likely accessed after removal.");
+            if(failed) Mechano.LOGGER.warn("Non-Fatal error rendering edge at " + sectionCenter + " - most likely accessed after removal.");
         }
     }
 

@@ -30,6 +30,7 @@ public class EnergySyncS2CPacket implements Packetable {
     }
 
     @Override
+    @SuppressWarnings("resource")
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {

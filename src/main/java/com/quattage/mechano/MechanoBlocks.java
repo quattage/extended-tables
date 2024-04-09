@@ -7,32 +7,28 @@ import com.quattage.mechano.content.block.power.alternator.collector.CollectorBl
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.BigRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
-import com.quattage.mechano.content.block.power.alternator.stator.StatorBlock;
-import com.quattage.mechano.content.block.power.transfer.adapter.CouplingNodeBlock;
-import com.quattage.mechano.content.block.power.transfer.adapter.TransmissionNodeBlock;
-import com.quattage.mechano.content.block.power.transfer.connector.transmission.StackedConnectorGenerator;
-import com.quattage.mechano.content.block.power.transfer.connector.transmission.TransmissionConnectorBlock;
-import com.quattage.mechano.content.block.power.transfer.connector.transmission.stacked.ConnectorStackedTier0Block;
-import com.quattage.mechano.content.block.power.transfer.connector.transmission.stacked.ConnectorStackedTier1Block;
-import com.quattage.mechano.content.block.power.transfer.connector.transmission.stacked.ConnectorStackedTier2Block;
-import com.quattage.mechano.content.block.power.transfer.connector.transmission.stacked.ConnectorStackedTier3Block;
+import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlock;
+import com.quattage.mechano.content.block.power.alternator.stator.AbstractStatorBlock;
+import com.quattage.mechano.content.block.power.alternator.stator.BigStatorBlock;
+import com.quattage.mechano.content.block.power.alternator.stator.SmallStatorBlock;
+import com.quattage.mechano.content.block.power.transfer.connector.tiered.ConnectorTier0Block;
+import com.quattage.mechano.content.block.power.transfer.connector.tiered.ConnectorTier1Block;
+import com.quattage.mechano.content.block.power.transfer.connector.tiered.ConnectorTier2Block;
+import com.quattage.mechano.content.block.power.transfer.connector.tiered.AbstractConnectorBlock;
 import com.quattage.mechano.content.block.power.transfer.test.TestBlock;
 import com.quattage.mechano.content.block.power.transfer.voltometer.VoltometerBlock;
 import com.quattage.mechano.content.block.simple.diagonalGirder.DiagonalGirderBlock;
-import com.quattage.mechano.foundation.block.hitbox.HitboxProvider;
 import com.quattage.mechano.foundation.block.orientation.DynamicStateGenerator;
 import com.simibubi.create.content.kinetics.BlockStressDefaults;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import static com.quattage.mechano.Mechano.REGISTRATE;
-import static com.quattage.mechano.Mechano.HITBOXES;
+import static com.quattage.mechano.Mechano.UPGRADES;
+import static com.quattage.mechano.MechanoClient.HITBOXES;
 import static com.quattage.mechano.Mechano.defer;
 import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
@@ -93,6 +89,41 @@ public class MechanoBlocks {
         .transform(customItemModel("rotor", "big_rotor/single"))
         .register();
 
+    public static final BlockEntry<BigRotorDummyBlock> BIG_ROTOR_DUMMY = REGISTRATE.block("big_rotor_dummy", BigRotorDummyBlock::new)
+        .initialProperties(BIG_ROTOR)
+        .properties(props -> props
+            .noLootTable()
+			.noOcclusion())
+        .blockstate(new DynamicStateGenerator().in("rotor")::generate)
+        .transform(pickaxeOnly())
+        .register();
+
+    public static final BlockEntry<SmallStatorBlock> SMALL_STATOR = REGISTRATE.block("small_stator", SmallStatorBlock::new)
+        .initialProperties(CommonProperties::dense)
+        .properties(props -> props
+            .sound(SoundType.NETHERITE_BLOCK)
+            .noOcclusion()
+        )
+        .transform(pickaxeOnly())
+        .transform(HITBOXES.flag("stator", AbstractStatorBlock.MODEL_TYPE, AbstractStatorBlock.ORIENTATION))
+        .blockstate(new DynamicStateGenerator(AbstractStatorBlock.MODEL_TYPE).in("stator")::generate)
+        .item()
+        .transform(customItemModel("stator", "small_stator/base_single"))
+        .register();
+
+    public static final BlockEntry<BigStatorBlock> BIG_STATOR = REGISTRATE.block("big_stator", BigStatorBlock::new)
+        .initialProperties(CommonProperties::dense)
+        .properties(props -> props
+            .sound(SoundType.NETHERITE_BLOCK)
+            .noOcclusion()
+        )
+        .transform(pickaxeOnly())
+        .transform(HITBOXES.flag("stator", AbstractStatorBlock.MODEL_TYPE, AbstractStatorBlock.ORIENTATION))
+        .blockstate(new DynamicStateGenerator(SmallStatorBlock.MODEL_TYPE).in("stator")::generate)
+        .item()
+        .transform(customItemModel("stator", "big_stator/base_single"))
+        .register();
+
     public static final BlockEntry<CollectorBlock> COLLECTOR = REGISTRATE.block("collector", CollectorBlock::new)
         .initialProperties(CommonProperties::malleable)
         .properties(props -> props
@@ -106,88 +137,37 @@ public class MechanoBlocks {
         .transform(customItemModel("collector", "base"))
         .register();
 
-    public static final BlockEntry<StatorBlock> STATOR = REGISTRATE.block("stator", StatorBlock::new)
-        .initialProperties(CommonProperties::dense)
-        .properties(props -> props
-            .sound(SoundType.NETHERITE_BLOCK)
-            .noOcclusion()
-        )
-        .transform(pickaxeOnly())
-        .transform(HITBOXES.flag(StatorBlock.MODEL_TYPE, StatorBlock.ORIENTATION))
-        .blockstate(new DynamicStateGenerator(StatorBlock.MODEL_TYPE)::generate)
-        .item()
-        .transform(customItemModel("stator", "base"))
-        .register();
-
-    public static final BlockEntry<CouplingNodeBlock> COUPLING_NODE = REGISTRATE.block("coupling_node", CouplingNodeBlock::new)
-        .initialProperties(CommonProperties::malleable)
-        .properties(props -> props
-        .sound(SoundType.NETHERITE_BLOCK)
-        .noOcclusion()
-        )
-        .transform(pickaxeOnly())
-        .blockstate(new DynamicStateGenerator(CouplingNodeBlock.MODEL_TYPE)::generate)
-        .item()
-        .transform(customItemModel("coupling_node", "base"))
-        .register();
-
-
-    public static final BlockEntry<TransmissionNodeBlock> TRANSMISSION_NODE = REGISTRATE.block("transmission_node", TransmissionNodeBlock::new)
-        .initialProperties(CommonProperties::malleable)
-        .properties(props -> props
-            .sound(SoundType.NETHERITE_BLOCK)
-            .noOcclusion()
-        )
-        .transform(pickaxeOnly())
-        .blockstate(new DynamicStateGenerator(TransmissionNodeBlock.MODEL_TYPE)::generate)
-        .item()
-        .transform(customItemModel("transmission_node", "base"))
-        .register();
-
-    public static final BlockEntry<TransmissionConnectorBlock> CONNECTOR_TRANSMISSION = REGISTRATE.block("connector_transmission", TransmissionConnectorBlock::new)
+    public static final BlockEntry<ConnectorTier0Block> CONNECTOR_T0 = REGISTRATE.block("connector_tier_zero", ConnectorTier0Block::new)
         .initialProperties(CommonProperties::malleable)
         .transform(pickaxeOnly())
-        .blockstate(new DynamicStateGenerator(TransmissionConnectorBlock.MODEL_TYPE)::generate)
+        .transform(HITBOXES.flag("connector", AbstractConnectorBlock.MODEL_TYPE, AbstractConnectorBlock.ORIENTATION))
+        .blockstate(new DynamicStateGenerator(AbstractConnectorBlock.MODEL_TYPE).in("connector")::generate)
+        .loot((lt, block) -> block.buildUpgradableLoot(block, lt))
         .item()
-        .transform(customItemModel("connector_transmission", "base"))
+        .transform(customItemModel("connector", "connector_tier_zero/base"))
         .register();
 
-    public static final BlockEntry<ConnectorStackedTier0Block> CONNECTOR_STACKED_ZERO = REGISTRATE.block("connector_stacked_zero", ConnectorStackedTier0Block::new)
+    public static final BlockEntry<ConnectorTier1Block> CONNECTOR_T1 = REGISTRATE.block("connector_tier_one", ConnectorTier1Block::new)
         .initialProperties(CommonProperties::malleable)
         .transform(pickaxeOnly())
-        .blockstate(new StackedConnectorGenerator()::generate)
-        .loot((lt, block) -> lt.dropOther(block, Blocks.AIR))
+        .transform(UPGRADES.upgradesFrom(CONNECTOR_T0).withStep(1).whenClickedWith(CONNECTOR_T0))
+        .transform(HITBOXES.flag("connector", AbstractConnectorBlock.MODEL_TYPE, AbstractConnectorBlock.ORIENTATION))
+        .blockstate(new DynamicStateGenerator(AbstractConnectorBlock.MODEL_TYPE).in("connector")::generate)
+        .loot((lt, block) -> block.buildUpgradableLoot(block, lt))
         .item()
-        .transform(customItemModel("connector_stacked", "tier0"))
-        .register();
-
-    public static final BlockEntry<ConnectorStackedTier1Block> CONNECTOR_STACKED_ONE = REGISTRATE.block("connector_stacked_one", ConnectorStackedTier1Block::new)
-        .initialProperties(CommonProperties::malleable)
-        .transform(pickaxeOnly())
-        .blockstate(new StackedConnectorGenerator()::generate)
-        .loot((lt, block) -> lt.dropOther(block, Blocks.AIR))
-        .item()
-        .transform(customItemModel("connector_stacked", "tier1"))
+        .transform(customItemModel("connector", "connector_tier_one/base"))
         .register();
     
-    public static final BlockEntry<ConnectorStackedTier2Block> CONNECTOR_STACKED_TWO = REGISTRATE.block("connector_stacked_two", ConnectorStackedTier2Block::new)
+    public static final BlockEntry<ConnectorTier2Block> CONNECTOR_T2 = REGISTRATE.block("connector_tier_two", ConnectorTier2Block::new)
         .initialProperties(CommonProperties::malleable)
         .transform(pickaxeOnly())
-        .blockstate(new StackedConnectorGenerator()::generate)
-        .loot((lt, block) -> lt.dropOther(block, Blocks.AIR))
+        .transform(UPGRADES.upgradesFrom(CONNECTOR_T1).withStep(2).whenClickedWith(CONNECTOR_T0))
+        .transform(HITBOXES.flag("connector", AbstractConnectorBlock.MODEL_TYPE, AbstractConnectorBlock.ORIENTATION))
+        .blockstate(new DynamicStateGenerator(AbstractConnectorBlock.MODEL_TYPE).in("connector")::generate)
+        .loot((lt, block) -> block.buildUpgradableLoot(block, lt))
         .item()
-        .transform(customItemModel("connector_stacked", "tier2"))
+        .transform(customItemModel("connector", "connector_tier_two/base"))
         .register();
-
-    public static final BlockEntry<ConnectorStackedTier3Block> CONNECTOR_STACKED_THREE = REGISTRATE.block("connector_stacked_three", ConnectorStackedTier3Block::new)
-        .initialProperties(CommonProperties::malleable)
-        .transform(pickaxeOnly())
-        .blockstate(new StackedConnectorGenerator()::generate)
-        .loot((lt, block) -> lt.dropOther(block, Blocks.AIR))
-        .item()
-        .transform(customItemModel("connector_stacked", "tier3"))
-        .register();
-
 
     public static final BlockEntry<DiagonalGirderBlock> DIAGONAL_GIRDER = REGISTRATE.block("diagonal_girder", DiagonalGirderBlock::new)
 		.initialProperties(CommonProperties::malleable)
@@ -198,15 +178,13 @@ public class MechanoBlocks {
         .transform(customItemModel("diagonal_girder", "item"))
 		.register();
 
-
-
     public static final BlockEntry<VoltometerBlock> VOLTOMETER = REGISTRATE.block("voltometer", VoltometerBlock::new)
 		.initialProperties(CommonProperties::malleable)
 		.properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
 		.transform(pickaxeOnly())
         .blockstate(new DynamicStateGenerator(VoltometerBlock.MODEL_TYPE)::generate)
 		.item()
-        .transform(customItemModel("voltometer", "base"))
+        .transform(customItemModel("voltometer", "floor"))
 		.register();
     
 

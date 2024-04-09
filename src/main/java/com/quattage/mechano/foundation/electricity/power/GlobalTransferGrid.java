@@ -53,7 +53,6 @@ public class GlobalTransferGrid {
         ListTag subs = net.getList("all", Tag.TAG_COMPOUND);
         Mechano.LOGGER.warn("Global network in [" + getDimensionName() + "] is reading " + subs.size() + " TransferNetworks from NBT");
 
-        boolean hadFailures = false;
         for(int x = 0; x < subs.size(); x++) {
             CompoundTag subsystem = subs.getCompound(x);
             Mechano.LOGGER.info("Adding a LocalTransferGrid containing the following data:\n" + subsystem);

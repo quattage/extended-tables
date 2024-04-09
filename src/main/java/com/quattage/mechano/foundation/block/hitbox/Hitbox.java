@@ -9,6 +9,8 @@ import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 
 import java.util.List;
+import java.util.Locale;
+
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -64,14 +66,30 @@ public class Hitbox<T extends Enum<T> & StringRepresentable> {
 
     public VoxelShape getRotated(@Nullable T orient) {
 
-        if(orient == null)
+        if(orient == null || shapes.size() <= 1)
             return shapes.get(getDefaultProperty());
 
         VoxelShape shape = shapes.get(orient);
         if(shape == null) {
-            Mechano.LOGGER.warn("Error getting rotated VoxelShape - The given Property '" + orient.toString() + "' is not supported by this Hitbox!");
+            Mechano.LOGGER.warn("Error getting rotated VoxelShape for hitbox bound to " + propertyGroup.getName() + 
+                "- The given Property '" + orient.toString() + "' is not supported by this Hitbox!");
             return VoxelShapeBuilder.CUBE;
         }
         return shape;
+    }
+
+    public enum DefaultModelType implements StringRepresentable, HitboxNameable {
+        DEFAULT;
+
+        @Override
+        public String toString() {
+            return getSerializedName();
+        }
+
+        @Override
+        public String getSerializedName() {
+            return name().toLowerCase(Locale.ROOT);
+        }
+        
     }
 }
