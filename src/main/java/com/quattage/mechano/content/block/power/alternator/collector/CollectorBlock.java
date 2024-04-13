@@ -4,7 +4,7 @@ import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
-import com.quattage.mechano.foundation.block.hitbox.Hitbox;
+import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
@@ -29,7 +29,7 @@ import java.util.Locale;
 
 public class CollectorBlock extends DirectionalKineticBlock implements IBE<CollectorBlockEntity> {
 
-    private static Hitbox<Direction> hitbox;
+    private static RotatableHitboxShape<Direction> hitbox;
 
     public static final EnumProperty<CollectorBlockModelType> MODEL_TYPE = EnumProperty.create("model", CollectorBlockModelType.class);
 
@@ -69,7 +69,7 @@ public class CollectorBlock extends DirectionalKineticBlock implements IBE<Colle
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if(hitbox == null) hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
+         hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(FACING));
     }
 

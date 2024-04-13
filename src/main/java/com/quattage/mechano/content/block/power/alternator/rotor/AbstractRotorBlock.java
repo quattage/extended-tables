@@ -1,5 +1,7 @@
 package com.quattage.mechano.content.block.power.alternator.rotor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
@@ -26,9 +28,10 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
 @SuppressWarnings("deprecation")
-public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock {
+public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock implements BlockRotorable {
 
     public static final EnumProperty<RotorModelType> MODEL_TYPE = EnumProperty.create("model", RotorModelType.class);
+    private final List<BlockPos> connectedStators = new ArrayList<>();
 
     public AbstractRotorBlock(Properties properties) {
         super(properties);
@@ -93,6 +96,11 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock {
     @Override
     public Axis getRotationAxis(BlockState state) {
         return state.getValue(AXIS);
+    }
+
+    @Override
+    public Axis getRotorAxis(BlockState state) {
+        return getRotationAxis(state);
     }
 
     @Override

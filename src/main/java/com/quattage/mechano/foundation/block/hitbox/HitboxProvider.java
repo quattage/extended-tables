@@ -7,7 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Stopwatch;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.quattage.mechano.Mechano;
@@ -30,15 +32,19 @@ public class HitboxProvider extends SimplePreparableReloadListener<ResourceLocat
     @Override
     @SuppressWarnings("unchecked")
     protected ResourceLocation prepare(ResourceManager manager, ProfilerFiller profiler) {
-        
+
+        final Stopwatch timer = Stopwatch.createStarted();
+        int count = 0;
+
         for(UnbuiltHitbox<? extends StringRepresentable> unbuilt : HITBOXES.getAllUnbuilt()) {
+            count++; 
             manager.getResource(unbuilt.getRawPath()).ifPresentOrElse(resource -> {
                 Reader reader;
                 try {
                     
                     reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8);
                     
-                    // type erasure my ass lmao
+                    // i will have my way with you
                     List<Map<String, Map<String, Object>>> modelFile = 
                         (List<Map<String, Map<String, Object>>>)(GSON.fromJson(reader, Map.class).get("elements"));
 
@@ -72,6 +78,9 @@ public class HitboxProvider extends SimplePreparableReloadListener<ResourceLocat
             }, 
                 () -> Mechano.LOGGER.error("Exception loading Hitbox model at '" + unbuilt.getRawPath() + "' - The file could not be found!"));
         }
+
+        Mechano.LOGGER.info("Loaded " + count + " hitboxes in " + timer.elapsed(TimeUnit.MILLISECONDS) + " ms");
+        timer.stop();
 
         return null;
     }

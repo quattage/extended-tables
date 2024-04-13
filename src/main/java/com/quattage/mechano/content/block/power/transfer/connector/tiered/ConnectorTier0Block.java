@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoClient;
-import com.quattage.mechano.foundation.block.hitbox.Hitbox;
+import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.block.upgradable.BlockUpgradable;
 import com.simibubi.create.foundation.block.IBE;
@@ -27,13 +27,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class ConnectorTier0Block extends AbstractConnectorBlock implements IBE<ConnectorTier0BlockEntity>, BlockUpgradable {
 
-    protected static Hitbox<SimpleOrientation> hitbox;
+    protected static RotatableHitboxShape<SimpleOrientation> hitbox;
 
     public ConnectorTier0Block(Properties properties) {
         super(properties);
-    }
-
-    
+    }    
 
     @Override
     public Class<ConnectorTier0BlockEntity> getBlockEntityClass() {
@@ -52,16 +50,15 @@ public class ConnectorTier0Block extends AbstractConnectorBlock implements IBE<C
 
     @Override
     VoxelShape getHitbox(BlockState state) {
-        if(hitbox == null) hitbox = MechanoClient.HITBOXES.get(ORIENTATION, state.getValue(MODEL_TYPE), this);
+        hitbox = MechanoClient.HITBOXES.get(ORIENTATION, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(ORIENTATION));
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Enum<T> & StringRepresentable> List<EnumProperty<T>> getStatesToPreserve(
-            ArrayList<EnumProperty<T>> out) {
-        out.add((EnumProperty<T>) MODEL_TYPE);
-        out.add((EnumProperty<T>) ORIENTATION);
+    public <T extends Enum<T> & StringRepresentable> List<EnumProperty<T>> getStatesToPreserve(ArrayList<EnumProperty<T>> out) {
+        out.add((EnumProperty<T>) (EnumProperty<?>) MODEL_TYPE);
+        out.add((EnumProperty<T>) (EnumProperty<?>) ORIENTATION);
         return out;
     }
 
@@ -72,3 +69,4 @@ public class ConnectorTier0Block extends AbstractConnectorBlock implements IBE<C
         return table;
     }
 }
+    

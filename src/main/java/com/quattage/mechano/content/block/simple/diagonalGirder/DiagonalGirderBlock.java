@@ -11,7 +11,7 @@ import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.MechanoClientEvents;
-import com.quattage.mechano.foundation.block.hitbox.Hitbox;
+import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.hitbox.VoxelShapeBuilder;
 import com.simibubi.create.AllBlocks;
@@ -52,7 +52,7 @@ import com.simibubi.create.foundation.utility.Pair;
 public class DiagonalGirderBlock extends DirectionalBlock implements IBE<DiagonalGirderBlockEntity> {
     public static final EnumProperty<DiagonalGirderModelType> MODEL_TYPE = EnumProperty.create("model", DiagonalGirderModelType.class);
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
-    private static Hitbox<Direction> hitbox;
+    private static RotatableHitboxShape<Direction> hitbox;
     
     public static final VoxelShaper BOX_LONG_DOWN_FLAT = 
         VoxelShaper.forDirectional(VoxelShapeBuilder.newBox(3, -4.5, -5.75, 13.1, 0, 5.25), Direction.UP);
@@ -112,7 +112,7 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if(hitbox == null) hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
+         hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(FACING));
     }
 

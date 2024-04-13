@@ -41,7 +41,7 @@ public class BigRotorDummyBlockEntity extends SmartBlockEntity {
 
         if(thisDummy.getBlock() != MechanoBlocks.BIG_ROTOR_DUMMY.get()) return null;
 
-        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getCorners(
+        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getPositiveCorners(
                 worldPosition, thisDummy.getValue(RotatedPillarBlock.AXIS));
         
         for(BlockPos vPos : BlockPos.betweenClosed(corners.getFirst(), corners.getSecond())) {

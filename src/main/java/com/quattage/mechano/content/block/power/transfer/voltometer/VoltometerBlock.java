@@ -4,7 +4,7 @@ import java.util.Locale;
 
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoClient;
-import com.quattage.mechano.foundation.block.hitbox.Hitbox;
+import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
@@ -26,7 +26,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public class VoltometerBlock extends HorizontalDirectionalBlock implements IBE<VoltometerBlockEntity>, IWrenchable {
     
     public static final EnumProperty<VoltometerModelType> MODEL_TYPE = EnumProperty.create("model", VoltometerModelType.class);
-    private static Hitbox<Direction> hitbox;
+    private static RotatableHitboxShape<Direction> hitbox;
 
     public enum VoltometerModelType implements HitboxNameable, StringRepresentable {
         FLOOR, WALL, CEILING;
@@ -63,7 +63,7 @@ public class VoltometerBlock extends HorizontalDirectionalBlock implements IBE<V
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if(hitbox == null) hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
+         hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(FACING));
     }
 

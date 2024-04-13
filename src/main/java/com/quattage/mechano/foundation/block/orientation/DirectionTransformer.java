@@ -296,29 +296,53 @@ public class DirectionTransformer {
         return up.getAxis().isHorizontal();
     }
 
-    public static Direction[] getAxisDirections(Axis axis) {
+    public static Direction[] getPlaneFromAxis(Axis axis) {
         Direction[] out = new Direction[4];
         if(axis == Axis.Z) {
-            out[0] = Direction.DOWN;
-            out[1] = Direction.EAST;
-            out[2] = Direction.UP;
-            out[3] = Direction.WEST;
+            out[0] = Direction.UP;
+            out[1] = Direction.WEST;
+            out[2] = Direction.DOWN;
+            out[3] = Direction.EAST;
         } else if(axis == Axis.Y) {
             out[0] = Direction.NORTH;
             out[1] = Direction.EAST;
             out[2] = Direction.SOUTH;
             out[3] = Direction.WEST;
         } else {
-            out[0] = Direction.DOWN;
+            out[0] = Direction.UP;
             out[1] = Direction.NORTH;
-            out[2] = Direction.UP;
+            out[2] = Direction.DOWN;
             out[3] = Direction.SOUTH;
         }
         return out;
     }
 
-    public static Pair<BlockPos, BlockPos> getCorners(BlockPos center, Axis axis) {
-        Direction[] plane = getAxisDirections(axis);
+    public static BlockPos[] getAllCorners(BlockPos center, Axis axis) {
+
+        Direction[] plane = getPlaneFromAxis(axis);
+
+        BlockPos[] out = new BlockPos[4];
+        out[0] = center.relative(plane[0]).relative(plane[1]);
+        out[1] = center.relative(plane[0]).relative(plane[3]);
+        out[2] = center.relative(plane[2]).relative(plane[3]);
+        out[3] = center.relative(plane[2]).relative(plane[1]);
+        return out;
+    }
+
+    public static BlockPos[] getAllAdjacent(BlockPos center, Axis axis) {
+
+        Direction[] plane = getPlaneFromAxis(axis);
+
+        BlockPos[] out = new BlockPos[4];
+        out[0] = center.relative(plane[0]);
+        out[1] = center.relative(plane[1]);
+        out[2] = center.relative(plane[2]);
+        out[3] = center.relative(plane[3]);
+        return out;
+    }
+
+    public static Pair<BlockPos, BlockPos> getPositiveCorners(BlockPos center, Axis axis) {
+        Direction[] plane = getPlaneFromAxis(axis);
         BlockPos c1 = center.relative(plane[0]).relative(plane[1]);
         BlockPos c2 = center.relative(plane[2]).relative(plane[3]);
         return Pair.of(c1, c2);

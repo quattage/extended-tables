@@ -84,7 +84,6 @@ public class AnchorPoint {
      * @return an AABB representing the bounds of this AnchorPoint at its current location
      */
     public AABB getHitbox() {
-        if(hitbox == null) return null;
         return hitbox.inflate(anchorSize * 0.005f);
     }
 

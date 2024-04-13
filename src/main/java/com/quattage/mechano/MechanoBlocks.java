@@ -105,8 +105,8 @@ public class MechanoBlocks {
             .noOcclusion()
         )
         .transform(pickaxeOnly())
-        .transform(HITBOXES.flag("stator", AbstractStatorBlock.MODEL_TYPE, AbstractStatorBlock.ORIENTATION))
-        .blockstate(new DynamicStateGenerator(AbstractStatorBlock.MODEL_TYPE).in("stator")::generate)
+        .transform(HITBOXES.flag("stator", SmallStatorBlock.MODEL_TYPE, AbstractStatorBlock.ORIENTATION))
+        .blockstate(new DynamicStateGenerator(SmallStatorBlock.MODEL_TYPE).in("stator")::generate)
         .item()
         .transform(customItemModel("stator", "small_stator/base_single"))
         .register();
@@ -118,8 +118,8 @@ public class MechanoBlocks {
             .noOcclusion()
         )
         .transform(pickaxeOnly())
-        .transform(HITBOXES.flag("stator", AbstractStatorBlock.MODEL_TYPE, AbstractStatorBlock.ORIENTATION))
-        .blockstate(new DynamicStateGenerator(SmallStatorBlock.MODEL_TYPE).in("stator")::generate)
+        .transform(HITBOXES.flag("stator", BigStatorBlock.MODEL_TYPE, AbstractStatorBlock.ORIENTATION))
+        .blockstate(new DynamicStateGenerator(BigStatorBlock.MODEL_TYPE).in("stator")::generate)
         .item()
         .transform(customItemModel("stator", "big_stator/base_single"))
         .register();

@@ -89,22 +89,25 @@ public class StatorDirectionalHelper<T extends Comparable<T>> implements IPlacem
 		BlockPos frontPos = statorPos.relative(statorState.getValue(SimpleOrientedBlock.ORIENTATION).getCardinal());
 		BlockState frontState = world.getBlockState(frontPos);
 		if(frontState.getBlock() == MechanoBlocks.SMALL_ROTOR.get() && statorState.getValue(SimpleOrientedBlock.ORIENTATION).getOrient() == frontState.getValue(AbstractRotorBlock.AXIS)) {
-			PlacementOffset checkRotor = getRotoredOffset(world, frontPos, frontState, statorPos, statorState);	
+			PlacementOffset checkRotor = getRotoredOffset(world, frontPos, frontState, statorPos, statorState, player, ray);	
 			if(checkRotor.isSuccessful()) return checkRotor;
 		} 
 		return getFreehandOffset(player, world, statorState, statorPos, ray);
 	}
 
-	private PlacementOffset getRotoredOffset(Level world, BlockPos rotorPos, BlockState rotorState, BlockPos statorPos, BlockState statorState) {
+	private PlacementOffset getRotoredOffset(Level world, BlockPos rotorPos, BlockState rotorState, BlockPos statorPos, BlockState statorState, Player player, BlockHitResult ray) {
 		Axis revolvingAxis = rotorState.getValue(AbstractRotorBlock.AXIS);
 
 		return circleGetter.moveTo(rotorPos).setAxis(revolvingAxis).evaluatePlacement(perimeterPos -> {
+
 			final BlockState targetState = world.getBlockState(perimeterPos);
 
 			if(targetState.getBlock() instanceof AbstractStatorBlock) return null;
 			if(!targetState.canBeReplaced()) return PlacementOffset.fail();
 
-			return PlacementOffset.success(perimeterPos, state -> state.setValue(SmallStatorBlock.ORIENTATION, SimpleOrientation.combine(Direction.UP, revolvingAxis)));
+			return PlacementOffset.success(perimeterPos, state -> 
+				((AbstractStatorBlock<?>)statorState.getBlock())
+					.getInitialState(world, perimeterPos, statorState, revolvingAxis));
 		});
 	}
 

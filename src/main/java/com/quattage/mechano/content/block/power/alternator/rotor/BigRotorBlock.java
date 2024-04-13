@@ -67,7 +67,7 @@ public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlo
 
     protected void placeDummies(Level world, BlockPos pos, BlockState state) {
 
-        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getCorners(pos, state.getValue(AXIS));
+        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getPositiveCorners(pos, state.getValue(AXIS));
 
         for(BlockPos vPos : BlockPos.betweenClosed(corners.getFirst(), corners.getSecond())) {
             if(!(world.getBlockState(vPos).getBlock() instanceof BigRotorBlock)) {
@@ -80,7 +80,7 @@ public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlo
 
     protected void removeDummies(Level world, BlockPos pos, BlockState state) {
 
-        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getCorners(pos, state.getValue(AXIS));
+        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getPositiveCorners(pos, state.getValue(AXIS));
         BlockPos.betweenClosed(corners.getFirst(), corners.getSecond()).forEach(vPos -> {
 
             if(world.getBlockState(vPos).getBlock() instanceof BigRotorDummyBlock)
@@ -89,7 +89,7 @@ public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlo
     }
 
     protected boolean canPlaceDummies(LevelReader world, BlockPos pos, BlockState state) {
-        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getCorners(pos, state.getValue(AXIS));
+        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getPositiveCorners(pos, state.getValue(AXIS));
         for(BlockPos vPos : BlockPos.betweenClosed(corners.getFirst(), corners.getSecond())) {
             if(!world.getBlockState(vPos).canBeReplaced())
                 return false;

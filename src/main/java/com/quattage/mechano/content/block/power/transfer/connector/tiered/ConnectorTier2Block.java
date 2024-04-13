@@ -6,7 +6,7 @@ import java.util.List;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoClient;
-import com.quattage.mechano.foundation.block.hitbox.Hitbox;
+import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.block.upgradable.BlockUpgradable;
 import com.quattage.mechano.foundation.electricity.IBatteryBank;
@@ -31,7 +31,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class ConnectorTier2Block extends AbstractConnectorBlock implements IBE<ConnectorTier2BlockEntity>, BlockUpgradable, CreativeTabExcludable {
 
-    protected static Hitbox<SimpleOrientation> hitbox;
+    protected static RotatableHitboxShape<SimpleOrientation> hitbox;
 
     public ConnectorTier2Block(Properties properties) {
         super(properties);
@@ -59,7 +59,7 @@ public class ConnectorTier2Block extends AbstractConnectorBlock implements IBE<C
 
     @Override
     VoxelShape getHitbox(BlockState state) {
-        if(hitbox == null) hitbox = MechanoClient.HITBOXES.get(ORIENTATION, state.getValue(MODEL_TYPE), this);
+        hitbox = MechanoClient.HITBOXES.get(ORIENTATION, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(ORIENTATION));
     }
 
@@ -71,10 +71,9 @@ public class ConnectorTier2Block extends AbstractConnectorBlock implements IBE<C
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Enum<T> & StringRepresentable> List<EnumProperty<T>> getStatesToPreserve(
-            ArrayList<EnumProperty<T>> out) {
-        out.add((EnumProperty<T>) MODEL_TYPE);
-        out.add((EnumProperty<T>) ORIENTATION);
+    public <T extends Enum<T> & StringRepresentable> List<EnumProperty<T>> getStatesToPreserve(ArrayList<EnumProperty<T>> out) {
+        out.add((EnumProperty<T>) (EnumProperty<?>) MODEL_TYPE);
+        out.add((EnumProperty<T>) (EnumProperty<?>) ORIENTATION);
         return out;
     }
 
