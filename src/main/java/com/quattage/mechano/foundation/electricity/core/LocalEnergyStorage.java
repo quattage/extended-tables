@@ -1,7 +1,7 @@
 package com.quattage.mechano.foundation.electricity.core;
 
+import com.quattage.mechano.foundation.electricity.core.watt.WattBattery;
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable.OvervoltBehavior;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattBattery;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

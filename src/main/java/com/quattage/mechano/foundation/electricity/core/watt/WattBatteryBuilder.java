@@ -1,12 +1,13 @@
-package com.quattage.mechano.foundation.electricity.core.watt.unit;
+package com.quattage.mechano.foundation.electricity.core.watt;
 
 import java.util.function.Consumer;
 
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattStorable;
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable.OvervoltBehavior;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
 
 /**
- * Fluent builder for {@link com.quattage.mechano.foundation.electricity.core.watt.unit.WattBattery <code>WattBattery</code>} objects.
+ * Fluent builder for {@link com.quattage.mechano.foundation.electricity.core.watt.WattBattery <code>WattBattery</code>} objects.
  */
 public class WattBatteryBuilder<T extends DirectionalWattStorable> {
     

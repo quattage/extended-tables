@@ -1,9 +1,10 @@
-package com.quattage.mechano.foundation.electricity.core.watt.unit;
+package com.quattage.mechano.foundation.electricity.core.watt;
 
 import java.util.function.Consumer;
 
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattStorable;
-import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 
 /**
  * A WattBattery is an EnergyStorage-like object
