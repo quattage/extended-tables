@@ -1,23 +1,22 @@
-// 1.20.1	2024-04-09T04:38:23.2789781	Registrate Provider for mechano [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
+// 1.20.1	2024-04-20T21:03:50.604873	Registrate Provider for mechano [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
 36d58ef389ec7fc88bb0130fc30fb0fca0e24913 assets/mechano/blockstates/big_rotor.json
 faed7284078bd4637397b90dd711bdef181152aa assets/mechano/blockstates/big_rotor_dummy.json
-568e9366652521220b1bb5f5f0986cd9ec354718 assets/mechano/blockstates/big_stator.json
-cee9ea28eed09f9a179de27f487de56f88e795d4 assets/mechano/blockstates/collector.json
+e9949528359a2c89400103aef3696b5fc70f7e1d assets/mechano/blockstates/big_stator.json
 f910dd1303de32dab10fe2f9cdb3faae4f8e2d18 assets/mechano/blockstates/connector_tier_one.json
 74dabbcfc6b4a05897f0f9c3a2556a4665167061 assets/mechano/blockstates/connector_tier_two.json
 aa05c0bf0c2598d2334d112f71564b238f236558 assets/mechano/blockstates/connector_tier_zero.json
 d71af16a02775da01df8542afe1a36cd7d1b36a7 assets/mechano/blockstates/diagonal_girder.json
+9fc6c24297aa920762ec74b4437f61e3a315e96c assets/mechano/blockstates/slip_ring_shaft.json
 c7f812ba7399409254b15135d86283a946c8369b assets/mechano/blockstates/small_rotor.json
 28c960ae2cb3263807e927e3d08d86de6dd33429 assets/mechano/blockstates/small_stator.json
 ed9c36a7aec63784b6490d40afaeb1a84a303399 assets/mechano/blockstates/test_block.json
 0239159ae06506bec94f0b1417bcda8563dbc9b8 assets/mechano/blockstates/tool_forge.json
 3899b7f5e0bbd749289d26e87726e9d71e04ea4d assets/mechano/blockstates/tool_station.json
 ce5fbce78788ee0159f955002ba87f5664a31806 assets/mechano/blockstates/voltometer.json
-f7fe13efee1f1d6abbe6b218509584c37ae024e8 assets/mechano/lang/en_ud.json
-e8067fc7a609f6b77d15847d769752aa577d3ffd assets/mechano/lang/en_us.json
+8f78d12e94e5b723be6cb7e282376b5d3e8533fe assets/mechano/lang/en_ud.json
+b1501295f5af2388ecf80c071a4a7015439311d4 assets/mechano/lang/en_us.json
 1a3bcd28a77299029ffdefa180564a49683695b6 assets/mechano/models/item/big_rotor.json
 4c7bd224163908944a5cb2675470da6a7fb2c08e assets/mechano/models/item/big_stator.json
-ad2157bb28994f1be97ddd57356978c5dfd9e0ea assets/mechano/models/item/collector.json
 5a76ccb4835b4e939685c5735f5565778a0091ba assets/mechano/models/item/connector_tier_one.json
 f6ac0de07737f88625c45bd8ad5712cf83250ae2 assets/mechano/models/item/connector_tier_two.json
 a0d388cca5800a347cb71b376a5118273f9f6abb assets/mechano/models/item/connector_tier_zero.json
@@ -25,6 +24,7 @@ c3003a6e1cdf08f84f6b912a7b7707f0a307984f assets/mechano/models/item/diagonal_gir
 9ed5ec0f12a35110ce1fbea475dd13937b9d21c8 assets/mechano/models/item/empty_spool.json
 ffaab51f35f9b4b32cb3217c9fdc279b56628b1c assets/mechano/models/item/hookup_spool.json
 d122d5120ee28baa5b1f1294282fb6fb53899d2b assets/mechano/models/item/hookup_wire.json
+9ef411d05b1f185fc26fb22a629f51733460e310 assets/mechano/models/item/slip_ring_shaft.json
 8e9233242fbb3fe43d97e2317b7bceec31c08420 assets/mechano/models/item/small_rotor.json
 d0d86091a5c5a5ec99ebb555c63c92b5dee061bb assets/mechano/models/item/small_stator.json
 5f684de9c7e55073b4dbc1865915fd6c25f6c8d3 assets/mechano/models/item/test_block.json
@@ -33,15 +33,15 @@ d0d86091a5c5a5ec99ebb555c63c92b5dee061bb assets/mechano/models/item/small_stator
 c52e65bf5ae90772610eef092ec943bf117b73e4 assets/mechano/models/item/voltometer.json
 623454ba296061ef9cb61efd5add24e7d934540d data/mechano/loot_tables/blocks/big_rotor.json
 d61b5ebea7aca0eb6a7646cf074c0cbe97100bda data/mechano/loot_tables/blocks/big_stator.json
-8b3698946ecae8d914ea53c2a8f15147b77949d9 data/mechano/loot_tables/blocks/collector.json
 f536af9f3fa191ea63d2da6da418787893a3178a data/mechano/loot_tables/blocks/connector_tier_one.json
 d1a34e0d5e0d1d82e109e01a0784636595b08f5b data/mechano/loot_tables/blocks/connector_tier_two.json
 f3a6f04962f51950bc5c65740e05393536c34aa5 data/mechano/loot_tables/blocks/connector_tier_zero.json
 4774f1b60014b984d39ee1ac04efc6e465e8acae data/mechano/loot_tables/blocks/diagonal_girder.json
+cd7fab6a0cf45ac438bbcb536213c6fa9bc7d972 data/mechano/loot_tables/blocks/slip_ring_shaft.json
 f902a68b5cf8d07d5758fde0aa77e08f6807b594 data/mechano/loot_tables/blocks/small_rotor.json
 cee8787653e6a91033aa3a426a269ba87533c14f data/mechano/loot_tables/blocks/small_stator.json
 62dc26d473ed46ee5d13060b393166bbe79e0e3f data/mechano/loot_tables/blocks/test_block.json
 dcf87d5b8d89c5856f79e70f852a86a332bf6928 data/mechano/loot_tables/blocks/tool_forge.json
 eb885d3d663137881113c6192c2779580f93bc68 data/mechano/loot_tables/blocks/tool_station.json
 a85a0fae427d75342ef9c7339a5cae0b8f7eb2e0 data/mechano/loot_tables/blocks/voltometer.json
-5febffcc440289fda31c5798343211c0ec79cee9 data/minecraft/tags/blocks/mineable/pickaxe.json
+207b44b6259f2b3f45cb3ea72386f8335a8b0e1b data/minecraft/tags/blocks/mineable/pickaxe.json

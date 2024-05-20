@@ -1,11 +1,13 @@
 package com.quattage.mechano;
 
 import com.quattage.mechano.foundation.network.Packetable;
+import com.quattage.mechano.content.block.power.alternator.rotor.AlternatorUpdateS2CPacket;
+import com.quattage.mechano.foundation.electricity.grid.sync.GridEdgeUpdateSyncS2CPacket;
+import com.quattage.mechano.foundation.electricity.grid.sync.GridPathUpdateS2CPacket;
+import com.quattage.mechano.foundation.electricity.grid.sync.GridVertDestroySyncS2CPacket;
+import com.quattage.mechano.foundation.network.AnchorRefreshS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorSelectC2SPacket;
 import com.quattage.mechano.foundation.network.EnergySyncS2CPacket;
-import com.quattage.mechano.foundation.network.GridEdgeUpdateSyncS2CPacket;
-import com.quattage.mechano.foundation.network.GridPathUpdateS2CPacket;
-import com.quattage.mechano.foundation.network.GridVertDestroySyncS2CPacket;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -56,6 +58,18 @@ public class MechanoPackets {
             .decoder(GridPathUpdateS2CPacket::new)
             .encoder(GridPathUpdateS2CPacket::toBytes)
             .consumerMainThread(GridPathUpdateS2CPacket::handle)
+            .add();
+
+        NETWORK.messageBuilder(AlternatorUpdateS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
+            .decoder(AlternatorUpdateS2CPacket::new)
+            .encoder(AlternatorUpdateS2CPacket::toBytes)
+            .consumerMainThread(AlternatorUpdateS2CPacket::handle)
+            .add();
+
+        NETWORK.messageBuilder(AnchorRefreshS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
+            .decoder(AnchorRefreshS2CPacket::new)
+            .encoder(AnchorRefreshS2CPacket::toBytes)
+            .consumerMainThread(AnchorRefreshS2CPacket::handle)
             .add();
 
         //C2S

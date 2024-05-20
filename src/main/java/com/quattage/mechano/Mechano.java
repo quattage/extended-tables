@@ -2,13 +2,15 @@ package com.quattage.mechano;
 
 import com.mojang.logging.LogUtils;
 import com.quattage.mechano.foundation.block.upgradable.UpgradeCache;
-import com.quattage.mechano.foundation.electricity.power.GlobalTransferGrid;
-import com.quattage.mechano.foundation.electricity.power.GlobalTransferGridProvider;
-import com.quattage.mechano.foundation.electricity.power.GridClientCache;
-import com.quattage.mechano.foundation.electricity.power.GridClientCacheProvider;
+import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridProvider;
+import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
+import com.quattage.mechano.foundation.electricity.grid.GridClientCacheProvider;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.utility.LangBuilder;
 import com.tterrag.registrate.providers.DataGenContext;
 
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -26,7 +28,6 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(Mechano.MOD_ID)
 public class Mechano {
     
@@ -39,21 +40,21 @@ public class Mechano {
     public static final Capability<GridClientCache> CLIENT_CACHE_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
     public static final UpgradeCache UPGRADES = new UpgradeCache();
 
-
     public Mechano() {
         Mechano.LOGGER.info("loading mechano");
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
         REGISTRATE.registerEventListeners(modBus);
-
+        MechanoSettings.init(modBus);
         MechanoBlocks.register(modBus);
         MechanoItems.register(modBus);
-        MechanoGroups.register(modBus);
-        MechanoMenus.register(modBus);
         MechanoBlockEntities.register(modBus);
+        
         MechanoRecipes.register(modBus);
         MechanoSounds.register(modBus);
+        MechanoGroups.register(modBus);
+        MechanoMenus.register(modBus);
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MechanoClient.init(modBus, forgeBus));
 
@@ -69,11 +70,15 @@ public class Mechano {
     public void addWorldCapabilities(AttachCapabilitiesEvent<Level> event) {
         if(event.getObject().isClientSide) {
             Mechano.LOGGER.info("Attaching ClientCache capability to " + event.getObject().dimension().location());
-            event.addCapability(asResource("transfer_grid_client_cache"), new GridClientCacheProvider(event.getObject()));
+            event.addCapability(asResource("transfer_grid_client_cache"), new GridClientCacheProvider((ClientLevel)event.getObject()));
         } else {
             Mechano.LOGGER.info("Attaching ServerGrid capability to " + event.getObject().dimension().location());
             event.addCapability(asResource("transfer_grid_server_manager"), new GlobalTransferGridProvider(event.getObject()));
         }
+    }
+
+    public static LangBuilder lang() {
+        return new LangBuilder(MOD_ID);
     }
 
     public static void log(String message) {      

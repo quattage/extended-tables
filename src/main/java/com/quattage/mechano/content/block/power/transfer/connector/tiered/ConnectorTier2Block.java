@@ -6,10 +6,10 @@ import java.util.List;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.block.upgradable.BlockUpgradable;
-import com.quattage.mechano.foundation.electricity.IBatteryBank;
 import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
 import com.simibubi.create.foundation.block.IBE;
 
@@ -67,6 +67,19 @@ public class ConnectorTier2Block extends AbstractConnectorBlock implements IBE<C
     @SuppressWarnings("deprecation")
     public void onPlace(BlockState state, Level world, BlockPos pos, BlockState pOldState, boolean pIsMoving) {
         super.onPlace(state, world, pos, pOldState, pIsMoving);
+    }
+
+    @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+
+        InteractionResult out = super.onWrenched(state, context);
+        SimpleOrientation orient = context.getLevel().getBlockState(context.getClickedPos()).getValue(SimpleOrientedBlock.ORIENTATION);
+        
+        swapPoleStates(context.getLevel(), context.getClickedPos(), orient, true);
+        swapPoleStates(context.getLevel(), context.getClickedPos(), orient, false);
+        
+        return out;
+
     }
 
     @Override

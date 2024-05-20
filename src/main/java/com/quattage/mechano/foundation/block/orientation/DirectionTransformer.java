@@ -2,6 +2,7 @@ package com.quattage.mechano.foundation.block.orientation;
 
 import javax.annotation.Nullable;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.CombinedOrientedBlock;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.VerticallyOrientedBlock;
@@ -315,6 +316,41 @@ public class DirectionTransformer {
             out[3] = Direction.SOUTH;
         }
         return out;
+    }
+
+    public static int getJoinedCornerStatus(Direction dirA, Direction dirB, Axis axis) {
+
+        int dirAIndex = -1;
+        int dirBIndex = -1;
+
+        Direction[] plane = getPlaneFromAxis(axis);
+        for(int x = 0; x < plane.length; x++) {
+            if(plane[x] == dirA)
+                dirAIndex = x;
+            if(plane[x] == dirB)
+                dirBIndex = x;
+            x++;
+        }
+
+        boolean invert = isPositive(dirA) == isPositive(dirB);
+
+        if(Math.abs(dirAIndex - dirBIndex) == 1 || Math.abs(dirAIndex - dirBIndex) == plane.length - 1)
+            return dirAIndex < dirBIndex ? (invert ? 1 : -1) : (invert ? -1 : 1);
+        return 0;
+    }
+
+    public static Direction getComplementingDirection(Direction dir, Axis axis) {
+        Direction[] plane = getPlaneFromAxis(axis);
+
+        for(int x = 0; x < plane.length; x++) {
+            if(plane[x] == dir) {
+                if(x < plane.length - 1)
+                    return plane[x + 1];
+                return plane[0];
+            }
+        }
+
+        return plane[0];
     }
 
     public static BlockPos[] getAllCorners(BlockPos center, Axis axis) {

@@ -1,10 +1,9 @@
 package com.quattage.mechano.foundation.electricity;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
-import com.quattage.mechano.foundation.electricity.core.DirectionalEnergyStorable;
+import com.quattage.mechano.foundation.electricity.core.DirectionalWattStorable;
 import com.quattage.mechano.foundation.electricity.core.ForgeEnergyJunction;
 import com.quattage.mechano.foundation.electricity.core.LocalEnergyStorage;
 import com.quattage.mechano.foundation.network.EnergySyncS2CPacket;
@@ -27,7 +26,7 @@ import javax.annotation.Nullable;
  * It manages sending, receiving, and storing ForgeEnergy and handles
  * its own capability implementation.
  */
-public class BatteryBank<T extends SmartBlockEntity & IBatteryBank> implements DirectionalEnergyStorable {
+public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> implements DirectionalWattStorable {
 
     
     @Nullable
@@ -148,9 +147,11 @@ public class BatteryBank<T extends SmartBlockEntity & IBatteryBank> implements D
     }
 
     /***
-     * Initializes the energy capabilities of this BatteryBank
+     * Initializes the energy capabilities of this BatteryBank and 
+     * reflects a state change if needed
      */
-    public void load() {
+    public void loadAndUpdate(BlockState state) {
+        reflectStateChange(state);
         energyHandler = LazyOptional.of(() -> battery);
     }
 
@@ -193,7 +194,7 @@ public class BatteryBank<T extends SmartBlockEntity & IBatteryBank> implements D
             if(p.isInput || p.isOutput)
                 out[x] = interactions[x].getDirection();
         }
-            
+
         return out;
     }
 
@@ -203,10 +204,8 @@ public class BatteryBank<T extends SmartBlockEntity & IBatteryBank> implements D
      * @return True if this BatteryBank is interacting with a ForgeEnergy BlockEntity
      */
     public boolean isConnectedExternally() {
-        for(ForgeEnergyJunction pol : interactions) {
-            Mechano.log("CHECKING DIR: " + pol.getDirection());
+        for(ForgeEnergyJunction pol : interactions) 
             if(pol.canSendOrReceive(target)) return true;
-        }
         return false;
     }
 

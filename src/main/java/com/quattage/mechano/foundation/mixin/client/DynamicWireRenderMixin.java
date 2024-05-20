@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
-import com.quattage.mechano.foundation.electricity.power.features.GID;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer;
 import com.quattage.mechano.foundation.electricity.spool.WireSpool;
 

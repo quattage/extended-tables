@@ -3,11 +3,11 @@ package com.quattage.mechano;
 import com.quattage.mechano.content.block.integrated.toolStation.ToolStationBlock;
 import com.quattage.mechano.content.block.integrated.toolStation.ToolStationGenerator;
 import com.quattage.mechano.content.block.integrated.toolStation.UpgradeBlock;
-import com.quattage.mechano.content.block.power.alternator.collector.CollectorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.BigRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlock;
+import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlock;
 import com.quattage.mechano.content.block.power.alternator.stator.AbstractStatorBlock;
 import com.quattage.mechano.content.block.power.alternator.stator.BigStatorBlock;
 import com.quattage.mechano.content.block.power.alternator.stator.SmallStatorBlock;
@@ -24,7 +24,9 @@ import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 import static com.quattage.mechano.Mechano.REGISTRATE;
 import static com.quattage.mechano.Mechano.UPGRADES;
@@ -33,6 +35,7 @@ import static com.quattage.mechano.Mechano.defer;
 import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 
+@EventBusSubscriber(modid = Mechano.MOD_ID)
 public class MechanoBlocks {
 
     static {
@@ -93,16 +96,17 @@ public class MechanoBlocks {
         .initialProperties(BIG_ROTOR)
         .properties(props -> props
             .noLootTable()
-			.noOcclusion())
+			.noOcclusion()
+            .pushReaction(PushReaction.BLOCK)
+        )
         .blockstate(new DynamicStateGenerator().in("rotor")::generate)
         .transform(pickaxeOnly())
         .register();
 
     public static final BlockEntry<SmallStatorBlock> SMALL_STATOR = REGISTRATE.block("small_stator", SmallStatorBlock::new)
-        .initialProperties(CommonProperties::dense)
+        .initialProperties(CommonProperties::dense) 
         .properties(props -> props
             .sound(SoundType.NETHERITE_BLOCK)
-            .noOcclusion()
         )
         .transform(pickaxeOnly())
         .transform(HITBOXES.flag("stator", SmallStatorBlock.MODEL_TYPE, AbstractStatorBlock.ORIENTATION))
@@ -112,11 +116,7 @@ public class MechanoBlocks {
         .register();
 
     public static final BlockEntry<BigStatorBlock> BIG_STATOR = REGISTRATE.block("big_stator", BigStatorBlock::new)
-        .initialProperties(CommonProperties::dense)
-        .properties(props -> props
-            .sound(SoundType.NETHERITE_BLOCK)
-            .noOcclusion()
-        )
+        .initialProperties(SMALL_STATOR)
         .transform(pickaxeOnly())
         .transform(HITBOXES.flag("stator", BigStatorBlock.MODEL_TYPE, AbstractStatorBlock.ORIENTATION))
         .blockstate(new DynamicStateGenerator(BigStatorBlock.MODEL_TYPE).in("stator")::generate)
@@ -124,7 +124,7 @@ public class MechanoBlocks {
         .transform(customItemModel("stator", "big_stator/base_single"))
         .register();
 
-    public static final BlockEntry<CollectorBlock> COLLECTOR = REGISTRATE.block("collector", CollectorBlock::new)
+    public static final BlockEntry<SlipRingShaftBlock> SLIP_RING_SHAFT = REGISTRATE.block("slip_ring_shaft", SlipRingShaftBlock::new)
         .initialProperties(CommonProperties::malleable)
         .properties(props -> props
             .sound(SoundType.NETHERITE_BLOCK)
@@ -132,9 +132,9 @@ public class MechanoBlocks {
         )
         .transform(BlockStressDefaults.setImpact(48.0))
         .transform(pickaxeOnly())
-        .blockstate(new DynamicStateGenerator(CollectorBlock.MODEL_TYPE)::generate)
+        .blockstate(new DynamicStateGenerator(SlipRingShaftBlock.MODEL_TYPE)::generate)
         .item()
-        .transform(customItemModel("collector", "base"))
+        .transform(customItemModel("slip_ring_shaft", "base"))
         .register();
 
     public static final BlockEntry<ConnectorTier0Block> CONNECTOR_T0 = REGISTRATE.block("connector_tier_zero", ConnectorTier0Block::new)

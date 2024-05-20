@@ -2,17 +2,16 @@
 
 package com.quattage.mechano.foundation.electricity.rendering;
 
+import javax.annotation.Nullable;
+
 import org.joml.Vector3f;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.helper.VectorHelper;
-import com.quattage.mechano.foundation.mixin.client.RenderChunkInvoker;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -104,7 +103,7 @@ public class WireModelRenderer {
         if(modelCache.containsKey(key)) 
             model = modelCache.get(key);
         else {
-            model = buildWireModel(-1, 0, origin, true);
+            model = buildWireModel(1f, origin, true);
             modelCache.put(key, model);
         }
         model.render(buffer, matrix, fromBlockLight, toBlockLight, fromSkyLight, toSkyLight, sprite);
@@ -116,7 +115,19 @@ public class WireModelRenderer {
      */
     public void renderDynamic(VertexConsumer buffer, PoseStack matrix, Vector3f origin, 
         int fromBlockLight, int toBlockLight, int fromSkyLight, int toSkyLight) {
-        WireModel model = buildWireModel(-1, 0, origin, false);
+        WireModel model = buildWireModel(1f, origin, false);
+        if(model == null) return;
+        model.render(buffer, matrix, fromBlockLight, toBlockLight, fromSkyLight, toSkyLight, null);
+    }
+
+    /***
+     * Renders a dynamic wire (a wire that can move, doesn't use the cache at all)
+     * This is useful for wires that aren't yet confirmed, or placed in-world.
+     */
+    public void renderDynamic(VertexConsumer buffer, PoseStack matrix, Vector3f origin, 
+        float sagOverride, int fromBlockLight, int toBlockLight, int fromSkyLight, int toSkyLight) {
+        WireModel model = buildWireModel(sagOverride, origin, false);
+        if(model == null) return;
         model.render(buffer, matrix, fromBlockLight, toBlockLight, fromSkyLight, toSkyLight, null);
     }
 
@@ -126,17 +137,19 @@ public class WireModelRenderer {
      */
     public void renderDynamic(VertexConsumer buffer, PoseStack matrix, Vector3f origin, 
         int fromBlockLight, int toBlockLight, int fromSkyLight, int toSkyLight, boolean isGlowingRed, int alpha) {
-        WireModel model = buildWireModel(-1, 0, origin, false);
+        WireModel model = buildWireModel(1f, origin, false);
+        if(model == null) return;
         model.render(buffer, matrix, fromBlockLight, toBlockLight, fromSkyLight, toSkyLight, isGlowingRed, alpha, null);
     }
 
     /***
      * Renders a dynamic wire (a wire that can move, doesn't use the cache at all)
-     * With an "age" attribute to drive animations.
-    */
+     * This is useful for wires that aren't yet confirmed, or placed in-world.
+     */
     public void renderDynamic(VertexConsumer buffer, PoseStack matrix, Vector3f origin, 
-        int age, float pTicks, int fromBlockLight, int toBlockLight, int fromSkyLight, int toSkyLight, boolean isGlowingRed, int alpha) {
-        WireModel model = buildWireModel(age, pTicks, origin, false);
+        float sagOverride, int fromBlockLight, int toBlockLight, int fromSkyLight, int toSkyLight, boolean isGlowingRed, int alpha) {
+        WireModel model = buildWireModel(sagOverride, origin, false);
+        if(model == null) return;
         model.render(buffer, matrix, fromBlockLight, toBlockLight, fromSkyLight, toSkyLight, isGlowingRed, alpha, null);
     }
 
@@ -145,20 +158,24 @@ public class WireModelRenderer {
     }
 
     // builds a wire model and returns the result
-    private WireModel buildWireModel(int age, float pTicks, Vector3f origin, boolean backface) {
+    @Nullable
+    private WireModel buildWireModel(float sagOverride,  Vector3f origin, boolean backface) {
         int capacity = (int)(2 * new Vec3(origin).lengthSqr());
+
+        if(capacity <= 0 || capacity >= Integer.MAX_VALUE) return null;
+        
         WireModel.WireBuilder builder = WireModel.builder(capacity);
 
         float dXZ = (float)Math.sqrt(origin.x() * origin.x() + origin.z() * origin.z());
         if(dXZ < 0.1) {
-            buildVerticalWireCountour(builder, origin, age, pTicks, 0.785398f, WireUV.SKEW_A);
-            buildVerticalWireCountour(builder, origin, age, pTicks, 2.35619f, WireUV.SKEW_B);
+            buildVerticalWireCountour(builder, origin, 0.785398f, WireUV.SKEW_A);
+            buildVerticalWireCountour(builder, origin, 2.35619f, WireUV.SKEW_B);
         } else {
-            buildWireContour(builder, origin, age, pTicks, 0.785398f, false, WireUV.SKEW_A, 1f, dXZ);
-            buildWireContour(builder, origin, age, pTicks, 2.35619f, false, WireUV.SKEW_B, 1f, dXZ);
+            buildWireContour(builder, origin, sagOverride,  0.785398f, false, WireUV.SKEW_A, 1f, dXZ);
+            buildWireContour(builder, origin, sagOverride, 2.35619f, false, WireUV.SKEW_B, 1f, dXZ);
             if(backface) {
-                buildWireContour(builder, origin, age, pTicks, 3.92699f, false, WireUV.SKEW_A, 1f, dXZ);
-                buildWireContour(builder, origin, age, pTicks, 5.49779f, false, WireUV.SKEW_B, 1f, dXZ);
+                buildWireContour(builder, origin, sagOverride, 3.92699f, false, WireUV.SKEW_A, 1f, dXZ);
+                buildWireContour(builder, origin, sagOverride, 5.49779f, false, WireUV.SKEW_B, 1f, dXZ);
             }
         }
         return builder.build();
@@ -167,8 +184,8 @@ public class WireModelRenderer {
     // builds one elongated manifold that makes up one "face" of the wire. In this case,
     // the math breaks down as dX approaches 0, so perfectly vertical wires use a different, 
     // more simplified algorithm.
-    private void buildVerticalWireCountour(WireModel.WireBuilder builder, Vector3f vec, int age, 
-        float pTicks, float angle, WireUV uv) {
+    private void buildVerticalWireCountour(WireModel.WireBuilder builder, 
+        Vector3f vec, float angle, WireUV uv) {
 
         float contextualLength = 1f / LOD;
         float chainWidth = (uv.x1() - uv.x0()) / 16 * SCALE;
@@ -211,10 +228,11 @@ public class WireModelRenderer {
     // builds one elongated manifold that makes up one "face" of the wire.
     // The other face (to create the X shape seen in-game) is done with
     // a second call to this method.
-    private void buildWireContour(WireModel.WireBuilder builder, Vector3f vec, int age, 
-        float pTicks, float angle, boolean inv, WireUV uv, float offset, float distanceXZ) {
+    private void buildWireContour(WireModel.WireBuilder builder, Vector3f vec, float sagOverride, 
+        float angle, boolean inv, WireUV uv, float offset, float distanceXZ) {
 
-        float animatedSag = Mth.clamp(0.8267f * (float)Math.pow(1.06814f, distanceXZ), 0.5f, 4.8f);
+        float animatedSag = (Mth.clamp(0.8267f * (float)Math.pow(1.06814f, distanceXZ), 0.5f, 4.8f)) * sagOverride;
+
         float realLength, desiredLength = 1 / (Mth.clamp(2.05118f * (float)Math.pow(0.882237f, distanceXZ), 0.8f, 2.8f));
         float distance = VectorHelper.getLength(vec);
 
@@ -243,8 +261,8 @@ public class WireModelRenderer {
         rotAxis.set(point1.x() - point0.x(), point1.y() - point0.y(), point1.z() - point0.z());
         rotAxis.normalize();
 
-        float offsetC = (float)((width / 2) * Math.cos(angle));
-        float offsetS = (float)((width / 2) * Math.sin(angle));
+        // float offsetC = (float)((width / 2) * Math.cos(angle));
+        // float offsetS = (float)((width / 2) * Math.sin(angle));
 
         normal.rotateAxis(angle, rotAxis.x, rotAxis.y, rotAxis.z);
         normal.mul(width);
@@ -259,8 +277,6 @@ public class WireModelRenderer {
 
             rotAxis.set(point1.x() - point0.x(), point1.y() - point0.y(), point1.z() - point0.z());
             rotAxis.normalize();
-            
-            
 
             normal.set(-gradient, Math.abs(distanceXZ / distance), 0);
             normal.normalize();

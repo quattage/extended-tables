@@ -2,9 +2,12 @@ package com.quattage.mechano.content.block.power.transfer.connector.tiered;
 
 import java.util.Locale;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
+import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.electricity.core.EBEWrenchable;
 import com.simibubi.create.AllBlocks;
 
@@ -130,6 +133,37 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
         return false;
     }
 
+    @Override
+    public float getShadeBrightness(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+        return 1f;
+    }
+
+    /***
+     * Used for rotating a pole made of connectors all at once.
+     * @param world 
+     * @param startPos Starting position
+     * @param facing SimpleOrientation of the block at the starting position
+     * @param invert If true, iterates opposite of the given SimpleOrientation
+     */
+    protected void swapPoleStates(Level world, BlockPos startPos, SimpleOrientation facing, boolean invert) {
+
+        Direction stepDir = facing.getCardinal();
+        if(invert) stepDir = stepDir.getOpposite();
+        
+        for(int x = 0; x < MechanoSettings.POLE_STACK_SIZE; x++) {
+            
+            BlockPos thisPos = startPos.relative(stepDir, x + 1);
+            BlockState thisState = world.getBlockState(thisPos);
+
+            if(!(thisState.getBlock() instanceof AbstractConnectorBlock)) return;
+
+            if(thisState.getValue(SimpleOrientedBlock.ORIENTATION).getCardinal() == facing.getCardinal()) {
+                world.setBlockAndUpdate(thisPos, thisState.setValue(SimpleOrientedBlock.ORIENTATION, facing));
+                syncEBE(world, thisPos);
+            }
+        }
+    }
+
     protected boolean isAttached(LevelReader world, BlockPos pos, Direction dir, VoxelShape foundation) {
 
         BlockPos relative = pos.relative(dir);
@@ -153,7 +187,6 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
 
     @Override
     public ItemStack getCloneItemStack(BlockGetter pLevel, BlockPos pPos, BlockState pState) {
-        // TODO Auto-generated method stub
         return new ItemStack(MechanoBlocks.CONNECTOR_T0.get());
     }
 }

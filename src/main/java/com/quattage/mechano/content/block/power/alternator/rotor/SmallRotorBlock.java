@@ -30,6 +30,11 @@ public class SmallRotorBlock extends AbstractRotorBlock implements IBE<SmallRoto
         super(properties);
     }
 
+	@Override
+	public BlockPos getParentPos(Level world, BlockPos pos, BlockState state) {
+		return pos;
+	}
+
     @Override
     public Class<SmallRotorBlockEntity> getBlockEntityClass() {
         return SmallRotorBlockEntity.class;

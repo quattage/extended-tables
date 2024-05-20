@@ -19,7 +19,7 @@ import java.util.List;
  * ElectricBlockEntity provides a basic ForgeEnergy implementation with no
  * bells & whistles.
 */
-public abstract class ElectricBlockEntity extends SmartBlockEntity implements IBatteryBank {
+public abstract class ElectricBlockEntity extends SmartBlockEntity implements BatteryBankUpdatable {
 
     public final BatteryBank<ElectricBlockEntity> batteryBank;
 
@@ -35,9 +35,9 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements IB
      * Refreshes this ElectricBlockEntity's interactions to reflect a BlockState change.<p>
      * This would typically be used after this block is rotated.
      */
-    public void reOrient() {
-        batteryBank.reflectStateChange(this.getBlockState());
-        this.level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+    @Override
+    public void reOrient(BlockState state) {
+        batteryBank.reflectStateChange(state);
     }
 
     public boolean isConnectedExternally() {
@@ -46,8 +46,7 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements IB
 
     @Override
     public void onLoad() {
-        reOrient();
-        batteryBank.load();
+        batteryBank.loadAndUpdate(getBlockState());
         super.onLoad();
     }
 
@@ -61,6 +60,7 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements IB
 
     @Override // runs on first tick
     public void initialize() {
+        reOrient(getBlockState());
         super.initialize();
     }
 

@@ -3,6 +3,7 @@ package com.quattage.mechano.foundation.electricity;
 import java.util.List;
 
 import com.quattage.mechano.foundation.electricity.builder.AnchorBankBuilder;
+import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
 import net.minecraft.core.BlockPos;
@@ -18,6 +19,7 @@ import net.minecraft.world.phys.AABB;
 public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
 
     private final AnchorPointBank<WireAnchorBlockEntity> anchors;
+    private long oldTime = 0;
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {}
@@ -53,9 +55,9 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
     }
 
     @Override
-    public void reOrient() {
-        anchors.reflectStateChange(this.getBlockState());
-        super.reOrient();
+    public void reOrient(BlockState state) {
+        anchors.reflectStateChange(state);
+        super.reOrient(state);
     }
 
     public void syncInGrid() {
@@ -75,9 +77,16 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
         super.invalidate();
     }
 
+    public double getDelta(long time) {
+        if(oldTime == 0) oldTime = System.nanoTime();
+        double out = (time - oldTime) * 0.000001f;
+        oldTime = time;
+        return out;
+    }
+
     @Override
     public AABB getRenderBoundingBox() {
-        if(anchors.isAwaitingConnection) 
+        if(anchors.isAwaitingConnection || GridClientCache.hasNewEdge(this)) 
             return AABB.ofSize(getBlockPos().getCenter(), Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         return super.getRenderBoundingBox();
     }
@@ -85,7 +94,6 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
     @Override
     public void initialize() {
         super.initialize();
-        reOrient();
         this.anchors.initialize(getLevel());
     }
 }

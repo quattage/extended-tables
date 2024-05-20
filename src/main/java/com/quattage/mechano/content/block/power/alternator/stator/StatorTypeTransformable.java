@@ -20,23 +20,15 @@ public interface StatorTypeTransformable<T extends Enum<T> & StringRepresentable
         return enumValues()[(get().ordinal() / 4) * 4 + 3];
     }
 
-    default T toCorner() {
-        return enumValues()[((get().ordinal() + 4) % (enumValues().length))];
-    }
-
     default T copy() {
         return enumValues()[get().ordinal()];
-    }
-
-    default boolean shouldContnue(StatorTypeTransformable<?> other) {
-        return this.isCorner() == other.isCorner();
     }
 
     default T getDefualt() {
         return enumValues()[0];
     }
 
+    abstract boolean shouldContnue(T other);
     abstract T get();
     abstract T[] enumValues();
-    abstract boolean isCorner();
 }

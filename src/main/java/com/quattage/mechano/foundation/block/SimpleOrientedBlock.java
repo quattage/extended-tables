@@ -3,7 +3,6 @@ package com.quattage.mechano.foundation.block;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
@@ -36,12 +35,14 @@ public class SimpleOrientedBlock extends Block implements IWrenchable {
 		SimpleOrientation rotatedOrient = SimpleOrientation.cycle(state.getValue(ORIENTATION));
         BlockState rotated = state.setValue(ORIENTATION, rotatedOrient);
 
-        if (!rotated.canSurvive(world, context.getClickedPos()))
+        if(!rotated.canSurvive(world, context.getClickedPos()))
 			return InteractionResult.PASS;
 
-        KineticBlockEntity.switchToBlockState(world, context.getClickedPos(), updateAfterWrenched(rotated, context));
+        context.getLevel().setBlockAndUpdate(context.getClickedPos(),  
+            Block.updateFromNeighbourShapes(rotated, context.getLevel(), 
+                context.getClickedPos()));
 
-        if (world.getBlockState(context.getClickedPos()) != state)
+        if(world.getBlockState(context.getClickedPos()) != state)
 			playRotateSound(world, context.getClickedPos());
 
 		return InteractionResult.SUCCESS;
@@ -56,6 +57,7 @@ public class SimpleOrientedBlock extends Block implements IWrenchable {
         if(orientation.getAxis() == followingDir.getAxis()) followingDir = followingDir.getClockWise();
         if(context.getPlayer().isCrouching()) orientation = orientation.getOpposite();
 
-        return this.defaultBlockState().setValue(ORIENTATION, SimpleOrientation.combine(orientation, followingDir.getAxis()));
+        return this.defaultBlockState().setValue(ORIENTATION, 
+            SimpleOrientation.combine(orientation, followingDir.getAxis()));
     }
 }

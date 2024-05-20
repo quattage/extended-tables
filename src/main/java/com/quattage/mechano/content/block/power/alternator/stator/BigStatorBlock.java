@@ -5,10 +5,17 @@ import java.util.Locale;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
+import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
+import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlock;
+import com.quattage.mechano.foundation.block.hitbox.Hitbox;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
+import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
 import com.simibubi.create.foundation.placement.PlacementOffset;
+import com.simibubi.create.foundation.utility.Pair;
 import com.tterrag.registrate.util.entry.BlockEntry;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -18,33 +25,48 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.content.block.power.alternator.stator.BigStatorBlock.BigStatorModelType> {
 
     public static final EnumProperty<BigStatorModelType> MODEL_TYPE = EnumProperty.create("model", BigStatorModelType.class);
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper(2));
+    private static Hitbox<SimpleOrientation> hitbox = new Hitbox<>();
 
-    protected static enum BigStatorModelType implements HitboxNameable, StringRepresentable, StatorTypeTransformable<BigStatorModelType> {
+    protected static enum BigStatorModelType implements StringRepresentable, HitboxNameable, StatorTypeTransformable<BigStatorModelType> {
         
-        BASE_SINGLE(false),
-        BASE_END_A(false),      
-        BASE_END_B(false),      
-        BASE_MIDDLE(false),     
+        BASE_SINGLE(0, 0),
+        BASE_END_A(0, 1),
+        BASE_END_B(0, 2),
+        BASE_MIDDLE(0, 3),
 
-        CORNER_SINGLE(true),
-        CORNER_END_A(true),     
-        CORNER_END_B(true),     
-        CORNER_MIDDLE(true);
+        CORNER_POSITIVE_SINGLE(1, 0),
+        CORNER_POSITIVE_END_A(1, 1),
+        CORNER_POSITIVE_END_B(1, 2),
+        CORNER_POSITIVE_MIDDLE(1, 3),
 
-        final boolean isCorner;
+        CORNER_NEGATIVE_SINGLE(2, 0),
+        CORNER_NEGATIVE_END_A(2, 1),
+        CORNER_NEGATIVE_END_B(2, 2),
+        CORNER_NEGATIVE_MIDDLE(2, 3);
 
-        BigStatorModelType(boolean isCorner) {
-            this.isCorner = isCorner;
+        final byte offset;
+        final byte cornerType;
+
+        BigStatorModelType(int cornerType, int offset) {
+            this.cornerType = (byte)cornerType;
+            this.offset = (byte)offset;
+        }
+
+        public byte getCornerType() {
+            return this.cornerType;
         }
 
         @Override
@@ -57,9 +79,20 @@ public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.con
             return toString();
         }
 
-        @Override
-        public boolean isCorner() {
-            return this.isCorner;
+        protected BigStatorModelType toBase() {
+            return values()[this.offset];
+        }
+
+        protected BigStatorModelType toCorner(boolean isPositive) {
+            return isPositive ? toPositiveCorner() : toNegativeCorner();
+        }
+
+        protected BigStatorModelType toPositiveCorner() {
+            return values()[4 + this.offset];
+        }
+
+        protected BigStatorModelType toNegativeCorner() {
+            return values()[8 + this.offset];
         }
 
         @Override
@@ -75,6 +108,11 @@ public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.con
         public String toString() {
             return getSerializedName();
         }
+
+        @Override
+        public boolean shouldContnue(BigStatorModelType other) {
+            return true;
+        }
     }
 
     public BigStatorBlock(Properties pProperties) {
@@ -82,13 +120,19 @@ public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.con
     }
 
     @Override
-    public BlockEntry<? extends AbstractStatorBlock<BigStatorModelType>> getEntry() {
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        if(hitbox.needsBuilt()) hitbox = MechanoClient.HITBOXES.collectAllOfType(this);
+        return hitbox.get(state.getValue(getTypeProperty())).getRotated(state.getValue(ORIENTATION));
+    }
+
+    @Override
+    public BlockEntry<? extends AbstractStatorBlock<BigStatorModelType>> getStatorEntry() {
         return MechanoBlocks.BIG_STATOR;
     }
 
     @Override
-    public boolean isStator(Block block) {
-        return block == getEntry().get();
+    public BlockEntry<? extends BlockRotorable> getRotorEntry() {
+        return MechanoBlocks.BIG_ROTOR_DUMMY;
     }
 
     @Override
@@ -113,7 +157,40 @@ public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.con
 
     @Override
     protected BlockState getAlignedModelState(Level world, Axis fromAxis, BlockPos centerPos, BlockState fromState, BlockState thisState, BlockPos[] plane) {
+
+        if(world.isClientSide()) return thisState;
+
+        for(BlockPos visitedPos : plane) {
+
+            BlockState visitedState = world.getBlockState(visitedPos);            
+            if(!isStator(visitedState)) continue;
+            SimpleOrientation orient = visitedState.getValue(ORIENTATION);
+            if(orient.getOrient() != fromAxis) continue;
+
+            int cornerStatus = DirectionTransformer.getJoinedCornerStatus(
+                fromState.getValue(ORIENTATION).getCardinal(), orient.getCardinal(), fromAxis);
+            
+            if(cornerStatus != 0) {
+                BigStatorModelType type = thisState.getValue(MODEL_TYPE).toCorner(cornerStatus < 0 ? true : false);
+                return thisState.setValue(MODEL_TYPE, type);
+            }
+        }
+
         return thisState;
+    }
+
+    @Override
+    protected boolean areBlocksContinuous(SimpleOrientation thisOrient, BigStatorModelType thisType,
+            SimpleOrientation thatOrient, BigStatorModelType thatType) {
+        return thisType.getCornerType() == thatType.getCornerType() ? thisOrient == thatOrient : false;
+    }
+
+    @Override
+    public BlockPos getAttachedRotorPos(Level world, BlockPos pos, BlockState state) {
+        BlockPos facing = pos.relative(state.getValue(ORIENTATION).getCardinal());
+        if(world.getBlockState(facing).getBlock() instanceof BlockRotorable br)
+            return br.getParentPos(world, pos, state);
+        return facing;
     }
 
     @Override
@@ -123,11 +200,11 @@ public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.con
 
     //////////
     @MethodsReturnNonnullByDefault
-	protected static class PlacementHelper extends StatorDirectionalHelper<SimpleOrientation> {
+	protected static class PlacementHelper extends StatorDirectionalHelper<BigStatorModelType> {
 
 		protected PlacementHelper(int radius) {
 			super(radius, state -> state.getBlock() instanceof BigStatorBlock, 
-                state -> state.getValue(ORIENTATION), ORIENTATION);
+                state -> state.getValue(ORIENTATION), MODEL_TYPE);
 		}
 
 		@Override

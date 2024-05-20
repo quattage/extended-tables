@@ -2,15 +2,14 @@ package com.quattage.mechano.foundation.electricity.spool;
 
 import java.util.ArrayList;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.MechanoItems;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.core.anchor.interaction.AnchorInteractType;
-import com.quattage.mechano.foundation.electricity.power.GlobalTransferGrid;
-import com.quattage.mechano.foundation.electricity.power.features.GID;
+import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.rendering.WireAnchorBlockRenderer;
 import com.quattage.mechano.foundation.network.AnchorSelectC2SPacket;
 import com.simibubi.create.foundation.utility.Pair;
@@ -18,7 +17,6 @@ import com.simibubi.create.foundation.utility.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -117,6 +115,7 @@ public abstract class WireSpool extends Item {
         return MechanoClient.WIRE_TEXTURE_PROVIDER.get(this);
     }
 
+    @SuppressWarnings("deprecation")
     public final TextureAtlasSprite getWireSprite() {
         return Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(new ResourceLocation("mechano:block/wire/" + getName()));
     }
@@ -170,11 +169,12 @@ public abstract class WireSpool extends Item {
         if(!network.isVertAvailable(currentAnchor.getFirst().getID())) {
             player.displayClientMessage(AnchorInteractType.ANCHOR_FULL.getMessage(), true);
             return InteractionResultHolder.fail(handStack);
-        } 
+        }
         
         CompoundTag nbt = handStack.getOrCreateTag();
         if(nbt.isEmpty()) {
             selectedAnchorID.writeTo(nbt);
+            WireAnchorBlockRenderer.resetOldPos(player, currentAnchor.getFirst());
         } else {
             if(!GID.isValidTag(nbt)) { // validate just in case, this code may never be reached idk
                 clearTag(handStack);
@@ -185,6 +185,11 @@ public abstract class WireSpool extends Item {
             Pair<AnchorPoint, WireAnchorBlockEntity> previousAnchor = AnchorPoint.getAnchorAt(world, GID.of(nbt));
             if(previousAnchor == null ) {
                 clearTag(handStack);
+                return InteractionResultHolder.fail(handStack);
+            }
+
+            if(currentAnchor.getFirst().getID().getPos().equals(previousAnchor.getFirst().getID().getPos())) {
+                player.displayClientMessage(AnchorInteractType.LINK_CONFLICT.getMessage(), true);
                 return InteractionResultHolder.fail(handStack);
             }
 
@@ -205,7 +210,6 @@ public abstract class WireSpool extends Item {
         return InteractionResultHolder.fail(handStack);
     }
 
-    @SuppressWarnings("unused")
     public void clearTag(ItemStack stack) {
         stack.setTag(new CompoundTag());
     }
@@ -234,11 +238,6 @@ public abstract class WireSpool extends Item {
                 aP = null;
             }
         }
-    }
-
-    private void sendInfo(Level world, Player player, BlockPos pos, AnchorInteractType result) {
-        player.displayClientMessage(result.getMessage(), true);
-        result.playConnectSound(world, pos);
     }
 
     public void setSelectedAnchor(GID selectedAnchorID) {

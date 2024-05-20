@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
  * ElectricBlockEntity provides a basic ForgeEnergy implementation with no
  * bells & whistles.
 */
-public abstract class ElectroKineticBlockEntity extends KineticBlockEntity implements IBatteryBank{
+public abstract class ElectroKineticBlockEntity extends KineticBlockEntity implements BatteryBankUpdatable{
 
     public final BatteryBank<ElectroKineticBlockEntity> batteryBank;
 
@@ -29,12 +29,9 @@ public abstract class ElectroKineticBlockEntity extends KineticBlockEntity imple
         batteryBank = init.build();
     }
 
-    /***
-     * Refreshes this ElectricBlockEntity's interactions to reflect a BlockState change.<p>
-     * This would typically be used after this block is rotated.
-     */
-    public void reOrient() {
-        batteryBank.reflectStateChange(this.getBlockState());
+    @Override
+    public void reOrient(BlockState state) {
+        batteryBank.reflectStateChange(state);
     }
     
     /***
@@ -52,8 +49,7 @@ public abstract class ElectroKineticBlockEntity extends KineticBlockEntity imple
 
     @Override
     public void onLoad() {
-        batteryBank.load();
-        reOrient();
+        batteryBank.loadAndUpdate(this.getBlockState());
         super.onLoad();
     }
 

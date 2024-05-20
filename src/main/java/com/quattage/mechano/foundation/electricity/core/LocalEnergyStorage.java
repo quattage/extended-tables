@@ -1,5 +1,8 @@
 package com.quattage.mechano.foundation.electricity.core;
 
+import com.quattage.mechano.foundation.electricity.core.watt.WattStorable.OvervoltBehavior;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattBattery;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -13,7 +16,7 @@ import net.minecraftforge.energy.IEnergyStorage;
 /***
  * A generic implementation of <code>EnergyStorage</code> provided by Forge.
  */
-public class LocalEnergyStorage<T extends DirectionalEnergyStorable> extends EnergyStorage {
+public class LocalEnergyStorage<T extends DirectionalWattStorable> extends EnergyStorage {
 
     private T parent;
 
@@ -30,6 +33,16 @@ public class LocalEnergyStorage<T extends DirectionalEnergyStorable> extends Ene
         int maxExtract, int energy) {
             super(capacity, maxReceive, maxExtract, energy);
             this.parent = parent;
+
+
+        WattBattery<T> batt = WattBattery.newBatteryAt(parent)
+            .withFlux(120)
+            .withVoltageTolerance(240)
+            .withMaxCharge(2048)
+            .withMaxDischarge(2048)
+            .withCapacity(2048)
+            .withOvervoltBehavior(OvervoltBehavior.LIMIT_LOSSY)
+        .makeWithOvervoltEvent(this::setEnergyStored);
     }
     
     @Override

@@ -144,10 +144,6 @@ repositories {
         name = "shedaniel"
         url = "https://maven.shedaniel.me/"
     }
-    maven { 
-        name = "geckolib"                                 //Geckolib
-        url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
-    }
 }
 
 // the good shit
@@ -167,9 +163,6 @@ dependencies {
 
     // cloth config
     implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
-
-    // Geckolib
-    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${geckolib_version}")
 
     // BetterF3
     if(Boolean.parseBoolean(project.use_betterf3)) {

@@ -3,7 +3,7 @@ package com.quattage.mechano.foundation.network;
 import java.util.function.Supplier;
 
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
-import com.quattage.mechano.foundation.electricity.power.features.GID;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.spool.WireSpool;
 
 import net.minecraft.core.BlockPos;

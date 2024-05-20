@@ -2,13 +2,15 @@ package com.quattage.mechano.content.block.power.alternator.stator;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.MechanoPackets;
+import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
+import com.quattage.mechano.content.block.power.alternator.rotor.AlternatorUpdateS2CPacket;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
-import com.quattage.mechano.foundation.block.hitbox.Hitbox;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
+import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 import com.simibubi.create.foundation.placement.IPlacementHelper;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -23,6 +25,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -30,12 +33,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
 public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentable & HitboxNameable & StatorTypeTransformable<T>> extends SimpleOrientedBlock {
-
-    private static Hitbox<SimpleOrientation> hitbox = new Hitbox<SimpleOrientation>();
 
     public AbstractStatorBlock(Properties pProperties) {
         super(pProperties);
@@ -44,68 +43,128 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if(hitbox.needsBuilt()) hitbox = MechanoClient.HITBOXES.collectAllOfType(this);
-        return hitbox.get(state.getValue(getTypeProperty())).getRotated(state.getValue(ORIENTATION));
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = super.getStateForPlacement(context);
-        return getInitialState(context.getLevel(), context.getClickedPos(), state, state.getValue(ORIENTATION).getOrient());
+        return getInitialState(context.getLevel(), context.getClickedPos(), state, state.getValue(ORIENTATION).getOrient(), true);
     }
 
-    public BlockState getInitialState(Level world, BlockPos pos, @Nullable BlockState state, Axis rotorAxis) {
+    public BlockState getInitialState(Level world, BlockPos pos, @Nullable BlockState state, Axis rotorAxis, boolean shouldUpdate) {
         
-        if(state == null) 
-            state = this.defaultBlockState();
+        if(state == null) state = this.defaultBlockState();
 
-        BlockPos[] planePositions = getAlignmentType().toPositions(pos, rotorAxis);
-        if(getAlignmentType().needsForcedUpdates()) {
-            for(BlockPos visitedPos : planePositions) {
-                BlockState visitedState = world.getBlockState(visitedPos);
-                if(visitedState.getBlock() instanceof AbstractStatorBlock asb)
-                    asb.forcedNeighborChange(world, rotorAxis, visitedPos, state, visitedState, planePositions);
+        BlockPos[] planePositions = DirectionTransformer.getAllAdjacent(pos, rotorAxis);
+
+        for(BlockPos visitedPos : planePositions) {
+            BlockState visitedState = world.getBlockState(visitedPos);
+            if(isRotor(visitedState.getBlock())) {
+
+                Direction delta = Direction.fromDelta(
+                    pos.getX() - visitedPos.getX(), 
+                    pos.getY() - visitedPos.getY(), 
+                    pos.getZ() - visitedPos.getZ()
+                );
+
+                if(delta == null) continue;
+
+                state = state.setValue(ORIENTATION, 
+                    SimpleOrientation.combine(
+                        delta.getOpposite(), rotorAxis
+                    ));
+                break;
             }
         }
 
-        if(getAlignmentType() == UpdateAlignment.CORNERS) {
-
-        } else {
-
-            for(BlockPos visitedPos : planePositions) {
-                BlockState visitedState = world.getBlockState(visitedPos);
-                if(visitedState.getBlock() instanceof BlockRotorable br) {
-
-                    if(br.getRotorAxis(visitedState) != rotorAxis) continue;        
-                    state = 
-                        state.setValue(ORIENTATION, SimpleOrientation.combine(Direction.fromDelta(
-                            pos.getX() - visitedPos.getX(), 
-                            pos.getY() - visitedPos.getY(), 
-                            pos.getZ() - visitedPos.getZ()
-                        ).getOpposite(), rotorAxis)
-                    );
-
-                    break;
-                }
-            }
-        }
+        
 
         return getAlignedModelState(world, rotorAxis, pos, state, state, planePositions);
     }
 
     @Override
     @SuppressWarnings("deprecation")
+    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
+
+        super.onPlace(state, world, pos, oldState, isMoving);
+        if(world.isClientSide) return;
+
+        Axis rotorAxis = state.getValue(ORIENTATION).getOrient();
+        if(getAlignmentType().needsForcedUpdates()) {
+            BlockPos[] cornerPositions = getAlignmentType().toPositions(pos, rotorAxis);
+            for(BlockPos visitedPos : cornerPositions) {
+                BlockState visitedState = world.getBlockState(visitedPos);
+                if(visitedState.getBlock() instanceof AbstractStatorBlock asb)
+                    asb.forcedNeighborChange(world, rotorAxis, visitedPos, state, visitedState, cornerPositions);
+            }
+        }
+
+        if(state.getBlock() != oldState.getBlock()) {
+            BlockPos rotorPos = updateAttachedRotor(world, pos, state, true);
+            if(rotorPos != null)
+                MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(rotorPos, AlternatorUpdateS2CPacket.Type.ROTOR_INCREMENT));
+        }
+    }
+
+    
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
+
+        if(state.getBlock() != newState.getBlock()) {
+            BlockPos rotorPos = updateAttachedRotor(world, pos, state, false);
+            if(rotorPos != null)
+                MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(rotorPos, AlternatorUpdateS2CPacket.Type.ROTOR_DECREMENT));
+        }
+
+        super.onRemove(state, world, pos, newState, isMoving);
+    }
+
+    @Nullable 
+    private BlockPos updateAttachedRotor(Level world, BlockPos pos, BlockState state, boolean inc) {
+        if(world.getBlockEntity(getAttachedRotorPos(world, pos, state)) instanceof AbstractRotorBlockEntity arbe) {
+            if(inc) arbe.incStatorCount(); 
+            else arbe.decStatorCount();
+            return arbe.getBlockPos();
+        }
+
+        return null;
+    }
+
+    @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+
+        boolean hasRotorBefore = hasRotor(context.getLevel(), context.getClickedPos(), state);
+        InteractionResult result = super.onWrenched(state, context);
+        boolean hasRotorAfter = hasRotor(context.getLevel(), context.getClickedPos(), context.getLevel().getBlockState(context.getClickedPos()));
+
+        if(hasRotorBefore != hasRotorAfter) {
+            BlockPos rotorPos = updateAttachedRotor(context.getLevel(), context.getClickedPos(), state, hasRotorAfter);
+            if(rotorPos != null)
+                MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(rotorPos, 
+                    hasRotorAfter ? AlternatorUpdateS2CPacket.Type.ROTOR_INCREMENT : AlternatorUpdateS2CPacket.Type.ROTOR_DECREMENT));
+        }
+
+        return result;
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
     public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean pIsMoving) {
 
-        SimpleOrientation thisOrient = state.getValue(SmallStatorBlock.ORIENTATION);
+        SimpleOrientation thisOrient = state.getValue(ORIENTATION);
         Direction orientation = DirectionTransformer.toDirection(thisOrient.getOrient());
 
+        boolean hasRear = false;
         BlockState rear = world.getBlockState(pos.relative(orientation));
-        BlockState front = world.getBlockState(pos.relative(orientation.getOpposite()));
+        if(this.isStator(rear.getBlock())) {
+            hasRear = areBlocksContinuous(thisOrient, state.getValue(getTypeProperty()), 
+                rear.getValue(ORIENTATION), rear.getValue(getTypeProperty()));
+        }
 
-        boolean hasRear = this.isStator(rear.getBlock()) && rear.getValue(SmallStatorBlock.ORIENTATION) == thisOrient;
-        boolean hasFront = this.isStator(front.getBlock()) && front.getValue(SmallStatorBlock.ORIENTATION) == thisOrient;
+        boolean hasFront = false;
+        BlockState front = world.getBlockState(pos.relative(orientation.getOpposite()));
+        if(this.isStator(front.getBlock())) {
+            hasFront = areBlocksContinuous(thisOrient, state.getValue(getTypeProperty()), 
+                front.getValue(ORIENTATION), front.getValue(getTypeProperty()));
+        }
 
         T type = state.getValue(getTypeProperty());
         T typeNew = type.copy();
@@ -127,32 +186,57 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
 
         BlockState newState = getAlignedModelState(world, fromAxis, centerPos, fromState, thisState, plane);
         if(thisState != newState)
-            setModel(world, centerPos, thisState);
+            setModel(world, centerPos, newState);
     }
 
     
-    protected void setModel(Level world, BlockPos pos, BlockState state, T bType, boolean update) {
+    private void setModel(Level world, BlockPos pos, BlockState state, T bType, boolean update) {
         world.setBlock(pos, state.setValue(getTypeProperty(), bType), update ? 3 : 16);
     }
 
-    protected void setModel(Level world, BlockPos pos, BlockState state) {
-        world.setBlock(pos, state, 16);
+    private void setModel(Level world, BlockPos pos, BlockState state) {
+        world.setBlock(pos, state, 3);
     }
-
-    protected abstract int getPlacementHelperId();
-    protected abstract BlockEntry<? extends AbstractStatorBlock<?>> getEntry();
-    protected abstract EnumProperty<T> getTypeProperty();
-    protected abstract T getDefaultModelType();
-    protected abstract UpdateAlignment getAlignmentType();
-    protected abstract BlockState getAlignedModelState(Level world, Axis fromAxis, BlockPos centerPos, BlockState fromState, BlockState thisState, BlockPos[] plane);
-
-    public abstract boolean isStator(Block block);
-    public abstract int getRadius();
 
     @Override
     public float getShadeBrightness(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
         return 1f;
     }
+
+    protected abstract int getPlacementHelperId();
+    protected abstract BlockEntry<? extends AbstractStatorBlock<T>> getStatorEntry();
+    protected abstract BlockEntry<? extends BlockRotorable> getRotorEntry();
+    protected abstract EnumProperty<T> getTypeProperty();
+    protected abstract T getDefaultModelType();
+    protected abstract UpdateAlignment getAlignmentType();
+    protected abstract BlockState getAlignedModelState(Level world, Axis fromAxis, BlockPos centerPos, BlockState fromState, BlockState thisState, BlockPos[] plane);
+    protected abstract boolean areBlocksContinuous(SimpleOrientation thisOrient, T thisType, SimpleOrientation thatOrient, T thatType);
+    
+    public abstract BlockPos getAttachedRotorPos(Level world, BlockPos pos, BlockState state);
+
+    public boolean hasRotor(Level world, BlockPos pos, BlockState state) {
+        BlockState rotorState = world.getBlockState(getAttachedRotorPos(world, pos, state));
+        if(!isRotor(rotorState)) return false;
+        return rotorState.getValue(RotatedPillarKineticBlock.AXIS) == state.getValue(SimpleOrientedBlock.ORIENTATION).getOrient();
+    }
+
+    protected boolean isRotor(BlockState state) {
+        return isRotor(state.getBlock());
+    }
+
+    private boolean isRotor(Block block) {
+        return block == getRotorEntry().get();
+    }
+
+    protected boolean isStator(BlockState state) {
+        return isStator(state.getBlock());
+    }
+
+    private boolean isStator(Block block) {
+        return block == getStatorEntry().get();
+    }
+    
+    public abstract int getRadius();
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {

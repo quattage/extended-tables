@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import com.quattage.mechano.foundation.electricity.AnchorPointBank;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorTransform;
-import com.quattage.mechano.foundation.electricity.power.features.GID;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 
 import net.minecraft.world.level.block.entity.BlockEntity;
 

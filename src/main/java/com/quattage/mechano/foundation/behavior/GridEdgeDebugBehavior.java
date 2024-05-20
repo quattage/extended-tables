@@ -10,9 +10,9 @@ import java.util.Map;
 
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
-import com.quattage.mechano.foundation.electricity.power.GridClientCache;
-import com.quattage.mechano.foundation.electricity.power.features.GID;
-import com.quattage.mechano.foundation.electricity.power.features.GIDPair;
+import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.foundation.utility.Pair;

@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import javax.annotation.Nullable;
 
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
-import com.quattage.mechano.foundation.electricity.power.GlobalTransferGrid;
-import com.quattage.mechano.foundation.electricity.power.features.GridVertex;
+import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,9 +24,6 @@ public class AnchorPointBank<T extends BlockEntity> {
     public final T target;
     public boolean isAwaitingConnection = false;
     private final AnchorPoint[] anchorPoints;
-
-    private float time;
-    private float oldTime;
 
     private GlobalTransferGrid net;
 
@@ -59,8 +55,16 @@ public class AnchorPointBank<T extends BlockEntity> {
     }
 
     public AnchorPointBank<T> reflectStateChange(BlockState state) {
-        for(AnchorPoint node : anchorPoints)
-            node.update(state);
+
+        if(this.net == null) {
+            for(AnchorPoint node : anchorPoints)
+                node.update(state);
+        } else {
+            for(AnchorPoint node : anchorPoints) {
+                node.update(state); 
+                node.broadcastChunkChange(this.net);
+            }
+        }
         return this;
     }
 
@@ -98,7 +102,11 @@ public class AnchorPointBank<T extends BlockEntity> {
     }
 
     public AnchorPoint get(int index) {
-        return anchorPoints[index];
+        try {
+            return anchorPoints[index];
+        } catch(ArrayIndexOutOfBoundsException e) {
+            return null;
+        }
     }
 
     public int indexOf(AnchorPoint anchor) {
@@ -125,17 +133,6 @@ public class AnchorPointBank<T extends BlockEntity> {
     public void setIsAwaitingConnection(Level world, boolean isAwaitingConnection) {
         if(world.isClientSide)
             this.isAwaitingConnection = isAwaitingConnection;
-    }
-
-    public float tickTime(float pTicks) {
-        return tickTime(pTicks, 0.001f);
-    }
-
-    public float tickTime(float pTicks, float step) {
-        oldTime = time;
-        if(time < 1) time += step;
-        else time = 0;
-        return Mth.lerp(pTicks, oldTime, time);
     }
 
     public boolean equals(Object other) {

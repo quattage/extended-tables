@@ -28,12 +28,16 @@ public class BigRotorDummyBlockEntity extends SmartBlockEntity {
         return;
     }
 
-    protected void obliterate() {
+    protected void obliterate(boolean drop) {
         if(parentPos == null) searchForParent();
         if(parentPos == null) return;
 
         if(level.getBlockState(parentPos).getBlock() == MechanoBlocks.BIG_ROTOR.get())
-            level.destroyBlock(parentPos, true);
+            level.destroyBlock(parentPos, drop);
+    }
+
+    protected void obliterate() {
+        obliterate(true);
     }
 
     protected BlockPos searchForParent() {
@@ -52,8 +56,12 @@ public class BigRotorDummyBlockEntity extends SmartBlockEntity {
         return null;
     }
 
-    public void setParentPos(BlockPos parentPos) {
+    protected void setParentPos(BlockPos parentPos) {
         this.parentPos = parentPos;
+    }
+
+    protected BlockPos getParentPos() {
+        return this.parentPos;
     }
 
     @Override

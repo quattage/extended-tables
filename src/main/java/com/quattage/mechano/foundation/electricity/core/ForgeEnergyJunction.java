@@ -1,5 +1,6 @@
 package com.quattage.mechano.foundation.electricity.core;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.relative.Relative;
 import com.quattage.mechano.foundation.block.orientation.relative.RelativeDirection;
@@ -111,7 +112,7 @@ public class ForgeEnergyJunction {
         boolean hasBlock = false;
         for(Block b : interactions)
             if(b.equals(block)) hasBlock = true;
-        
+
         return denyOrAllow ? hasBlock : !hasBlock;
     }
 

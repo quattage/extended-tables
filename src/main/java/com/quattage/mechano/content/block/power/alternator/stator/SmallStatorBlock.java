@@ -5,7 +5,12 @@ import java.util.Locale;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
+import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
+import com.quattage.mechano.foundation.block.hitbox.Hitbox;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
+import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
 import com.simibubi.create.foundation.placement.PlacementOffset;
@@ -18,16 +23,20 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.content.block.power.alternator.stator.SmallStatorBlock.SmallStatorModelType> {
 
     public static final EnumProperty<SmallStatorModelType> MODEL_TYPE = EnumProperty.create("model", SmallStatorModelType.class);
-    public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper(1));
+    public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper(1));  
+    private static Hitbox<SimpleOrientation> hitbox = new Hitbox<>();
 
     protected static enum SmallStatorModelType implements HitboxNameable, StringRepresentable, StatorTypeTransformable<SmallStatorModelType> {
         
@@ -57,7 +66,10 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
             return toString();
         }
 
-        @Override
+        protected SmallStatorModelType toCorner() {
+            return enumValues()[((get().ordinal() + 4) % (enumValues().length))];
+        }
+
         public boolean isCorner() {
             return this.isCorner;
         }
@@ -75,6 +87,13 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
         public String toString() {
             return getSerializedName();
         }
+
+        @Override
+        public boolean shouldContnue(SmallStatorModelType other) {
+            return this.isCorner() == other.isCorner();
+        }
+
+        
     }
 
     public SmallStatorBlock(Properties pProperties) {
@@ -82,13 +101,19 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
     }
 
     @Override
-    public BlockEntry<? extends AbstractStatorBlock<?>> getEntry() {
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        if(hitbox.needsBuilt()) hitbox = MechanoClient.HITBOXES.collectAllOfType(this);
+        return hitbox.get(state.getValue(getTypeProperty())).getRotated(state.getValue(ORIENTATION));
+    }
+
+    @Override
+    public BlockEntry<? extends AbstractStatorBlock<SmallStatorModelType>> getStatorEntry() {
         return MechanoBlocks.SMALL_STATOR;
     }
 
     @Override
-    public boolean isStator(Block block) {
-        return block == getEntry().get();
+    public BlockEntry<? extends BlockRotorable> getRotorEntry() {
+        return MechanoBlocks.SMALL_ROTOR;
     }
 
     @Override
@@ -116,9 +141,7 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
 
         BlockState aState = world.getBlockState(plane[0]);
         BlockState bState = world.getBlockState(plane[1]);
-        
-        if(aState.getBlock() == getEntry().get() && bState.getBlock() == getEntry().get()) {
-
+        if(isStator(aState) && isStator(bState)) {
             SimpleOrientation orient = bState.getValue(ORIENTATION);
             if(fromAxis == aState.getValue(ORIENTATION).getOrient() && fromAxis == orient.getOrient())  {
                 thisState = thisState.setValue(ORIENTATION, bState.getValue(ORIENTATION));
@@ -127,9 +150,7 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
         }
 
         BlockState cState = world.getBlockState(plane[2]);
-
-        if(bState.getBlock() == getEntry().get() && cState.getBlock() == getEntry().get()) {
-
+        if(isStator(bState) && isStator(cState)) {
             SimpleOrientation orient = cState.getValue(ORIENTATION);
             if(fromAxis == bState.getValue(ORIENTATION).getOrient() && fromAxis == orient.getOrient()) {
                 thisState = thisState.setValue(ORIENTATION, orient);
@@ -138,9 +159,7 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
         }
 
         BlockState dState = world.getBlockState(plane[3]);
-
-        if(cState.getBlock() == getEntry().get() && dState.getBlock() == getEntry().get()) {
-
+        if(isStator(cState) && isStator(dState)) {
             SimpleOrientation orient = dState.getValue(ORIENTATION);
             if(fromAxis == cState.getValue(ORIENTATION).getOrient() && fromAxis == orient.getOrient()) {
                 thisState = thisState.setValue(ORIENTATION, orient);
@@ -148,8 +167,7 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
             }
         }
 
-        if(dState.getBlock() == getEntry().get() && aState.getBlock() == getEntry().get()) {
-
+        if(isStator(dState) && isStator(aState)) {
             SimpleOrientation orient = aState.getValue(ORIENTATION);
             if(fromAxis == dState.getValue(ORIENTATION).getOrient() && fromAxis == orient.getOrient()) {
                 thisState = thisState.setValue(ORIENTATION, orient);
@@ -162,17 +180,35 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
     }
 
     @Override
+    protected boolean areBlocksContinuous(SimpleOrientation thisOrient, SmallStatorModelType thisType,
+            SimpleOrientation thatOrient, SmallStatorModelType thatType) {
+        return thisType.isCorner() == thatType.isCorner() ? thisOrient == thatOrient : false;
+    }
+
+    @Override
+    public BlockPos getAttachedRotorPos(Level world, BlockPos pos, BlockState state) {
+
+        if(state.getValue(MODEL_TYPE).isCorner()) {
+            SimpleOrientation orient = state.getValue(ORIENTATION);
+            return pos.relative(orient.getCardinal())
+                .relative(DirectionTransformer.getComplementingDirection(orient.getCardinal(), orient.getOrient()));
+        }  
+        
+        return pos.relative(state.getValue(ORIENTATION).getCardinal());
+    }
+
+    @Override
     protected UpdateAlignment getAlignmentType() {
         return UpdateAlignment.ADJACENT;
     }
 
     //////////
     @MethodsReturnNonnullByDefault
-	protected static class PlacementHelper extends StatorDirectionalHelper<SimpleOrientation> {
+	protected static class PlacementHelper extends StatorDirectionalHelper<SmallStatorModelType> {
 
 		protected PlacementHelper(int radius) {
 			super(radius, state -> state.getBlock() instanceof SmallStatorBlock, 
-                state -> state.getValue(ORIENTATION), ORIENTATION);
+                state -> state.getValue(ORIENTATION), MODEL_TYPE);
 		}
 
 		@Override

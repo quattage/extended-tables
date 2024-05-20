@@ -1,7 +1,7 @@
 package com.quattage.mechano.content.block.power.transfer.connector.tiered;
 
 import com.quattage.mechano.foundation.block.orientation.relative.Relative;
-import com.quattage.mechano.foundation.electricity.IBatteryBank;
+import com.quattage.mechano.foundation.electricity.BatteryBankUpdatable;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.builder.AnchorBankBuilder;
 import com.quattage.mechano.foundation.electricity.builder.BatteryBankBuilder;
@@ -24,7 +24,7 @@ public class ConnectorTier1BlockEntity extends WireAnchorBlockEntity {
 	}
 
 	@Override
-	public void createBatteryBankDefinition(BatteryBankBuilder<? extends IBatteryBank> builder) {
+	public void createBatteryBankDefinition(BatteryBankBuilder<? extends BatteryBankUpdatable> builder) {
 		builder
 			.capacity(5000)
 			.maxIO(2500)

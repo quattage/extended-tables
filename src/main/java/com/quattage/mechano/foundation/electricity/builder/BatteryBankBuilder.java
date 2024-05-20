@@ -2,7 +2,7 @@ package com.quattage.mechano.foundation.electricity.builder;
 
 import com.quattage.mechano.foundation.block.orientation.relative.Relative;
 import com.quattage.mechano.foundation.electricity.BatteryBank;
-import com.quattage.mechano.foundation.electricity.IBatteryBank;
+import com.quattage.mechano.foundation.electricity.BatteryBankUpdatable;
 import com.quattage.mechano.foundation.electricity.core.ForgeEnergyJunction;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 /***
  * A fluent builder for BatteryBanks
  */
-public class BatteryBankBuilder<T extends SmartBlockEntity & IBatteryBank> {
+public class BatteryBankBuilder<T extends SmartBlockEntity & BatteryBankUpdatable> {
     
     private int capacity = 10000;
     private int maxInput = 5000;

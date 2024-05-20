@@ -1,10 +1,10 @@
 package com.quattage.mechano;
 
 import com.quattage.mechano.content.block.integrated.toolStation.ToolStationBlockEntity;
-import com.quattage.mechano.content.block.power.alternator.collector.CollectorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.BigRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlockEntity;
+import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlockEntity;
 import com.quattage.mechano.content.block.power.transfer.connector.tiered.TieredConnectorRenderer;
 import com.quattage.mechano.content.block.power.transfer.connector.tiered.ConnectorTier0BlockEntity;
 import com.quattage.mechano.content.block.power.transfer.connector.tiered.ConnectorTier1BlockEntity;
@@ -47,10 +47,10 @@ public class MechanoBlockEntities {
 		.validBlocks(MechanoBlocks.BIG_ROTOR_DUMMY)
 		.register();
 
-    public static final BlockEntityEntry<CollectorBlockEntity> COLLECTOR = Mechano.REGISTRATE
-		.blockEntity("collector", CollectorBlockEntity::new)
+    public static final BlockEntityEntry<SlipRingShaftBlockEntity> SLIP_RING_SHAFT = Mechano.REGISTRATE
+		.blockEntity("slip_ring_shaft", SlipRingShaftBlockEntity::new)
 		.instance(() -> CutoutRotatingInstance::new, false)
-		.validBlocks(MechanoBlocks.COLLECTOR)
+		.validBlocks(MechanoBlocks.SLIP_RING_SHAFT)
 		.renderer(() -> KineticBlockEntityRenderer::new)
 		.register();
 

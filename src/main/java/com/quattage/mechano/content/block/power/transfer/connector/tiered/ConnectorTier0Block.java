@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.block.upgradable.BlockUpgradable;
@@ -15,6 +16,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -59,6 +61,16 @@ public class ConnectorTier0Block extends AbstractConnectorBlock implements IBE<C
     public <T extends Enum<T> & StringRepresentable> List<EnumProperty<T>> getStatesToPreserve(ArrayList<EnumProperty<T>> out) {
         out.add((EnumProperty<T>) (EnumProperty<?>) MODEL_TYPE);
         out.add((EnumProperty<T>) (EnumProperty<?>) ORIENTATION);
+        return out;
+    }
+
+    @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+        
+        InteractionResult out = super.onWrenched(state, context);
+        SimpleOrientation orient = context.getLevel().getBlockState(context.getClickedPos()).getValue(SimpleOrientedBlock.ORIENTATION);
+        swapPoleStates(context.getLevel(), context.getClickedPos(), orient, true);
+
         return out;
     }
 

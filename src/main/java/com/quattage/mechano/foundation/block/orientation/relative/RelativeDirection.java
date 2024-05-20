@@ -76,6 +76,7 @@ public class RelativeDirection {
     }
 
     public Direction get() {
+        Mechano.log("facingDir get: " + facingDir);
         return facingDir;
     }
 

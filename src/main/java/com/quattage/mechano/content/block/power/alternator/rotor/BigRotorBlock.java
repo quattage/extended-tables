@@ -36,6 +36,11 @@ public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlo
     }
 
     @Override
+	public BlockPos getParentPos(Level world, BlockPos pos, BlockState state) {
+		return pos;
+	}
+
+    @Override
     public Class<BigRotorBlockEntity> getBlockEntityClass() {
         return BigRotorBlockEntity.class;
     }

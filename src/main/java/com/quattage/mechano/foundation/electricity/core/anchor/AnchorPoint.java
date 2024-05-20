@@ -2,12 +2,15 @@ package com.quattage.mechano.foundation.electricity.core.anchor;
 
 import javax.annotation.Nullable;
 
+import com.quattage.mechano.Mechano;
+import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.power.features.GID;
-import com.quattage.mechano.foundation.electricity.power.features.GridVertex;
-import com.quattage.mechano.foundation.electricity.rendering.WireAnchorBlockRenderer;
+import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.simibubi.create.foundation.utility.Color;
 import com.simibubi.create.foundation.utility.Pair;
@@ -30,7 +33,6 @@ public class AnchorPoint {
     private final int maxConnections;
 
     private float anchorSize;
-    private float targetFactor = 0;
     private AABB hitbox = null;
 
     private GridVertex participant = null;
@@ -78,6 +80,17 @@ public class AnchorPoint {
         refreshHitbox();
     }
 
+    public void broadcastChunkChange(GlobalTransferGrid grid) {
+
+        if(participant != null) 
+            participant.refreshLinkedChunks();
+        else {
+            GridVertex vert = grid.getVertAt(this.getID());
+            if(vert == null) return;
+            vert.refreshLinkedChunks();
+        }
+    }
+
     /***
      * Gets the hitbox of this AnchorPoint
      * @throws IllegalStateException 
@@ -94,38 +107,20 @@ public class AnchorPoint {
         return anchorSize;
     }
 
-    /***
-     * Sets the size of this AnchorPoint
-     * @param anchorSize
-     */
-    public void setSize(int anchorSize) {
-        this.anchorSize = anchorSize;
-        if(anchorSize < 0) anchorSize = 0;
+    public void increaseToSize(float sizeTarget, double delta) {
+
+        if(this.anchorSize < sizeTarget)
+            this.anchorSize += delta;
+        else if(this.anchorSize > sizeTarget)
+            anchorSize = sizeTarget;
     }
 
-    /***
-     * Decreases the size of this AnchorPoint
-     */
-    public void deflate(float amt) {
-        this.anchorSize -= amt;
-        if(anchorSize < 0) anchorSize = 0;
-    }
+    public void decreaseToSize(float sizeTarget, double delta) {
 
-    /***
-     * Increases the size of this AnchorPoint
-     */
-    public void inflate(float amt) {
-        this.anchorSize += amt;
-    }
-
-    public void incTargetTick() {
-        if(targetFactor < 1)
-            targetFactor+= 0.05f;
-    }
-
-    public void decTargetTick() {
-        if(targetFactor > 0) 
-            targetFactor -= 0.05f;
+        if(this.anchorSize > sizeTarget)
+            this.anchorSize -= delta;
+        else if(this.anchorSize < sizeTarget)
+            anchorSize = sizeTarget;
     }
 
     public void refreshHitbox() {
@@ -159,7 +154,7 @@ public class AnchorPoint {
     public double getDistanceToRaycast(Vec3 start, Vec3 end) {
         double closestDist = -1;
         Vec3 anchorPos = getPos();
-        for(float x = 0f; x < 1; x += 0.1f) {
+        for(float x = 0f; x < 1; x += 0.05f) {
             Vec3 rayPos = start.lerp(end, x);
             double dist = rayPos.distanceTo(anchorPos);
             if(closestDist == -1 || dist < closestDist) 
@@ -195,6 +190,6 @@ public class AnchorPoint {
     }
 
     public Color getColor() {
-        return selectedColor.copy().mixWith(rawColor, anchorSize / (float)WireAnchorBlockRenderer.ANCHOR_SELECT_SIZE);
+        return selectedColor.copy().mixWith(rawColor, anchorSize / (float)MechanoSettings.ANCHOR_SELECT_SIZE);
     }
 }

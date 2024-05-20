@@ -1,6 +1,7 @@
 package com.quattage.mechano.foundation.helper.shape;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import com.simibubi.create.foundation.placement.PlacementOffset;
 
@@ -28,6 +29,10 @@ public abstract class ShapeGetter {
 	public PlacementOffset evaluatePlacement(Function<BlockPos, PlacementOffset> action) {
 		if(!isInitialized) throw new IllegalStateException("Cannot evaluate ShapeGetter before it is initialized!");
 		return evalSafe(action);
+	}
+
+	public void iteratePlacement(Consumer<BlockPos> action) {
+		
 	}
 
 	protected abstract PlacementOffset evalSafe(Function<BlockPos, PlacementOffset> action);
