@@ -1,6 +1,6 @@
 package com.quattage.mechano.foundation.electricity.core;
 
-import com.quattage.mechano.foundation.electricity.BatteryBankUpdatable;
+import com.quattage.mechano.foundation.electricity.WattBatteryHandlable;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 
 import net.minecraft.core.BlockPos;
@@ -18,7 +18,7 @@ public interface EBEWrenchable extends IWrenchable {
     default void syncEBE(Level world, BlockPos pos) {
 
         BlockEntity be = world.getBlockEntity(pos);
-        if(be instanceof BatteryBankUpdatable bb)
+        if(be instanceof WattBatteryHandlable bb)
             bb.reOrient(be.getBlockState());
     }
 }

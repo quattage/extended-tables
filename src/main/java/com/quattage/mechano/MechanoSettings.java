@@ -12,7 +12,7 @@ public class MechanoSettings {
     public static int ANCHOR_NORMAL_SIZE = 20;
     public static int POLE_STACK_SIZE = 16;
 
-    public static int FE2W_RATE = 8; // 1 watt = (FE2W_RATE) FE
+    public static int FE2W_RATE = 128; // 1 watt = (FE2W_RATE) FE
     public static int FE2W_VOLTAGE = 120;
 
     protected static void init(IEventBus modBus) {

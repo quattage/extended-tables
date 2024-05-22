@@ -16,11 +16,11 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.energy.IEnergyStorage;
 
 /***
- * A ForgeEnergyJunction is a "rule" describing
- * what blocks, and in what direction, energy can be
+ * An InteractionJunction is a "rule" describing
+ * what blocks, and in what direction, Watts can be
  * transmitted to/from a parent BlockEntity.
  */
-public class ForgeEnergyJunction {
+public class InteractionJunction {
     
     private final RelativeDirection dir;
     public boolean isInput;
@@ -32,14 +32,14 @@ public class ForgeEnergyJunction {
     private final Block[] interactions;
 
     /***
-     * Create a new ForgeEnergyJunction at the given RelativeDirection.
+     * Create a new InteractionJunction at the given RelativeDirection.
      * @param dir RelativeDirection 
-     * @param isInput True if this ForgeEnergyJunction can accept energy from external sources
-     * @param isOutput True if this ForgeEnergyJunction can send energy to external sources
+     * @param isInput True if this InteractionJunction can accept energy from external sources
+     * @param isOutput True if this InteractionJunction can send energy to external sources
      * @param interactions An array representing a list of blocks to consider
      * @param denyOrAllow True if the interactions list is a whitelist, or false if the interactions list is a blacklist.
      */
-    public ForgeEnergyJunction(RelativeDirection dir, boolean isInput, boolean isOutput, Block[] interactions, boolean denyOrAllow) {
+    public InteractionJunction(RelativeDirection dir, boolean isInput, boolean isOutput, Block[] interactions, boolean denyOrAllow) {
         this.dir = dir;
         this.isInput = isInput;
         this.isOutput = isOutput;
@@ -48,12 +48,12 @@ public class ForgeEnergyJunction {
     }
 
     /***
-     * Create a new ForgeEnergyJunction at the given RelativeDirection.
+     * Create a new InteractionJunction at the given RelativeDirection.
      * @param dir RelativeDirection
-     * @param isInput True if this ForgeEnergyJunction can accept energy from external sources
-     * @param isOutput True if this ForgeEnergyJunction can send energy to external sources
+     * @param isInput True if this InteractionJunction can accept energy from external sources
+     * @param isOutput True if this InteractionJunction can send energy to external sources
      */
-    public ForgeEnergyJunction(RelativeDirection dir, boolean isInput, boolean isOutput) {
+    public InteractionJunction(RelativeDirection dir, boolean isInput, boolean isOutput) {
         this.dir = dir;
         this.isInput = isInput;
         this.isOutput = isOutput;
@@ -62,11 +62,11 @@ public class ForgeEnergyJunction {
     }
 
     /***
-     * Create a new ForgeEnergyJunction at the given RelativeDirection. <p>
+     * Create a new InteractionJunction at the given RelativeDirection. <p>
      * This policy has no exceptions, and will always interact.
      * @param dir
      */
-    public ForgeEnergyJunction(RelativeDirection dir) {
+    public InteractionJunction(RelativeDirection dir) {
         this.dir = dir;
         this.isInput = true;
         this.isOutput = true;
@@ -75,11 +75,11 @@ public class ForgeEnergyJunction {
     }
 
     /***
-     * Create a new ForgeEnergyJunction at the given RelativeDirection. <p>
+     * Create a new InteractionJunction at the given RelativeDirection. <p>
      * This policy has no exceptions, and will always interact.
      * @param dir
      */
-    public ForgeEnergyJunction(Relative rel) {
+    public InteractionJunction(Relative rel) {
         this.dir = new RelativeDirection(rel);
         this.isInput = true;
         this.isOutput = true;
@@ -91,7 +91,7 @@ public class ForgeEnergyJunction {
         return dir.get();
     }
 
-    public ForgeEnergyJunction rotateToFace(CombinedOrientation orient) {
+    public InteractionJunction rotateToFace(CombinedOrientation orient) {
         dir.rotate(orient);
         return this;
     }
@@ -117,11 +117,11 @@ public class ForgeEnergyJunction {
     }
 
     /***
-     * Determines whether or not this ForgeEnergyJunction
+     * Determines whether or not this InteractionJunction
      * is interacting with any ForgeEnergy capabilities 
      * in the world.
      * @param parent BlockEntity to use as a reference for getting real-world positions
-     * @return True if this ForgeEnergyJunction is facing towards
+     * @return True if this InteractionJunction is facing towards
      * a block which provides ForgeEnergy capabilities in the opposing direction
      */
     public boolean canSendOrReceive(BlockEntity parent) {
@@ -145,7 +145,7 @@ public class ForgeEnergyJunction {
 
 
     public boolean equals(Object other) {
-        if(other instanceof ForgeEnergyJunction ip) 
+        if(other instanceof InteractionJunction ip) 
             return dir.equals(ip.dir) && 
                 this.isInput == ip.isInput && 
                 this.isOutput == ip.isOutput;

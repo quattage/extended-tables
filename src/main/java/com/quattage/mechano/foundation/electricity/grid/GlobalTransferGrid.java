@@ -40,7 +40,7 @@ public class GlobalTransferGrid {
     public static GlobalTransferGrid of(Level world) {
         if(world == null) throw new NullPointerException("Error getting GlobalTransferGrid - World is null!");
         if(world.isClientSide()) return null;
-        LazyOptional<GlobalTransferGrid> network = world.getCapability(Mechano.SERVER_GRID_CAPABILITY);
+        LazyOptional<GlobalTransferGrid> network = world.getCapability(Mechano.CAPABILITIES.SERVER_GRID_CAPABILITY);
         if(!network.isPresent()) throw new RuntimeException("Error getting GlobalTransferGrid from " + world.dimension().location() 
             + " - No handler registered for this dimension!");
         GlobalTransferGrid realNetwork = network.orElseThrow(RuntimeException::new);

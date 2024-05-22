@@ -1,6 +1,6 @@
 package com.quattage.mechano.foundation.electricity;
 
-import com.quattage.mechano.foundation.electricity.builder.BatteryBankBuilder;
+import com.quattage.mechano.foundation.electricity.builder.WattBatteryHandlerBuilder;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
@@ -16,37 +16,39 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /***
- * ElectricBlockEntity provides a basic ForgeEnergy implementation with no
- * bells & whistles.
-*/
-public abstract class ElectricBlockEntity extends SmartBlockEntity implements BatteryBankUpdatable {
+ * The ElectricBlockEntity provides the base functionality and handlers required to 
+ * use the sided WattStorable capability.
+ * @see {@link com.quattage.mechano.foundation.electricity.ElectroKineticBlockEntity <code>ElectroKineticBlockEntity</code>} for implementing electricity with Kinetics.
+ */
+public abstract class ElectricBlockEntity extends SmartBlockEntity implements WattBatteryHandlable {
 
-    public final BatteryBank<ElectricBlockEntity> batteryBank;
+    public final WattBatteryHandler<ElectricBlockEntity> battery;
 
     public ElectricBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
 
-        BatteryBankBuilder<ElectricBlockEntity> init = new BatteryBankBuilder<ElectricBlockEntity>().at(this);
-        createBatteryBankDefinition(init);
-        batteryBank = init.build();
+        WattBatteryHandlerBuilder<ElectricBlockEntity> init = new WattBatteryHandlerBuilder<ElectricBlockEntity>().at(this);
+        createWattHandlerDefinition(init);
+        battery = init.build();
     }
 
-    /***
-     * Refreshes this ElectricBlockEntity's interactions to reflect a BlockState change.<p>
-     * This would typically be used after this block is rotated.
-     */
+    @Override
+    public WattBatteryHandler<?> getWattBatteryHandler() {
+        return battery;
+    }
+
     @Override
     public void reOrient(BlockState state) {
-        batteryBank.reflectStateChange(state);
+        battery.reflectStateChange(state);
     }
 
     public boolean isConnectedExternally() {
-        return batteryBank.isConnectedExternally();
+        return battery.isConnectedExternally();
     }
 
     @Override
     public void onLoad() {
-        batteryBank.loadAndUpdate(getBlockState());
+        battery.loadAndUpdate(getBlockState());
         super.onLoad();
     }
 
@@ -55,7 +57,7 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Ba
 
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return batteryBank.provideEnergyCapabilities(cap, side);
+        return battery.provideEnergyCapabilities(cap, side);
     }
 
     @Override // runs on first tick
@@ -67,18 +69,18 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Ba
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        batteryBank.invalidate();
+        battery.invalidate();
     }
 
     @Override
     protected void write(CompoundTag tag, boolean clientPacket) {
         super.write(tag, clientPacket);
-        batteryBank.writeTo(tag);
+        battery.writeTo(tag);
     }
 
     @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
-        batteryBank.readFrom(tag);
+        battery.readFrom(tag);
         super.read(tag, clientPacket);
     }
 
@@ -87,6 +89,6 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Ba
     @Override
     public void handleUpdateTag(CompoundTag tag) {
         super.handleUpdateTag(tag);
-        batteryBank.readFrom(tag);
+        battery.readFrom(tag);
     }
 }

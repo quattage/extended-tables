@@ -1,6 +1,6 @@
 package com.quattage.mechano.foundation.electricity;
 
-import com.quattage.mechano.foundation.electricity.builder.BatteryBankBuilder;
+import com.quattage.mechano.foundation.electricity.builder.WattBatteryHandlerBuilder;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,48 +14,46 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 
 /***
- * ElectricBlockEntity provides a basic ForgeEnergy implementation with no
- * bells & whistles.
-*/
-public abstract class ElectroKineticBlockEntity extends KineticBlockEntity implements BatteryBankUpdatable{
+ * The ElectroKineticBlockEntityBlockEntity provides the base functionality and handlers required to 
+ * use the sided WattStorable capability as a subclass of Create's KineticBlockEntity. BlockEntities that
+ * need both Kinetics and WattStorable functionality should extend from this.
+ * @see {@link com.quattage.mechano.foundation.electricity.ElectricBlockEntity <code>ElectricBlockEntity</code>} for non-kinetic purposes.
+ */
+public abstract class ElectroKineticBlockEntity extends KineticBlockEntity implements WattBatteryHandlable{
 
-    public final BatteryBank<ElectroKineticBlockEntity> batteryBank;
+    public final WattBatteryHandler<ElectroKineticBlockEntity> battery;
 
     public ElectroKineticBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
 
-        BatteryBankBuilder<ElectroKineticBlockEntity> init = new BatteryBankBuilder<ElectroKineticBlockEntity>().at(this);
-        createBatteryBankDefinition(init);
-        batteryBank = init.build();
+        WattBatteryHandlerBuilder<ElectroKineticBlockEntity> init = new WattBatteryHandlerBuilder<ElectroKineticBlockEntity>().at(this);
+        createWattHandlerDefinition(init);
+        battery = init.build();
     }
 
     @Override
     public void reOrient(BlockState state) {
-        batteryBank.reflectStateChange(state);
+        battery.reflectStateChange(state);
     }
     
-    /***
-     * Called whenever the Energy stored within this ElectricBlockEntity is
-     * changed in any way. Sending block updates and packets is handled by 
-     * the BatteryBank object, so you won't have to do that here.
-     */
-    public void onEnergyUpdated() {
-
+    @Override
+    public WattBatteryHandler<? extends WattBatteryHandlable> getWattBatteryHandler() {
+        return battery;
     }
 
     public boolean isConnectedExternally() {
-        return batteryBank.isConnectedExternally();
+        return battery.isConnectedExternally();
     }
 
     @Override
     public void onLoad() {
-        batteryBank.loadAndUpdate(this.getBlockState());
+        battery.loadAndUpdate(this.getBlockState());
         super.onLoad();
     }
 
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return batteryBank.provideEnergyCapabilities(cap, side);
+        return battery.provideEnergyCapabilities(cap, side);
     }
 
     @Override // runs on first tick
@@ -66,18 +64,18 @@ public abstract class ElectroKineticBlockEntity extends KineticBlockEntity imple
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        batteryBank.invalidate();
+        battery.invalidate();
     }
 
     @Override
     protected void write(CompoundTag tag, boolean clientPacket) {
         super.write(tag, clientPacket);
-        batteryBank.writeTo(tag);
+        battery.writeTo(tag);
     }
 
     @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
-        batteryBank.readFrom(tag);
+        battery.readFrom(tag);
         super.read(tag, clientPacket);
     }
 
@@ -86,6 +84,6 @@ public abstract class ElectroKineticBlockEntity extends KineticBlockEntity imple
     @Override
     public void handleUpdateTag(CompoundTag tag) {
         super.handleUpdateTag(tag);
-        batteryBank.readFrom(tag);
+        battery.readFrom(tag);
     }
 }

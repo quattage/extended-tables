@@ -4,6 +4,9 @@ import javax.annotation.Nullable;
 
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraftforge.common.util.LazyOptional;
+
 public interface WattStorable {
 
     
@@ -14,7 +17,7 @@ public interface WattStorable {
     * @param simulate If TRUE, the insertion will only be simulated.
     * @return Amount of watt-ticks that were (or would have been, if simulated) accepted by the storage.
     */
-    WattUnit recieveWatts(WattUnit maxWattsToRecieve, boolean simulate);
+    WattUnit receiveWatts(WattUnit maxWattsToRecieve, boolean simulate);
 
     /**
     * Removes watt-ticks from the energy store and returns a WattUnit representing the energy removed.
@@ -22,12 +25,30 @@ public interface WattStorable {
     * @param simulate If TRUE, the extraction will only be simulated.
     * @return Amount of watt-ticks that were (or would have been, if simulated) extracted from the storage.
     */
-    WattUnit extractWatts(float maxWattsToExtract, boolean simulate);
+    WattUnit extractWatts(WattUnit maxWattsToExtract, boolean simulate);
+
+    /**
+     * Replaces the current amount of energy in the energy store with the WattUnit provided.
+     * Used to override the amount of energy in this store without needing an explicit source.
+     * @param watts Watts to set this energy store to.
+     * @param update <code>TRUE</code> if the energy store should update as a result of this call, as if it received energy normally.
+     */
+    void setStoredWatts(float watts, boolean update);
 
     /**
      * Returns the amount of watt-ticks currently in the energy store.
      */
     float getStoredWatts();
+
+    /**
+     * Returns the maximum amount of watts the energy store can receive in one tick
+     */
+    int getMaxCharge();
+
+    /**
+     * Returns the maximum amount of watts the energy store can provide in one tick
+     */
+    int getMaxDischarge();
 
     /**
      * @return the maximum amount of watt-hours that can be stored.
@@ -67,6 +88,17 @@ public interface WattStorable {
      */
     void setOvervoltBehavior(OvervoltBehavior overvoltBehavior);
 
+    CompoundTag writeTo(CompoundTag in);
+    void readFrom(CompoundTag in);
+
+    /**
+     * Converts this WattStorable into an {@link com.quattage.mechano.foundation.electricity.core.watt.ExplicitFeConverter <code>ExplicitEnergyConverter</code>}
+     * describing this energy store's Watt value as FE.
+     * @param <T> Inferred generic
+     * @return An inferred generic LazyOptional containing an <code>ExplicitFEConverter</code> object - This object should reflect up-to-date information
+     * about this energy store, converted (as best you can) into FE.
+     */
+    <T> LazyOptional<T> toFeEquivalent();
 
     /**
      * An OvervoltBehavior describes how this energy store should react when 

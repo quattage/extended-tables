@@ -8,8 +8,9 @@ import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.foundation.block.orientation.relative.Relative;
 import com.quattage.mechano.foundation.electricity.ElectroKineticBlockEntity;
-import com.quattage.mechano.foundation.electricity.BatteryBankUpdatable;
-import com.quattage.mechano.foundation.electricity.builder.BatteryBankBuilder;
+import com.quattage.mechano.foundation.electricity.WattBatteryHandlable;
+import com.quattage.mechano.foundation.electricity.builder.WattBatteryHandlerBuilder;
+import com.quattage.mechano.foundation.electricity.core.watt.WattStorable.OvervoltBehavior;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 
@@ -286,11 +287,22 @@ public class SlipRingShaftBlockEntity extends ElectroKineticBlockEntity {
         return true;
     }
 
-    @Override
-    public void createBatteryBankDefinition(BatteryBankBuilder<? extends BatteryBankUpdatable> builder) {
-        builder.capacity(10000)
-                .newInteraction(Relative.BOTTOM).onlySendEnergy().buildInteraction();
-    }
+	@Override
+	public void createWattHandlerDefinition(WattBatteryHandlerBuilder<? extends WattBatteryHandlable> builder) {
+		builder
+			.defineBattery(b -> b
+				.withFlux(120)
+				.withVoltageTolerance(120)
+				.withMaxCharge(2048)
+				.withMaxDischarge(2048)
+				.withCapacity(2048)
+				.withIncomingPolicy(OvervoltBehavior.LIMIT_LOSSY)
+				.withNoEvent()
+			)
+			.newInteraction(Relative.BOTTOM)
+				.buildInteraction()
+			.build();
+	}
 
 
     private static enum SlipRingShaftStatus {

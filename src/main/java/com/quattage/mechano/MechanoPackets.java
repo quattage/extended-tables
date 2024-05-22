@@ -7,7 +7,7 @@ import com.quattage.mechano.foundation.electricity.grid.sync.GridPathUpdateS2CPa
 import com.quattage.mechano.foundation.electricity.grid.sync.GridVertDestroySyncS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorRefreshS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorSelectC2SPacket;
-import com.quattage.mechano.foundation.network.EnergySyncS2CPacket;
+import com.quattage.mechano.foundation.network.WattSyncS2CPacket;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -36,10 +36,10 @@ public class MechanoPackets {
     public static void registerPackets() {  
 
         //S2C
-        NETWORK.messageBuilder(EnergySyncS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
-            .decoder(EnergySyncS2CPacket::new)
-            .encoder(EnergySyncS2CPacket::toBytes)
-            .consumerMainThread(EnergySyncS2CPacket::handle)
+        NETWORK.messageBuilder(WattSyncS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
+            .decoder(WattSyncS2CPacket::new)
+            .encoder(WattSyncS2CPacket::toBytes)
+            .consumerMainThread(WattSyncS2CPacket::handle)
             .add();
 
         NETWORK.messageBuilder(GridVertDestroySyncS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
@@ -81,14 +81,17 @@ public class MechanoPackets {
     }
 
     public static <T extends Packetable> void sendToServer(T message) {
+        if(message == null) return;
         NETWORK.sendToServer(message);
     }
 
     public static <T extends Packetable> void sendToClient(T message, ServerPlayer recipient) {
+        if(message == null) return;
         NETWORK.send(PacketDistributor.PLAYER.with(() -> recipient), message);
     }
 
     public static <T extends Packetable> void sendToAllClients(T message) {
+        if(message == null) return;
         NETWORK.send(PacketDistributor.ALL.noArg(), message);
     }
 

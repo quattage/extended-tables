@@ -76,7 +76,7 @@ public class GridClientCache {
     public static GridClientCache of(Level world) {
         if(world == null) throw new NullPointerException("Error getting GlobalTransferGrid - World is null!");
         if(!world.isClientSide()) return null;
-        LazyOptional<GridClientCache> cache = world.getCapability(Mechano.CLIENT_CACHE_CAPABILITY);
+        LazyOptional<GridClientCache> cache = world.getCapability(Mechano.CAPABILITIES.CLIENT_CACHE_CAPABILITY);
         if(!cache.isPresent()) throw new RuntimeException("Error getting GlobalTransferGrid from " + world.dimension().location() 
             + " - No handler registered for this dimension!");
         GridClientCache realCache = cache.orElseThrow(RuntimeException::new);

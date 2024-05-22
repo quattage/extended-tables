@@ -61,7 +61,7 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
     }
 
     public void syncInGrid() {
-        if(batteryBank == null) return;
+        if(battery == null) return;
         if(anchors.isEmpty()) return;
         anchors.sync();
     }

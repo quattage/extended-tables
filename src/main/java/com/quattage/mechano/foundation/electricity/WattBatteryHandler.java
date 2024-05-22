@@ -3,46 +3,44 @@ package com.quattage.mechano.foundation.electricity;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
-import com.quattage.mechano.foundation.electricity.core.DirectionalWattStorable;
-import com.quattage.mechano.foundation.electricity.core.ForgeEnergyJunction;
-import com.quattage.mechano.foundation.electricity.core.LocalEnergyStorage;
-import com.quattage.mechano.foundation.network.EnergySyncS2CPacket;
+import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
+import com.quattage.mechano.foundation.electricity.core.InteractionJunction;
+import com.quattage.mechano.foundation.electricity.core.watt.WattBatteryBuilder.WattBatteryUnbuilt;
+import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
+import com.quattage.mechano.foundation.network.WattSyncS2CPacket;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
 /***
- * The BatteryBank object stores a list of ForgeEnergyJunctions.
- * It manages sending, receiving, and storing ForgeEnergy and handles
- * its own capability implementation.
+ * The WattBatteryHandler is an encapsulting object which provides WattStorable functionality to handling classes.
+ * Can be thought of as a "transfer layer" between the energy capability of the WattStorable object, and the BlockEntity itself.
  */
-public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> implements DirectionalWattStorable {
+public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlable> implements DirectionalWattProvidable {
 
-    
     @Nullable
-    private final ForgeEnergyJunction[] interactions;
-    public final LocalEnergyStorage<BatteryBank<T>> battery;    
+    private final InteractionJunction[] interactions;
+    public final WattStorable battery;    
     private final T target;
-    public LazyOptional<IEnergyStorage> energyHandler = LazyOptional.empty();
+    public LazyOptional<WattStorable> energyHandler = LazyOptional.empty();
 
-    public BatteryBank(T target, ForgeEnergyJunction[] interactions, int capacity, int maxRecieve, int maxExtract, int energy) {
+    public WattBatteryHandler(T target, InteractionJunction[] interactions, WattBatteryUnbuilt unbuilt) {
         this.target = target;
         this.interactions = interactions;
-        this.battery = new LocalEnergyStorage<BatteryBank<T>>(this, capacity, maxRecieve, maxExtract, energy);
+        this.battery = unbuilt.buildAndAttach(this);
     }
 
     /***
-     * @return The world that this BatteryBank's parent 
+     * @return The world that this WattBatteryHandler's parent 
      * BlockEntity belongs to
      */
     public Level getWorld() {
@@ -50,35 +48,35 @@ public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> impl
     }
 
     /***
-     * Checks whether this BatteryBank is allowed to 
+     * Checks whether this WattBatteryHandler is allowed to 
      * send power to the given block.
      * @param block Block to check
-     * @return True if this BatteryBank can send power to
+     * @return True if this WattBatteryHandler can send power to
      * the given block.
      */
     public boolean canSendTo(Block block) {
         if(!canInteractDirectly()) return false;
-        for(ForgeEnergyJunction p : interactions)
+        for(InteractionJunction p : interactions)
             if(p.canSendTo(block)) return true;
         return false;
     }
 
     /***
-     * Checks whether this BatteryBank is allowed to
+     * Checks whether this WattBatteryHandler is allowed to
      * recieve power from the given block.
      * @param block Block to check
-     * @return True if this BatteryBank can receive
+     * @return True if this WattBatteryHandler can receive
      * power from the given block.
      */
     public boolean canRecieveFrom(Block block) {
         if(!canInteractDirectly()) return false;
-        for(ForgeEnergyJunction p : interactions)
+        for(InteractionJunction p : interactions)
             if(p.canRecieveFrom(block)) return true;
         return false;
     }
 
     /***
-     * @return True if this BatteryBank can send/recieve
+     * @return True if this WattBatteryHandler can send/recieve
      * directly to adjacent blocks
      */
     public boolean canInteractDirectly() {
@@ -86,55 +84,38 @@ public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> impl
     }
     
     /***
-     * @return True if this BatteryBank has no stored energy
+     * @return True if this WattBatteryHandler has no stored energy
      */
     public boolean isEmpty() {
-        return battery.getEnergyStored() > 0;
+        return WattUnit.hasNoPotential(battery.getStoredWatts());
     }
 
     /***
-     * @return True if this BatteryBank is at max energy
+     * @return True if this WattBatteryHandler is at max energy
      */
     public boolean isFull() {
-        return battery.getEnergyStored() >= battery.getMaxEnergyStored();
+        return battery.getCapacity() <= battery.getStoredWatts();
     }
 
     /***
-     * Compares the energy between this BatteryBank and a given
-     * BatteryBank.
-     * @param other BatteryBank to compare with.
-     * @return True if this BatteryBank has more stored energy
-     * than the given BatteryBank.
+     * Compares the energy between this WattBatteryHandler and a given
+     * WattBatteryHandler.
+     * @param other WattBatteryHandler to compare with.
+     * @return True if this WattBatteryHandler has more stored energy
+     * than the given WattBatteryHandler.
      */
-    public boolean hasMoreEnergyThan(BatteryBank<?> other) {
-        return this.battery.getEnergyStored() > other.battery.getEnergyStored();
+    public boolean hasMoreEnergyThan(WattBatteryHandler<?> other) {
+        return this.battery.getStoredWatts() > other.battery.getStoredWatts();
     }
 
     /***
-     * Called every time energy is added or removed from this BatteryBank.
+     * Called every time energy is added or removed from this WattBatteryHandler.
      */
     @Override
-    public void onEnergyUpdated() {
+    public void onWattsUpdated(float oldStoredWatts, float newStoredWatts) {
         target.setChanged();
-        target.onEnergyUpdated();
-        MechanoPackets.sendToAllClients(new EnergySyncS2CPacket(battery.getEnergyStored(), target.getBlockPos()));
-    }
-
-    /***
-     * Overrides the energy amount in this BatteryBank
-     */
-    @Override
-    public void setEnergyStored(int energy) {
-        battery.setEnergyStored(energy);
-    }
-
-    public int getEnergyStored() {
-        return battery.getEnergyStored();
-    }
-
-    public int sendEnergyTo(BlockEntity other) {
-        return 1;
-        // other.getCapability
+        target.onWattsUpdated();
+        MechanoPackets.sendToAllClients(WattSyncS2CPacket.ofSource(battery, target.getBlockPos()));
     }
 
     @Override
@@ -147,7 +128,7 @@ public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> impl
     }
 
     /***
-     * Initializes the energy capabilities of this BatteryBank and 
+     * Initializes the energy capabilities of this WattBatteryHandler and 
      * reflects a state change if needed
      */
     public void loadAndUpdate(BlockState state) {
@@ -156,16 +137,16 @@ public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> impl
     }
 
     /***
-     * Invalidates the energy capabilities of this BatteryBank
+     * Invalidates the energy capabilities of this WattBatteryHandler
      */
     public void invalidate() {
         energyHandler.invalidate();
     }
 
-    public BatteryBank<T> reflectStateChange(BlockState state) {
+    public WattBatteryHandler<T> reflectStateChange(BlockState state) {
         if(state == null) return this;
         CombinedOrientation target = DirectionTransformer.extract(state);
-        for(ForgeEnergyJunction interaction : interactions)
+        for(InteractionJunction interaction : interactions)
             interaction.rotateToFace(target);
         return this;
     }
@@ -179,10 +160,10 @@ public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> impl
     }
 
     /***
-     * Gets every direction that this BatteryBank can interact with.
+     * Gets every direction that this WattBatteryHandler can interact with.
      * Directions are relative to the world, and will change
-     * depending on the orientation of this BatteryBank's parent block.
-     * @return A list of Directions; empty if this BatteryBank
+     * depending on the orientation of this WattBatteryHandler's parent block.
+     * @return A list of Directions; empty if this WattBatteryHandler
      * has no interaction directions.
      */
     public Direction[] getInteractionDirections() {
@@ -190,7 +171,7 @@ public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> impl
 
         Direction[] out = new Direction[interactions.length];
         for(int x = 0; x < interactions.length; x++) {
-            ForgeEnergyJunction p = interactions[x];
+            InteractionJunction p = interactions[x];
             if(p.isInput || p.isOutput)
                 out[x] = interactions[x].getDirection();
         }
@@ -199,12 +180,12 @@ public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> impl
     }
 
     /***
-     * Checks whether this BatteryBank is directly connected to any BlockEntities that have ForgeEnergy
+     * Checks whether this WattBatteryHandler is directly connected to any BlockEntities that have ForgeEnergy
      * capabilites.
-     * @return True if this BatteryBank is interacting with a ForgeEnergy BlockEntity
+     * @return True if this WattBatteryHandler is interacting with a ForgeEnergy BlockEntity
      */
     public boolean isConnectedExternally() {
-        for(ForgeEnergyJunction pol : interactions) 
+        for(InteractionJunction pol : interactions) 
             if(pol.canSendOrReceive(target)) return true;
         return false;
     }
@@ -215,7 +196,12 @@ public class BatteryBank<T extends SmartBlockEntity & BatteryBankUpdatable> impl
      * summarizing the interactions as a list of Directions.
      * @return
      */
-    public ForgeEnergyJunction[] getRawInteractions() {
+    public InteractionJunction[] getRawInteractions() {
         return interactions;
+    }
+
+    @Override
+    public WattStorable getBattery() {
+        return this.battery;
     }
 }

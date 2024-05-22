@@ -2,8 +2,8 @@ package com.quattage.mechano.foundation.electricity.builder;
 
 import com.quattage.mechano.foundation.block.orientation.relative.Relative;
 import com.quattage.mechano.foundation.block.orientation.relative.RelativeDirection;
-import com.quattage.mechano.foundation.electricity.BatteryBankUpdatable;
-import com.quattage.mechano.foundation.electricity.core.ForgeEnergyJunction;
+import com.quattage.mechano.foundation.electricity.WattBatteryHandlable;
+import com.quattage.mechano.foundation.electricity.core.InteractionJunction;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import net.minecraft.world.level.block.Block;
 
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 /***
  * A fluent builder for ForgeEnergyJunctions
  */
-public class ForgeEnergyJunctionBuilder<T extends SmartBlockEntity & BatteryBankUpdatable> {
+public class ForgeEnergyJunctionBuilder<T extends SmartBlockEntity & WattBatteryHandlable> {
 
     private boolean isInput = true;
     private boolean isOutput = true;
@@ -21,12 +21,12 @@ public class ForgeEnergyJunctionBuilder<T extends SmartBlockEntity & BatteryBank
     private boolean denyOrAllow = false;
     private Block[] blocksList = null;
 
-    private final BatteryBankBuilder<T> base;
+    private final WattBatteryHandlerBuilder<T> base;
     private final Relative relative;
 
     
 
-    public ForgeEnergyJunctionBuilder(BatteryBankBuilder<T> base, Relative relative) {
+    public ForgeEnergyJunctionBuilder(WattBatteryHandlerBuilder<T> base, Relative relative) {
         this.base = base;
         this.relative = relative;
     }
@@ -79,13 +79,13 @@ public class ForgeEnergyJunctionBuilder<T extends SmartBlockEntity & BatteryBank
 
     
 
-    public BatteryBankBuilder<T> buildInteraction() {
-        base.addInteraction(new ForgeEnergyJunction(new RelativeDirection(relative), isInput, isOutput, blocksList, denyOrAllow));
+    public WattBatteryHandlerBuilder<T> buildInteraction() {
+        base.addInteraction(new InteractionJunction(new RelativeDirection(relative), isInput, isOutput, blocksList, denyOrAllow));
         return base;
     }
 
     @SuppressWarnings("unused")
-    private class BlockListBuilder<R extends SmartBlockEntity & BatteryBankUpdatable> {
+    private class BlockListBuilder<R extends SmartBlockEntity & WattBatteryHandlable> {
 
         private final ForgeEnergyJunctionBuilder<R> base;
         private final ArrayList<Block> blocksList = new ArrayList<Block>();

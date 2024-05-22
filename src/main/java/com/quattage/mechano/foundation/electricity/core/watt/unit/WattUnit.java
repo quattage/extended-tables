@@ -1,5 +1,7 @@
 package com.quattage.mechano.foundation.electricity.core.watt.unit;
 
+import com.quattage.mechano.MechanoSettings;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -45,6 +47,16 @@ public class WattUnit implements Comparable<WattUnit> {
     }
 
     /**
+     * Make a new WattUnit from total power in watts.
+     * @param volts Voltage of this WattUnit
+     * @param watts Total power. Used to derive the current value in the resulting WattUnit
+     * @return a new WattUnit object
+     */
+    public static WattUnit of(int volts, float watts) {
+        return new WattUnit(volts, watts / (float)volts);
+    }
+
+    /**
      * Make a new WattUnit from a CompoundTag <p>
      * Expects a short ("volt") and a float ("curr")
      * @param in CompoundTag to pull values from
@@ -61,6 +73,10 @@ public class WattUnit implements Comparable<WattUnit> {
      */
     public static WattUnit ofBytes(FriendlyByteBuf buf) {
         return new WattUnit(buf.readShort(), buf.readFloat());
+    }
+
+    public static boolean hasNoPotential(float watts) {
+        return watts < (1f / MechanoSettings.FE2W_RATE);
     }
 
     public WattUnit copy() {
@@ -106,6 +122,19 @@ public class WattUnit implements Comparable<WattUnit> {
     }
 
     /**
+     * Set the voltage stored within this WattUnit and alters the total power output.
+     * Does not adjust current to ensure the total power output remains the same.
+     * For that, use {@link WattUnit#adjustVoltage(int) <code>adjustVoltage</code>}
+     * @param newVoltage
+     * @return
+     */
+    public WattUnit setVoltageLossy(int newVoltage) {
+        volts.setTo(newVoltage);
+        setZeroIfNoPotential();
+        return this;
+    }
+
+    /**
      * Adjust the current (amps) stored within this Watt unit such that
      * <code>watts = voltage * current</code> <p>
      * Adjusts the voltage to make the above equation true without altering the total power output (watts)
@@ -117,7 +146,7 @@ public class WattUnit implements Comparable<WattUnit> {
     public WattUnit adjustCurrent(float newAmps) {
 
         if(getCurrent() == 0) return this;
-        if(newAmps < 0.00000001) {
+        if(newAmps < 0.00001) {
             setZero();
             return this;
         }
@@ -130,15 +159,36 @@ public class WattUnit implements Comparable<WattUnit> {
     }
 
     /**
+     * Set the current stored within this WattUnit and alters the total power output.
+     * Does not adjust voltage to ensure the total power output remains the same.
+     * For that, use {@link WattUnit#adjustCurrent(float) <code>adjustCurrent</code>}
+     * @param newVoltage
+     * @return
+     */
+    public WattUnit setCurrentLossy(float amps) {
+        this.amps = amps;
+        setZeroIfNoPotential();
+        return this;
+    }
+
+    /**
      * If the effective watt value of this WattUnit is zero, 
-     * (that is, if current OR voltage are zero)
+     * 
      * set both the voltage and current to zero.
      * <p>
      * This makes it impossible for a WattUnit to carry a non-zero voltage potential at zero (or effectively zero) amps, 
      * which would make no sense - the math that happens later on shouldn't have to deal with this edge case.
      */
     public void setZeroIfNoPotential() {
-        if(getCurrent() < 1) setZero();
+        if(hasNoPotential()) setZero();
+    }
+
+    /**
+     * @return <code>TRUE</code> if this WattUnit's total power output is zero or effectively zero.
+     * (that is, if {@link WattUnit#getCurrent() <code>getCurrent()</code>} returns less than 1 equivalent unit of FE, whatever the conversion rate may be return <code>TRUE</code>)
+     */
+    public boolean hasNoPotential() {
+        return getCurrent() < (1f / MechanoSettings.FE2W_RATE);
     }
 
     /**

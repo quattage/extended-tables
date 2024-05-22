@@ -11,7 +11,8 @@
 		"client.DynamicWireRenderMixin",
 		"client.StaticWireRenderMixin",
 		"client.StaticWireCullingMixin",
-		"client.RenderChunkInvoker"
+		"client.RenderChunkInvoker",
+		"CapabilityGetterMixin"
 	],
 	"minVersion": "0.8.5"
 }

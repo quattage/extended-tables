@@ -39,7 +39,7 @@ public class GlobalTransferGridProvider implements ICapabilityProvider, INBTSeri
 
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        return Mechano.SERVER_GRID_CAPABILITY.orEmpty(capability, networkOptional);
+        return Mechano.CAPABILITIES.SERVER_GRID_CAPABILITY.orEmpty(capability, networkOptional);
     }
     
 }

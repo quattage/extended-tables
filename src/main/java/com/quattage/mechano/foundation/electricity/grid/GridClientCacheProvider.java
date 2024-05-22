@@ -27,6 +27,6 @@ public class GridClientCacheProvider implements ICapabilityProvider {
 
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        return Mechano.CLIENT_CACHE_CAPABILITY.orEmpty(capability, cacheOptional);
+        return Mechano.CAPABILITIES.CLIENT_CACHE_CAPABILITY.orEmpty(capability, cacheOptional);
     }
 }

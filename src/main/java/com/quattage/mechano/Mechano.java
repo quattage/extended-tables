@@ -2,25 +2,15 @@ package com.quattage.mechano;
 
 import com.mojang.logging.LogUtils;
 import com.quattage.mechano.foundation.block.upgradable.UpgradeCache;
-import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
-import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridProvider;
-import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
-import com.quattage.mechano.foundation.electricity.grid.GridClientCacheProvider;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.utility.LangBuilder;
 import com.tterrag.registrate.providers.DataGenContext;
 
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
@@ -36,8 +26,7 @@ public class Mechano {
 
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(Mechano.MOD_ID);
-    public static final Capability<GlobalTransferGrid> SERVER_GRID_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
-    public static final Capability<GridClientCache> CLIENT_CACHE_CAPABILITY = CapabilityManager.get(new CapabilityToken<>(){});
+    public static final MechanoCapabilities CAPABILITIES = new MechanoCapabilities();
     public static final UpgradeCache UPGRADES = new UpgradeCache();
 
     public Mechano() {
@@ -46,6 +35,7 @@ public class Mechano {
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
         REGISTRATE.registerEventListeners(modBus);
+        CAPABILITIES.registerTo(forgeBus);
         MechanoSettings.init(modBus);
         MechanoBlocks.register(modBus);
         MechanoItems.register(modBus);
@@ -59,22 +49,10 @@ public class Mechano {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MechanoClient.init(modBus, forgeBus));
 
         modBus.addListener(this::onCommonSetup);
-        forgeBus.addGenericListener(Level.class, this::addWorldCapabilities);
     }
 
     public void onCommonSetup(final FMLCommonSetupEvent event) {
         MechanoPackets.register();
-    }
-
-    @SuppressWarnings({"resource"})
-    public void addWorldCapabilities(AttachCapabilitiesEvent<Level> event) {
-        if(event.getObject().isClientSide) {
-            Mechano.LOGGER.info("Attaching ClientCache capability to " + event.getObject().dimension().location());
-            event.addCapability(asResource("transfer_grid_client_cache"), new GridClientCacheProvider((ClientLevel)event.getObject()));
-        } else {
-            Mechano.LOGGER.info("Attaching ServerGrid capability to " + event.getObject().dimension().location());
-            event.addCapability(asResource("transfer_grid_server_manager"), new GlobalTransferGridProvider(event.getObject()));
-        }
     }
 
     public static LangBuilder lang() {

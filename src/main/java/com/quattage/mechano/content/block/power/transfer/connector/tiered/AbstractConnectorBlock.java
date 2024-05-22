@@ -9,6 +9,8 @@ import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.electricity.core.EBEWrenchable;
+import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
+import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.OptionalWattOrFE;
 import com.simibubi.create.AllBlocks;
 
 import net.minecraft.core.BlockPos;
@@ -107,25 +109,21 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
 	}
 
     protected boolean hasSupport(LevelReader world, BlockPos pos, BlockState state) {
+
         Direction dir = state.getValue(ORIENTATION).getCardinal();
         BlockPos underPos = pos.relative(dir.getOpposite());
         BlockState underState = world.getBlockState(underPos);
 
+        if(DirectionalWattProvidable.getFEOrWattsAt(world.getBlockEntity(underPos), dir).isPresent()) return true;
         if(underState.getBlock() == AllBlocks.METAL_GIRDER.get()) return true;
-        if(underState.getBlock() instanceof ConnectorTier2Block) {
+
+        if(underState.getBlock() instanceof ConnectorTier2Block) {     // TOTEM POLE
             if(underState.getValue(ORIENTATION).getCardinal() == state.getValue(ORIENTATION).getCardinal())
                 return true;
         }
 
         if(underState.getBlock() instanceof AbstractConnectorBlock) return false;
-
         if(underState.isFaceSturdy(world, pos, dir, SupportType.CENTER)) return true;
-
-        IEnergyStorage targetBattery = null;
-        BlockEntity targetBE = world.getBlockEntity(underPos);
-        if(targetBE != null) targetBattery = targetBE.getCapability(ForgeCapabilities.ENERGY, dir).orElse(null);
-
-        if(targetBattery != null) return true;
 
         if(isAttached(world, pos, dir, ROOTX)) return true;
         if(isAttached(world, pos, dir, ROOTY)) return true;

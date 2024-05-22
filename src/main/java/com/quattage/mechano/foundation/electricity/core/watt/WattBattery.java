@@ -2,9 +2,15 @@ package com.quattage.mechano.foundation.electricity.core.watt;
 
 import java.util.function.Consumer;
 
-import com.quattage.mechano.foundation.electricity.core.DirectionalWattStorable;
+import javax.annotation.Nullable;
+
+import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
 
 /**
  * A WattBattery is an EnergyStorage-like object
@@ -14,7 +20,7 @@ import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
  * @see {@link WattUnit <code>WattUnit</code>} for conveying Watts between objects.
  * @see {@link Voltage <code>Voltage</code>} for representing Voltage
  */
-public class WattBattery<T extends DirectionalWattStorable> implements WattStorable {
+public class WattBattery<T extends DirectionalWattProvidable> implements WattStorable {
 
     private final T parent;
 
@@ -31,7 +37,7 @@ public class WattBattery<T extends DirectionalWattStorable> implements WattStora
     private float storedWattTicks;
     private WattStorable.OvervoltBehavior overvoltBehavior;
 
-    protected WattBattery(T parent, int maxStoredWattTicks, int maxCharge, int maxDischarge, Voltage maxTolerance, Voltage maxFlux, OvervoltBehavior overvoltBehavior, Consumer<Integer> overvoltEvent) {
+    protected WattBattery(T parent, int maxStoredWattTicks, int maxCharge, int maxDischarge, Voltage maxTolerance, Voltage maxFlux, OvervoltBehavior overvoltBehavior, @Nullable Consumer<Integer> overvoltEvent) {
 
         this.parent = parent;
 
@@ -60,14 +66,14 @@ public class WattBattery<T extends DirectionalWattStorable> implements WattStora
         .makeWithOvervoltEvent(this::onOvervolt); // event is called when battery is overvolted
         </pre>
      * 
-     * @param <T> {@link DirectionalWattStorable DirectionalWattStorable} Handler for what happens
+     * @param <T> {@link DirectionalWattProvidable DirectionalWattStorable} Handler for what happens
      * during energy updates and capability provisions. 
      * 
      * @param parent Should handle reading, writing, sending packets, etc.
      * @return A new fluent builder for defining the resulting WattBattery object.
      */
-    public static <T extends DirectionalWattStorable> WattBatteryBuilder<T> newBatteryAt(T parent) {
-        return new WattBatteryBuilder<T>(parent);
+    public static <T extends DirectionalWattProvidable> WattBatteryBuilder newBattery() {
+        return new WattBatteryBuilder();
     }
 
     @Override
@@ -81,33 +87,56 @@ public class WattBattery<T extends DirectionalWattStorable> implements WattStora
     }
 
     @Override
-    public WattUnit extractWatts(float maxWattsToExtract, boolean simulate) {
+    public WattUnit extractWatts(WattUnit maxWattsToExtract, boolean simulate) {
         
-        if(maxWattsToExtract == 0) return WattUnit.EMPTY;
+        if(maxWattsToExtract.hasNoPotential()) return WattUnit.EMPTY;
         if(!canExtract()) return WattUnit.EMPTY;
 
-        float wattsExtracted  = Math.min(storedWattTicks, Math.min(maxWattsToExtract, maxDischarge));
-        if(!simulate) storedWattTicks -= wattsExtracted;
+        float wattsExtracted  = Math.min(storedWattTicks, Math.min(maxWattsToExtract.getWatts(), maxDischarge));
+        if(!simulate) {
+            float oldWatts = storedWattTicks;
+            storedWattTicks -= wattsExtracted;
+            if(oldWatts != storedWattTicks) 
+                parent.onWattsUpdated(oldWatts, storedWattTicks);
+        }
         return WattUnit.of(maxFlux, wattsExtracted);
     }
 
     @Override
-    public WattUnit recieveWatts(WattUnit maxWattsToRecieve, boolean simulate) {
+    public WattUnit receiveWatts(WattUnit maxWattsToRecieve, boolean simulate) {
         
-        if(maxWattsToRecieve.getCurrent() < 0.001) return WattUnit.EMPTY;
+        if(maxWattsToRecieve.hasNoPotential()) return WattUnit.EMPTY;
         if(!canReceive()) return WattUnit.EMPTY;
 
         float wattsReceived = 0;
         int volts = maxWattsToRecieve.getVoltage().get();
 
-        if(volts < maxTolerance.get()) {
+        if(volts <= maxTolerance.get()) {
             wattsReceived = Math.min((float)maxStoredWattTicks - storedWattTicks, Math.min(maxWattsToRecieve.getWatts(), maxCharge));
+        } else {
+            if(overvoltBehavior == OvervoltBehavior.SOFT_DENY) {
+                onOvervolt(maxFlux.get() - volts);
+                return WattUnit.EMPTY;
+            }
+            else if(overvoltBehavior == OvervoltBehavior.LIMIT_LOSSY) {
+                onOvervolt(maxFlux.get() - volts);
+                return receiveWatts(maxWattsToRecieve.copy().setVoltageLossy(maxFlux.get()), simulate);      
+            }
+            else if(overvoltBehavior == OvervoltBehavior.TRANSFORM_LOSSLESS) {
+                onOvervolt(maxFlux.get() - volts);
+                return receiveWatts(maxWattsToRecieve.copy().adjustVoltage(maxFlux.get()), simulate);            
+            }
+
+            else throw new UnsupportedOperationException("OvervoltBehavior type " + overvoltBehavior + " has no implementation!");
         }
 
-
-        //if(overvoltBehavior == OvervoltBehavior.HARD_LIMIT)
-
-        return WattUnit.EMPTY;
+        if(!simulate) {
+            float oldWatts = storedWattTicks;
+            storedWattTicks += wattsReceived;
+            if(oldWatts != storedWattTicks)
+                parent.onWattsUpdated(oldWatts, storedWattTicks);
+        }
+        return WattUnit.of(volts, wattsReceived);
     }
 
     @Override
@@ -116,8 +145,25 @@ public class WattBattery<T extends DirectionalWattStorable> implements WattStora
     }
 
     @Override
+    public void setStoredWatts(float watts, boolean update) {
+        float oldWatts = getStoredWatts();
+        this.storedWattTicks = Math.min(getCapacity(), watts);
+        if(update && (oldWatts != storedWattTicks)) parent.onWattsUpdated(oldWatts, oldWatts);
+    }
+
+    @Override
     public int getCapacity() {
         return maxStoredWattTicks;
+    }
+
+    @Override
+    public int getMaxCharge() {
+        return maxCharge;
+    }
+
+    @Override
+    public int getMaxDischarge() {
+        return maxDischarge;
     }
 
     @Override
@@ -133,5 +179,24 @@ public class WattBattery<T extends DirectionalWattStorable> implements WattStora
     @Override
 	public void setOvervoltBehavior(OvervoltBehavior overvoltBehavior) {
 		this.overvoltBehavior = overvoltBehavior;
-	}
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public LazyOptional<IEnergyStorage> toFeEquivalent() {
+        return LazyOptional.of(() -> new ExplicitFeConverter<WattBattery<?>>(this));
+    }
+
+    @Override
+    public CompoundTag writeTo(CompoundTag in) {
+        in.putFloat("storedWatts", storedWattTicks);
+        in.putByte("mode", (byte)overvoltBehavior.ordinal());
+        return in;
+    }
+
+    @Override
+    public void readFrom(CompoundTag in) {
+        this.storedWattTicks = in.getFloat("storedWatts");
+        this.overvoltBehavior = OvervoltBehavior.values()[in.getByte("mode")];
+    }
 }
