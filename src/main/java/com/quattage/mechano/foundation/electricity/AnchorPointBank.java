@@ -1,15 +1,18 @@
 package com.quattage.mechano.foundation.electricity;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,8 +27,8 @@ public class AnchorPointBank<T extends BlockEntity> {
     public final T target;
     public boolean isAwaitingConnection = false;
     private final AnchorPoint[] anchorPoints;
-
     private GlobalTransferGrid net;
+    private List<T> pathDestinations = new ArrayList<>();
 
     public AnchorPointBank(T target, ArrayList<AnchorPoint> nodesToAdd) {
         this.target = target;
@@ -141,10 +144,13 @@ public class AnchorPointBank<T extends BlockEntity> {
         return false;
     }
 
-    public void sync() {
-        for(AnchorPoint anchor : anchorPoints) {
-            GridVertex vert = anchor.getParticipant();
-            if(vert != null) vert.syncToHostBE();
+    public void sync(@Nullable Level world) {
+        if(world instanceof ServerLevel sl) {
+            for(AnchorPoint anchor : anchorPoints) 
+                anchor.syncParticipant(sl);
+        } else if(world == null) {
+            for(AnchorPoint anchor : anchorPoints)
+                anchor.syncParticipant(null);
         }
     }
 

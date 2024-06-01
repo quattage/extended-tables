@@ -1,10 +1,12 @@
 package com.quattage.mechano;
 
+import com.quattage.mechano.content.item.DebugButter;
 import com.quattage.mechano.content.item.spool.EmptySpool;
 import com.quattage.mechano.content.item.spool.HookupWireSpool;
 import com.quattage.mechano.content.item.wire.HookupWire;
 import com.tterrag.registrate.util.entry.ItemEntry;
 
+import net.minecraft.world.item.Rarity;
 import net.minecraftforge.eventbus.api.IEventBus;
 import static com.quattage.mechano.Mechano.REGISTRATE;
 
@@ -23,6 +25,15 @@ public class MechanoItems {
 
     public static final ItemEntry<HookupWireSpool> HOOKUP_WIRE_SPOOL = REGISTRATE.item("hookup_spool", HookupWireSpool::new)
         .register();
+
+    public static final ItemEntry<DebugButter> DEBUG_BUTTER = REGISTRATE.item("debug_butter", DebugButter::new)
+        .properties(p -> p
+            .rarity(Rarity.EPIC)
+            .stacksTo(1)
+            .fireResistant()
+        )
+        .register();
+
 
     public static void register(IEventBus event) {
         Mechano.logReg("items");

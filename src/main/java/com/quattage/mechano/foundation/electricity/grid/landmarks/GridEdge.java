@@ -2,7 +2,9 @@ package com.quattage.mechano.foundation.electricity.grid.landmarks;
 
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.sync.GridSyncHelper;
 import com.quattage.mechano.foundation.electricity.grid.sync.GridSyncPacketType;
 import com.quattage.mechano.foundation.electricity.spool.WireSpool;
@@ -30,8 +32,8 @@ public class GridEdge {
         this.target = edgeID;
         this.wireType = WireSpool.ofType(wireType);
 
-        BlockPos a = target.getSideA().getPos();
-        BlockPos b = target.getSideB().getPos();
+        BlockPos a = target.getSideA().getBlockPos();
+        BlockPos b = target.getSideB().getBlockPos();
         this.distance = (float)Math.sqrt(Math.pow(a.getX() - b.getX(), 2f) + Math.pow(a.getY() - b.getY(), 2f) + Math.pow(a.getZ() - b.getZ(), 2f));
 
         GridSyncHelper.informPlayerEdgeUpdate(GridSyncPacketType.ADD_NEW, this.toLightweight());
@@ -42,8 +44,8 @@ public class GridEdge {
         this.wireType = WireSpool.ofType(tag.getInt("t"));
         this.target = GIDPair.of(tag.getCompound("e"));
 
-        BlockPos a = target.getSideA().getPos();
-        BlockPos b = target.getSideB().getPos();
+        BlockPos a = target.getSideA().getBlockPos();
+        BlockPos b = target.getSideB().getBlockPos();
         this.distance = (float)Math.sqrt(Math.pow(a.getX() - b.getX(), 2f) + Math.pow(a.getY() - b.getY(), 2f) + Math.pow(a.getZ() - b.getZ(), 2f));
     }
 
@@ -58,7 +60,7 @@ public class GridEdge {
     }
 
     public float calcScore() {
-        return 1.0f / (float)this.wireType.getRate();
+        return 1.0f / wireType.getRating().getCurrent();
     }
 
     public WireSpool getWireType() {
@@ -86,19 +88,19 @@ public class GridEdge {
     public boolean isReal() { return true; }
 
     /***
-     * Whether or not this GridEdge can transfer any FE/t
-     * @return True if this Edge's transfer rate is > 0
+     * Whether or not this GridEdge can transfer any watts per tick
+     * @return True if this edge's trasnfer rate (in watts) is greater than the minimum watt potential
      */
     public boolean canTransfer() {
-        return getTransferRate() > 0 && this.canTransfer;
+        return this.canTransfer && (!getTransferStats().hasNoPotential());
     }
 
-    /***
-     * Gets the integer transfer rate in FE per Tick of the is edge
-     * @return Positive integer from 0 to int MAX_VALUE
+    /**
+     * Gets the transfer rate in volts & amps of this GridEdge.
+     * @return A WattUnit describing the aforementioned transfer statistics
      */
-    public int getTransferRate() {
-        return wireType.getRate();
+    public WattUnit getTransferStats() {
+        return wireType.getRating();
     }
 
     /***
@@ -122,17 +124,17 @@ public class GridEdge {
      * @return BlockPos position of this edge's A side
      */
     public BlockPos getPosA() {
-        return getSideA().getPos();
+        return getSideA().getBlockPos();
     }
 
     /***
      * @return BlockPos position of this edge's B side
      */
     public BlockPos getPosB() {
-        return getSideB().getPos();
+        return getSideB().getBlockPos();
     }
 
-    public GIDPair getID() {
+    public GIDPair getHashable() {
         return target;
     }
 

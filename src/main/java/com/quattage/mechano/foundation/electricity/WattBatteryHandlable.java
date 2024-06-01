@@ -18,7 +18,7 @@ public interface WattBatteryHandlable {
     void createWattHandlerDefinition(WattBatteryHandlerBuilder<? extends WattBatteryHandlable> builder);
 
     /**
-     * This block is optionally overridable and provided to expose additional functionality where needed, the WattHandler already
+     * This method is optionally overridable and provided to expose additional functionality where needed, the WattHandler already
      * sends packets and syncs BEs, so that does not need to be done here.
      */
     default void onWattsUpdated() {}

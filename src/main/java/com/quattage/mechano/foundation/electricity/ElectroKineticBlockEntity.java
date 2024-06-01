@@ -41,10 +41,6 @@ public abstract class ElectroKineticBlockEntity extends KineticBlockEntity imple
         return battery;
     }
 
-    public boolean isConnectedExternally() {
-        return battery.isConnectedExternally();
-    }
-
     @Override
     public void onLoad() {
         battery.loadAndUpdate(this.getBlockState());

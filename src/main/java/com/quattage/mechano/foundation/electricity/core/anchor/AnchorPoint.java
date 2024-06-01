@@ -8,13 +8,13 @@ import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
-import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.simibubi.create.foundation.utility.Color;
 import com.simibubi.create.foundation.utility.Pair;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,6 +35,7 @@ public class AnchorPoint {
     private float anchorSize;
     private AABB hitbox = null;
 
+    @Nullable
     private GridVertex participant = null;
 
     // TODO breakout
@@ -52,7 +53,7 @@ public class AnchorPoint {
     public static Pair<AnchorPoint, WireAnchorBlockEntity> getAnchorAt(Level world, GID loc) {
         if(world == null) return null;
         if(loc == null) return null;
-        BlockEntity be = world.getBlockEntity(loc.getPos());
+        BlockEntity be = world.getBlockEntity(loc.getBlockPos());
         if(be instanceof WireAnchorBlockEntity wbe) 
             return Pair.of(wbe.getAnchorBank().get(loc.getSubIndex()), wbe);
         return null;
@@ -93,7 +94,6 @@ public class AnchorPoint {
 
     /***
      * Gets the hitbox of this AnchorPoint
-     * @throws IllegalStateException 
      * @return an AABB representing the bounds of this AnchorPoint at its current location
      */
     public AABB getHitbox() {
@@ -136,7 +136,7 @@ public class AnchorPoint {
     }
 
     public Vec3 getPos() {
-        return transform.toRealPos(systemLocation.getPos());
+        return transform.toRealPos(systemLocation.getBlockPos());
     }
 
     public Vec3 getLocalOffset() {
@@ -163,11 +163,44 @@ public class AnchorPoint {
         return closestDist;
     }
 
+    /**
+     * Syncs the participant of this AnchorPoint. 
+     * An AnchorPoint's "participant" refers to the {@link GridVertex <code>GridVertex</code>}
+     * that this AnchorPoint repersents in the grid.
+     * @param world World to operate within. If null, syncing will only be performed if this AnchorPoint already has a participant.
+     */
+    public void syncParticipant(@Nullable ServerLevel world) {
+        if(participant == null) {
+            if(world == null) return;
+            GlobalTransferGrid grid = GlobalTransferGrid.of(world);
+            participant = grid.getVertAt(systemLocation);
+            if(participant == null) return;
+            participant.doFullSync(true);
+            return;
+        }
+
+        participant.doFullSync(true);
+    }
+
+    /**
+     * Sets the participant of this AnchorPoint to <code>null</code> <p>
+     * An AnchorPoint's "participant" refers to the {@link GridVertex <code>GridVertex</code>}
+     * that this AnchorPoint repersents in the grid.
+     */
     public void nullifyParticipant() {
+        Mechano.log("part nullified");
         this.participant = null;
     }
 
+    /**
+     * Sets the participant of this AnchorPoint to the provided {@link GridVertex <code>GridVertex</code>} instance.
+     * @param participant <code>GridVertex</code> to set this AnchorPoint's participant to
+     * @throws IllegalArgumentException The provided GridVertex <strong>must</strong> have the same GID as this AnchorPoint.
+     */
     public void setParticipant(GridVertex participant) {
+        Mechano.log("part set");
+        if(!participant.isAt(this.systemLocation))
+            throw new IllegalArgumentException("Error setting participant - AnchorPoint at " + systemLocation + " does not coorespond to the supplied GridVertex at " + participant.getID() + "! (Block positions and indices must be equal!)");
         this.participant = participant;
     }
 

@@ -10,12 +10,6 @@ public class GID {
 
     private final BlockPos pos;
     private final int subIndex;
-    
-    public GID(GridVertex vert) {
-        if(vert == null) throw new NullPointerException("Failed to create SVID - SystemVertex is null!");
-        this.pos = vert.getPos();
-        this.subIndex = vert.getSubIndex();
-    }
 
     public GID(BlockPos pos, int subIndex) {
         if(pos == null) throw new NullPointerException("Failed to create SVID - BlockPos is null!");
@@ -46,7 +40,7 @@ public class GID {
         return "[" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + ", " + subIndex + "]";
     }
 
-    public BlockPos getPos() {
+    public BlockPos getBlockPos() {
         return pos;
     }
 
@@ -73,7 +67,7 @@ public class GID {
 
     @Override
     public int hashCode() {
-        return (pos.hashCode() + subIndex) * 31;
+        return (pos.hashCode() * 31) + subIndex;
     }
 
     public CompoundTag writeTo(CompoundTag in) {

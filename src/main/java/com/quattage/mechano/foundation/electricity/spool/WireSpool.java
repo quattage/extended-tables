@@ -8,6 +8,7 @@ import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.core.anchor.interaction.AnchorInteractType;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.rendering.WireAnchorBlockRenderer;
@@ -41,7 +42,7 @@ public abstract class WireSpool extends Item {
 
     private final String spoolName;
     private final int spoolID;
-    private final int rate;
+    private final WattUnit rating;
     private final ItemStack emptyDrop;
     private final ItemStack rawDrop;
 
@@ -54,7 +55,7 @@ public abstract class WireSpool extends Item {
         this.spoolName = setSpoolName();
         this.spoolID = SPOOL_TYPES.size();
         WireSpool.SPOOL_TYPES.add(this);
-        this.rate = setRate();
+        this.rating = setRating();
         this.emptyDrop = new ItemStack(setEmptySpoolDrop());
         this.rawDrop = new ItemStack(setRawDrop());
     }
@@ -89,10 +90,10 @@ public abstract class WireSpool extends Item {
     protected abstract String setSpoolName();
 
     /***
-     * The energy transfer rate of this WireSpool's cooresponding wire type.
-     * @return Int in FE per tick. 
+     * Define the energy transfer rate of this WireSpool's associated wire type.
+     * @return WattUnit representing voltage and current limitations.
      */
-    protected abstract int setRate();
+    protected abstract WattUnit setRating();
 
     /***
      * The Raw item that cooresponds to this WireSpool. This is usually just a basic wire item, which is
@@ -132,8 +133,8 @@ public abstract class WireSpool extends Item {
         return rawDrop;
     }
 
-    public final int getRate() {
-        return rate;
+    public final WattUnit getRating() {
+        return rating;
     }
 
     public static ItemStack getHeldSpool(Player player) {
@@ -188,7 +189,7 @@ public abstract class WireSpool extends Item {
                 return InteractionResultHolder.fail(handStack);
             }
 
-            if(currentAnchor.getFirst().getID().getPos().equals(previousAnchor.getFirst().getID().getPos())) {
+            if(currentAnchor.getFirst().getID().getBlockPos().equals(previousAnchor.getFirst().getID().getBlockPos())) {
                 player.displayClientMessage(AnchorInteractType.LINK_CONFLICT.getMessage(), true);
                 return InteractionResultHolder.fail(handStack);
             }

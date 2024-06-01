@@ -53,7 +53,7 @@ public class WattBattery<T extends DirectionalWattProvidable> implements WattSto
     }
 
     /**
-     * Create a new WattBatteryBuilder bound to the given Object.
+     * Create a new {@link com.quattage.mechano.foundation.electricity.core.watt.WattBatteryBuilder <code>WattBatteryBuilder</code>} bound to the given Object.
      * <p>
      * <pre>
      * WattBattery<T> batt = WattBattery.newBatteryAt(parent)
@@ -66,10 +66,8 @@ public class WattBattery<T extends DirectionalWattProvidable> implements WattSto
         .makeWithOvervoltEvent(this::onOvervolt); // event is called when battery is overvolted
         </pre>
      * 
-     * @param <T> {@link DirectionalWattProvidable DirectionalWattStorable} Handler for what happens
+     * @param <T> {@link DirectionalWattProvidable <code>DirectionalWattStorable</code>} Handler for what happens
      * during energy updates and capability provisions. 
-     * 
-     * @param parent Should handle reading, writing, sending packets, etc.
      * @return A new fluent builder for defining the resulting WattBattery object.
      */
     public static <T extends DirectionalWattProvidable> WattBatteryBuilder newBattery() {
@@ -78,11 +76,13 @@ public class WattBattery<T extends DirectionalWattProvidable> implements WattSto
 
     @Override
     public boolean canExtract() {
+        if(!parent.isInExtractMode()) return false;
         return maxFlux.getRaw() < -32767 ? false : storedWattTicks > 0;
     }
 
     @Override
     public boolean canReceive() {
+        if(!parent.isInReceiveMode()) return false;
         return maxTolerance.getRaw() < -32767 ? false : storedWattTicks < maxStoredWattTicks;
     }
 
@@ -177,26 +177,36 @@ public class WattBattery<T extends DirectionalWattProvidable> implements WattSto
 	}
 
     @Override
+    public Voltage getFlux() {
+        return maxFlux;
+    }
+
+    @Override
 	public void setOvervoltBehavior(OvervoltBehavior overvoltBehavior) {
 		this.overvoltBehavior = overvoltBehavior;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public LazyOptional<IEnergyStorage> toFeEquivalent() {
+    public LazyOptional<IEnergyStorage> getFeConverterLazy() {
         return LazyOptional.of(() -> new ExplicitFeConverter<WattBattery<?>>(this));
+    }
+
+    @Override
+    public ExplicitFeConverter<WattStorable> newFeConverter() {
+        return new ExplicitFeConverter<WattStorable>(this);
     }
 
     @Override
     public CompoundTag writeTo(CompoundTag in) {
         in.putFloat("storedWatts", storedWattTicks);
-        in.putByte("mode", (byte)overvoltBehavior.ordinal());
+        in.putByte("ovb", (byte)overvoltBehavior.ordinal());
         return in;
     }
 
     @Override
     public void readFrom(CompoundTag in) {
         this.storedWattTicks = in.getFloat("storedWatts");
-        this.overvoltBehavior = OvervoltBehavior.values()[in.getByte("mode")];
+        this.overvoltBehavior = OvervoltBehavior.values()[in.getByte("ovb")];
     }
 }

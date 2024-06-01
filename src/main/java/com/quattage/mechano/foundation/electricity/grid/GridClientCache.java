@@ -18,8 +18,8 @@ import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer;
 import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer.BakedModelHashKey;
 import com.quattage.mechano.foundation.electricity.spool.WireSpool;
@@ -99,7 +99,7 @@ public class GridClientCache {
         if(edge.getAge() == 0 || (!shouldAddNew)) {
             synchronized(edgeCache) {
                 edge.setAge(0);
-                SectionPos sectionPosition = SectionPos.of(edge.getSideA().getPos());
+                SectionPos sectionPosition = SectionPos.of(edge.getSideA().getBlockPos());
                 List<GridClientEdge> section = edgeCache.get(sectionPosition);
                 if(section == null) section = new ArrayList<GridClientEdge>();
                 section.add(edge);
@@ -118,8 +118,8 @@ public class GridClientCache {
 
     public void removeFromQueue(GridClientEdge edge) {
         synchronized(edgeCache) {
-            SectionPos queryA = SectionPos.of(edge.getSideA().getPos());
-            SectionPos queryB = SectionPos.of(edge.getSideB().getPos());
+            SectionPos queryA = SectionPos.of(edge.getSideA().getBlockPos());
+            SectionPos queryB = SectionPos.of(edge.getSideB().getBlockPos());
 
             boolean sided = false;
             List<GridClientEdge> edgeList = edgeCache.get(queryA);
@@ -181,7 +181,7 @@ public class GridClientCache {
 
                 PoseStack matrixStack = new PoseStack();
                 matrixStack.pushPose(); 
-                BlockPos or = edge.getSideA().getPos().subtract(pos);
+                BlockPos or = edge.getSideA().getBlockPos().subtract(pos);
 
                 Pair<AnchorPoint, WireAnchorBlockEntity> fromAnchor = AnchorPoint.getAnchorAt(world, edge.getSideA());
                 if(fromAnchor == null || fromAnchor.getFirst() == null) {
@@ -230,8 +230,8 @@ public class GridClientCache {
     }
 
     public static void markChunksChanged(ClientLevel world, GridClientEdge edge) {
-        BlockPos posA = edge.getSideA().getPos();
-        BlockPos posB = edge.getSideB().getPos();
+        BlockPos posA = edge.getSideA().getBlockPos();
+        BlockPos posB = edge.getSideB().getBlockPos();
 
         BlockState stateA = world.getBlockState(posA);
         BlockState stateB = world.getBlockState(posB);

@@ -1,9 +1,12 @@
-package com.quattage.mechano.foundation.electricity.grid.landmarks;
+package com.quattage.mechano.foundation.electricity.grid.landmarks.client;
 
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -53,16 +56,16 @@ public class GridClientEdge {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
-        buf.writeBlockPos(sideA.getPos());
+        buf.writeBlockPos(sideA.getBlockPos());
         buf.writeInt(sideA.getSubIndex());
-        buf.writeBlockPos(sideB.getPos());
+        buf.writeBlockPos(sideB.getBlockPos());
         buf.writeInt(sideB.getSubIndex());
         buf.writeInt(wireType);
     }
 
     public int cheb() {
-        BlockPos a = sideA.getPos();
-        BlockPos b = sideB.getPos();
+        BlockPos a = sideA.getBlockPos();
+        BlockPos b = sideB.getBlockPos();
         return 
             Math.max(Math.max(
                 Math.abs(a.getX() - b.getX()), 
@@ -80,8 +83,8 @@ public class GridClientEdge {
     }
 
     public String toString() {
-        BlockPos a = sideA.getPos();
-        BlockPos b = sideB.getPos();
+        BlockPos a = sideA.getBlockPos();
+        BlockPos b = sideB.getBlockPos();
         return "GridClientEdge{[" + a.getX() + ", " + a.getY() + ", " + a.getZ() + ", " + sideA.getSubIndex() 
             + "], [" + b.getX() + ", " + b.getY() + ", " + b.getZ() + ", " + sideB.getSubIndex() + "]}";
     }
@@ -134,8 +137,8 @@ public class GridClientEdge {
     }
 
     public boolean containsPos(BlockPos pos) {
-        if(sideA.getPos().equals(pos)) return true;
-        if(sideB.getPos().equals(pos)) return true;
+        if(sideA.getBlockPos().equals(pos)) return true;
+        if(sideB.getBlockPos().equals(pos)) return true;
         return false;
     }
 

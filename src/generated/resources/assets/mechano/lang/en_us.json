@@ -13,6 +13,7 @@
   "block.mechano.tool_forge": "Tool Forge",
   "block.mechano.tool_station": "Tool Station",
   "block.mechano.voltometer": "Voltometer",
+  "item.mechano.debug_butter": "Debug Butter",
   "item.mechano.empty_spool": "Empty Spool",
   "item.mechano.hookup_spool": "Hookup Spool",
   "item.mechano.hookup_wire": "Hookup Wire"

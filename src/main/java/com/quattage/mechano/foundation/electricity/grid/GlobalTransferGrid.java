@@ -85,9 +85,9 @@ public class GlobalTransferGrid {
     }
 
     /***
-     * Links two GridVerticies without question. If these vertices don't belong to a subsystem,
-     * a new subsystem is made from them. If both vertices are in independent subsystems, these
-     * subsystems are merged.
+     * Links two GridVerticies without question. If these vertices don't belong to an active grid,
+     * a new grid is made from them. If both vertices are in independent subgrids, these
+     * subgrids are merged.
      * @param idA
      * @param idB
      */
@@ -98,16 +98,16 @@ public class GlobalTransferGrid {
         if(idA.equals(idB)) return AnchorInteractType.GENERIC;
         if(doesLinkExist(idA, idB)) return AnchorInteractType.LINK_EXISTS;
 
-        BlockEntity beA = world.getBlockEntity(idA.getPos());
+        BlockEntity beA = world.getBlockEntity(idA.getBlockPos());
         if(!(beA instanceof WireAnchorBlockEntity wbeA)) return AnchorInteractType.GENERIC;
-        BlockEntity beB = world.getBlockEntity(idB.getPos());
+        BlockEntity beB = world.getBlockEntity(idB.getBlockPos());
         if(!(beB instanceof WireAnchorBlockEntity wbeB)) return AnchorInteractType.GENERIC;
 
         if(sysA == null && sysB == null) {
             LocalTransferGrid newSystem = new LocalTransferGrid(this);
 
-            GridVertex vA = new GridVertex(wbeA, newSystem, idA.getPos(), idA.getSubIndex());
-            GridVertex vB = new GridVertex(wbeB, newSystem, idB.getPos(), idB.getSubIndex());
+            GridVertex vA = new GridVertex(wbeA, newSystem, idA);
+            GridVertex vB = new GridVertex(wbeB, newSystem, idB);
 
             newSystem.addVert(vA);
             newSystem.addVert(vB);
@@ -115,11 +115,12 @@ public class GlobalTransferGrid {
             subgrids.add(newSystem);
 
         } else if(sysA != null && sysB == null) {
-            sysA.getSecond().addVert(new GridVertex(wbeB, sysA.getSecond(), idB.getPos(), idB.getSubIndex()));
+            
+            sysA.getSecond().addVert(new GridVertex(wbeB, sysA.getSecond(), idB));
             sysA.getSecond().linkVerts(idA, idB, wireType, true);
 
         } else if(sysA == null && sysB != null) {
-            sysB.getSecond().addVert(new GridVertex(wbeA, sysB.getSecond(), idA.getPos(), idA.getSubIndex()));
+            sysB.getSecond().addVert(new GridVertex(wbeA, sysB.getSecond(), idA));
             sysB.getSecond().linkVerts(idA, idB, wireType, true);
 
         } else if(sysA.getFirst() == sysB.getFirst()) {
@@ -127,17 +128,13 @@ public class GlobalTransferGrid {
 
         } else if(sysA.getFirst() != sysB.getFirst()) {
 
-            if(sysA.getFirst() < sysB.getFirst()) {
-                LocalTransferGrid merged = sysA.getSecond().mergeWith(sysB.getSecond());
-                subgrids.remove(sysB.getSecond());
-                merged.linkVerts(idA, idB, wireType, false);
-                merged.findAllPaths(); 
-            } else {
-                LocalTransferGrid merged = sysB.getSecond().mergeWith(sysA.getSecond());
-                subgrids.remove(sysA.getSecond());
-                merged.linkVerts(idA, idB, wireType, false);
-                merged.findAllPaths();
-            }
+            subgrids.remove((int)sysA.getFirst());
+            subgrids.remove(sysB.getSecond());
+            LocalTransferGrid merged = LocalTransferGrid.ofMerged(this, true, sysA.getSecond(), sysB.getSecond());
+            merged.linkVerts(idA, idB, wireType, false);
+            merged.findAllPaths(true); 
+
+            subgrids.add(merged);
         }
 
         return AnchorInteractType.LINK_ADDED;
@@ -171,13 +168,13 @@ public class GlobalTransferGrid {
     public void findAndDestroyVertex(GID id, boolean shouldClean) {
         boolean modified = false;
         for(LocalTransferGrid grid : subgrids)
-            modified = grid.removeVert(id);
+            if(grid.removeVert(id)) modified = true;
         if(modified && shouldClean) declusterize();
     }
 
     public void destroyVertex(GridVertex vert, boolean shouldClean) {
-        if(vert.getParent().removeVert(vert.getGID()) && shouldClean)
-            declusterize(vert.getParent());
+        if(vert.getOrFindParent().removeVert(vert.getID()) && shouldClean)
+            declusterize(vert.getOrFindParent());
     }
 
     /***
@@ -191,6 +188,9 @@ public class GlobalTransferGrid {
             evaluated.addAll(grid.trySplit());
         subgrids.clear();
         subgrids.addAll(evaluated);
+
+        for(LocalTransferGrid g : subgrids)
+            g.resetVertices();
     } 
 
     /***
@@ -202,6 +202,9 @@ public class GlobalTransferGrid {
         evaluated.addAll(grid.trySplit());
         subgrids.clear();
         subgrids.addAll(evaluated);
+
+        for(LocalTransferGrid g : subgrids)
+            g.resetVertices();
     }
 
     /***

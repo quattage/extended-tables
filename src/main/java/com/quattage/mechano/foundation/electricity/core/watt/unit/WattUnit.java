@@ -8,6 +8,9 @@ import net.minecraft.network.FriendlyByteBuf;
 public class WattUnit implements Comparable<WattUnit> {
 
     public static final WattUnit EMPTY = new WattUnit(0, 0);
+    public static final WattUnit INFINITY = new WattUnit(Short.MAX_VALUE, Float.MAX_VALUE);
+
+    public static final float MIN_WATTS = 1f / (float)MechanoSettings.FE2W_RATE;
 
     private final Voltage volts;
     private float amps;
@@ -58,7 +61,7 @@ public class WattUnit implements Comparable<WattUnit> {
 
     /**
      * Make a new WattUnit from a CompoundTag <p>
-     * Expects a short ("volt") and a float ("curr")
+     * Expects a short ("volt") and a float ("curr"
      * @param in CompoundTag to pull values from
      * @return a new WattUnit object
      */
@@ -76,7 +79,7 @@ public class WattUnit implements Comparable<WattUnit> {
     }
 
     public static boolean hasNoPotential(float watts) {
-        return watts < (1f / MechanoSettings.FE2W_RATE);
+        return watts < MIN_WATTS;
     }
 
     public WattUnit copy() {
@@ -178,9 +181,11 @@ public class WattUnit implements Comparable<WattUnit> {
      * <p>
      * This makes it impossible for a WattUnit to carry a non-zero voltage potential at zero (or effectively zero) amps, 
      * which would make no sense - the math that happens later on shouldn't have to deal with this edge case.
+     * @return This WattUnit after modification - Equiavalent to {@link WattUnit#EMPTY <code>WattUnit.EMPTY</code>}
      */
-    public void setZeroIfNoPotential() {
+    public WattUnit setZeroIfNoPotential() {
         if(hasNoPotential()) setZero();
+        return this;
     }
 
     /**
@@ -188,7 +193,7 @@ public class WattUnit implements Comparable<WattUnit> {
      * (that is, if {@link WattUnit#getCurrent() <code>getCurrent()</code>} returns less than 1 equivalent unit of FE, whatever the conversion rate may be return <code>TRUE</code>)
      */
     public boolean hasNoPotential() {
-        return getCurrent() < (1f / MechanoSettings.FE2W_RATE);
+        return getCurrent() < MIN_WATTS;
     }
 
     /**
@@ -240,7 +245,7 @@ public class WattUnit implements Comparable<WattUnit> {
      */
     public void toBytes(FriendlyByteBuf in) {
         in.writeShort(volts.getRaw());
-        in.writeDouble(amps);
+        in.writeFloat(amps);
     }
 
     /**
@@ -267,6 +272,17 @@ public class WattUnit implements Comparable<WattUnit> {
         return 0;
     }
 
-
+    /**
+     * Compares this WattUnit with the provided WattUnit. Returns a WattUnit that has the lowest stats of both
+     * @param o Other WattUnit to compare
+     * @return A new WattUnit, containing the lowest current and voltage between this WattUnit and the provided WattUnit.
+     */
+    public WattUnit getLowerStats(WattUnit o) {
+        float cOut = this.getCurrent();
+        short vOut = this.getVoltage().getRaw();
+        if(cOut > o.getCurrent()) cOut = o.getCurrent();
+        if(vOut > o.getVoltage().getRaw()) vOut = o.getVoltage().getRaw();
+        return new WattUnit(vOut, cOut);
+    }
 }
 

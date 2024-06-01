@@ -42,7 +42,7 @@ public class AnchorSelectC2SPacket implements Packetable {
         }
 
         buf.writeInt(anchorLocation.getSubIndex());
-        buf.writeBlockPos(anchorLocation.getPos());
+        buf.writeBlockPos(anchorLocation.getBlockPos());
     }
 
     @Override

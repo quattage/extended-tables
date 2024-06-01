@@ -1,19 +1,16 @@
 package com.quattage.mechano.foundation.electricity.core;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.relative.Relative;
 import com.quattage.mechano.foundation.block.orientation.relative.RelativeDirection;
-import com.quattage.mechano.foundation.electricity.core.anchor.interaction.AnchorInteractColor;
-import com.simibubi.create.foundation.utility.Color;
+import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.OptionalWattOrFE;
+import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.energy.IEnergyStorage;
 
 /***
  * An InteractionJunction is a "rule" describing
@@ -118,31 +115,61 @@ public class InteractionJunction {
 
     /***
      * Determines whether or not this InteractionJunction
-     * is interacting with any ForgeEnergy capabilities 
-     * in the world.
+     * is interacting with any external energy capabilities in the world.
      * @param parent BlockEntity to use as a reference for getting real-world positions
-     * @return True if this InteractionJunction is facing towards
-     * a block which provides ForgeEnergy capabilities in the opposing direction
+     * @return True if this InteractionJunction is facing toward
+     * a block which provides ForgeEnergy or Watt capabilities in the opposing direction
      */
     public boolean canSendOrReceive(BlockEntity parent) {
-        Level world = parent.getLevel();
-        if((!isInput && !isOutput) || world == null) 
+
+        if((!isInput && !isOutput) || parent.getLevel() == null) 
             return false;
+        OptionalWattOrFE battery = getConnectedCapability(parent);
 
-        BlockPos offset = parent.getBlockPos().relative(getDirection());
-        BlockEntity be = world.getBlockEntity(offset);
-        if(be == null) return false;
-        IEnergyStorage batteryAtPos = be.getCapability(ForgeCapabilities.ENERGY, getDirection().getOpposite()).orElse(null);
-        return batteryAtPos != null;
+        return battery.isPresent();
     }
 
-    public Color getColor() {
-        if(isInput && isOutput) return AnchorInteractColor.BOTH.get();
-        if(isInput) return AnchorInteractColor.INSERT.get();
-        if(isOutput) return AnchorInteractColor.EXTRACT.get();
-        return AnchorInteractColor.NONE.get();
+    /**
+     * Determines whether or not this InteractionJunction
+     * can send power to any external energy capabilities in the world.
+     * @param parent BlockEntity to use as a reference for getting real-world positions
+     * @return True if this InteractionJunction is facing towards
+     * a block which provides ForgeEnergy or Watt capabilities in the opposing direction
+     */
+    public boolean canSend(BlockEntity parent) {
+        
+        if((!isInput && !isOutput) || parent.getLevel() == null) 
+            return false;
+        OptionalWattOrFE battery = getConnectedCapability(parent);
+
+        if(battery.isFE())
+            return battery.getFECap().canReceive();
+
+        if(battery.isWatt())
+            return battery.getWattCap().canReceive();
+
+        return false;
     }
 
+    // public float getSendRate(BlockEntity parent, WattStorable source) {
+    //     if((!isInput && !isOutput) || parent.getLevel() == null) 
+    //         return 0;
+
+    //     OptionalWattOrFE destination = getConnectedCapability(parent);
+    //     if(destination.isFE()) {
+    //         return destination.getFECap().receiveEnergy(source.toRealFeEquivalent().extractEnergy(Integer.MAX_VALUE, true), true);
+    //     }
+
+    //     return destination.getWattCap().receiveWatts(source.extractWatts(WattUnit.INFINITY, true), true).getWatts();
+    // }
+
+    public OptionalWattOrFE getConnectedCapability(BlockEntity parent) {
+        return DirectionalWattProvidable.getFEOrWattsAt(
+                parent.getLevel().getBlockEntity(
+                parent.getBlockPos().relative(getDirection())), 
+                getDirection().getOpposite()
+            );
+    }
 
     public boolean equals(Object other) {
         if(other instanceof InteractionJunction ip) 

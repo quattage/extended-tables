@@ -1,6 +1,7 @@
 package com.quattage.mechano.foundation.electricity;
 
 import com.quattage.mechano.foundation.electricity.builder.WattBatteryHandlerBuilder;
+import com.simibubi.create.content.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
@@ -20,7 +21,7 @@ import java.util.List;
  * use the sided WattStorable capability.
  * @see {@link com.quattage.mechano.foundation.electricity.ElectroKineticBlockEntity <code>ElectroKineticBlockEntity</code>} for implementing electricity with Kinetics.
  */
-public abstract class ElectricBlockEntity extends SmartBlockEntity implements WattBatteryHandlable {
+public abstract class ElectricBlockEntity extends SmartBlockEntity implements WattBatteryHandlable, IHaveGoggleInformation {
 
     public final WattBatteryHandler<ElectricBlockEntity> battery;
 
@@ -42,10 +43,12 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Wa
         battery.reflectStateChange(state);
     }
 
-    public boolean isConnectedExternally() {
-        return battery.isConnectedExternally();
+    @Override
+    public void tick() {
+        super.tick();
+        battery.tickWatts();
     }
-
+    
     @Override
     public void onLoad() {
         battery.loadAndUpdate(getBlockState());

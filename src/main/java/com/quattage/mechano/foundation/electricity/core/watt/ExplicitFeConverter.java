@@ -35,6 +35,10 @@ public class ExplicitFeConverter<T extends WattStorable> implements IEnergyStora
         return WattUnitConversions.toFE(parent.getCapacity());
     }
 
+    public int getMaxEnergyOut() {
+        return WattUnitConversions.toFE(parent.getMaxDischarge());
+    }
+
     @Override
     public boolean canExtract() {
         return parent.canExtract();

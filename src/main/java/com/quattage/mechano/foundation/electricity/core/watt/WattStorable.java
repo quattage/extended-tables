@@ -2,11 +2,17 @@ package com.quattage.mechano.foundation.electricity.core.watt;
 
 import javax.annotation.Nullable;
 
+import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
 
+/**
+ * Provides the basic framework for expressing points of "energy" as a product of both potential (volts) and
+ * current (amps) - shares the same purpose as Forge's own <code>IEnergyStorage</code> interface.
+ */
 public interface WattStorable {
 
     
@@ -56,16 +62,23 @@ public interface WattStorable {
     int getCapacity();
 
     /**
-     * If <code>FALSE</code>, calls to {@link WattStorable#recieveWatts(float, short, boolean) receiveWatts()} will return zero.
+     * If <code>FALSE</code>, calls to {@link WattStorable#extractWatts(float, short, boolean) extractWatts()} will return zero.
      * @return <code>TRUE</code> if this energy store can have watt-ticks extracted from it
      */
     boolean canExtract();
 
     /**
-     * If <code>FALSE</code>, calls to {@link WattStorable#extractWatts(float, short, boolean) extractWatts()} will return zero.
+     * If <code>FALSE</code>, calls to {@link WattStorable#receiveWatts(float, short, boolean) receiveWatts()} will return zero.
      * @return <code>TRUE</code> if this energy store can receive watt-ticks.
      */
     boolean canReceive();
+
+    /**
+     * The flux of this energy store. Flux describes the potential of this energy store.
+     * An energy store of 120 volts of flux will always tend towards an output of 120 volts if possible.
+     * @return Voltage value representing this energy store's flux.
+     */
+    Voltage getFlux();
 
     /**
      * <li><code>SOFT_DENY:</code> The incoming watt-tick is simply denied, nothing happens, this energy store receives nothing.
@@ -98,7 +111,8 @@ public interface WattStorable {
      * @return An inferred generic LazyOptional containing an <code>ExplicitFEConverter</code> object - This object should reflect up-to-date information
      * about this energy store, converted (as best you can) into FE.
      */
-    <T> LazyOptional<T> toFeEquivalent();
+    <T> LazyOptional<T> getFeConverterLazy();
+    ExplicitFeConverter<WattStorable> newFeConverter();
 
     /**
      * An OvervoltBehavior describes how this energy store should react when 

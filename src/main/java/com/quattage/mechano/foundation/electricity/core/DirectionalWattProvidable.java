@@ -32,6 +32,20 @@ public interface DirectionalWattProvidable {
      */
     public abstract WattStorable getBattery();
 
+    public default boolean isInExtractMode() {
+        return getMode().canExtract();
+    }
+
+    public default boolean isInReceiveMode() {
+        return getMode().canReceive();
+    }
+
+    /***
+     * Should check whether the implementing class is directly connected to any BlockEntities that have ForgeEnergy or WattStorable capabilites.
+     * @return <code>TRUE</code> if this WattBatteryHandler is interacting with a WattStorable or IEnergyStorage capability
+     */
+    public abstract boolean isInteractingExternally();
+
     /***
      * Expects a WattStorable object belonging to the implementing handler. 
      * Should be cast to an inferred generic.
@@ -60,19 +74,20 @@ public interface DirectionalWattProvidable {
         @Nullable Direction side, @Nullable Direction[] energyDirs) {
 
         if(side == null) return LazyOptional.empty();
-        if(energyDirs.length >= 6) {
+        if(energyDirs.length >= 6)
             return getOrFake(cap);
-        }
+
         for(int x = 0; x < energyDirs.length; x++) 
             if(side.equals(energyDirs[x])) return getOrFake(cap);
 
         return LazyOptional.empty();
     }
 
+    // Gets the WattStorable returned by getEnergyHandler() as-is or converts to IEnergyStorage if needed
     private <T> @NotNull LazyOptional <T> getOrFake(Capability<T> cap) { 
         if(cap == ForgeCapabilities.ENERGY) {
             if(getEnergyHandler().orElse(null) instanceof WattStorable batt)
-                return batt.toFeEquivalent();
+                return batt.getFeConverterLazy();
             else return LazyOptional.empty();
         }
         if(cap == Mechano.CAPABILITIES.WATT_CAPABILITY) return getEnergyHandler();
@@ -91,6 +106,8 @@ public interface DirectionalWattProvidable {
         if(targetBE == null) return new OptionalWattOrFE(null, null);
         return new OptionalWattOrFE(targetBE.getCapability(ForgeCapabilities.ENERGY, dir).orElse(null), targetBE.getCapability(Mechano.CAPABILITIES.WATT_CAPABILITY).orElse(null));
     }
+
+    public abstract ExternalInteractMode getMode();
 
     /**
      * An intermediary object that stores both FE and Watt capabilities
@@ -123,6 +140,49 @@ public interface DirectionalWattProvidable {
 
         public IEnergyStorage getFECap() {
             return feBattery;
+        }
+
+        public String toString() {
+            if(isFE()) return "FE: [" + feBattery.getEnergyStored() + " / " + feBattery.getMaxEnergyStored() + "]";
+            if(isWatt()) return "Watts: [" + wattBattery.getStoredWatts() + " / " + wattBattery.getCapacity() + "]";
+            return "NO FE/WATT CAP";
+        }
+    }
+
+    public enum ExternalInteractMode {
+        NONE(false, false),
+        PUSH_OUT(true, false),
+        PULL_IN(false, true),
+        BOTH(true, true);
+
+        private final boolean canExtract;
+        private final boolean canReceive;
+
+        private ExternalInteractMode(boolean canExtract, boolean canReceive) {
+            this.canExtract = canExtract;
+            this.canReceive = canReceive;
+        }
+
+        public boolean canInteract() {
+            return canExtract || canReceive;
+        }
+
+        public boolean canExtract() {
+            return canExtract;
+        }
+
+        public boolean canReceive() {
+            return canReceive;
+        }
+
+        public ExternalInteractMode next() {
+            return values()[(this.ordinal() + 1) % 4];
+        }
+
+        public boolean isCompatableWith(ExternalInteractMode other) {
+            if(this == NONE || other == NONE) return false;
+            if(this == BOTH || other == BOTH) return true;
+            return this != other;
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.quattage.mechano.foundation.electricity.grid.landmarks;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 
 /***
@@ -11,18 +10,13 @@ public class GIDPair {
     private final GID idB;
 
     public GIDPair(GridVertex vA, GridVertex vB) {
-        this.idA = new GID(vA);
-        this.idB = new GID(vB);
+        this.idA = vA.getID();
+        this.idB = vB.getID();
     }
 
     public GIDPair(GID idA, GID idB) {
         this.idA = idA.copy();
         this.idB = idB.copy();
-    }
-
-    public GIDPair(BlockPos pA, BlockPos pB) {
-        this.idA = new GID(pA);
-        this.idB = new GID(pB);
     }
 
     public static GIDPair of(CompoundTag in) {

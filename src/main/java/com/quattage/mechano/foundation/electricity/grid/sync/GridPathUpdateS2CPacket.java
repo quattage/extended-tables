@@ -2,6 +2,7 @@ package com.quattage.mechano.foundation.electricity.grid.sync;
 
 import java.util.function.Supplier;
 
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
@@ -13,7 +14,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 public class GridPathUpdateS2CPacket implements Packetable {
     
-    private final int rate;
+    private final WattUnit rate;
     private final int pathSize;
     private final GridSyncPacketType type;
     private final GID[] path;
@@ -21,20 +22,20 @@ public class GridPathUpdateS2CPacket implements Packetable {
 
     public GridPathUpdateS2CPacket(GridPath gPath, GridSyncPacketType type) {
         
-        this.rate = gPath.getRate();
+        this.rate = gPath.getTransferStats();
         this.pathSize = gPath.size();
         this.type = type;
         
         this.path = new GID[pathSize];
         int x = 0;
         for(GridVertex vert : gPath.members()) {
-            this.path[x] = vert.getGID();
+            this.path[x] = vert.getID();
             x++;
         }
     }
 
     public GridPathUpdateS2CPacket(FriendlyByteBuf buf) {
-        this.rate = buf.readInt();
+        this.rate = WattUnit.ofBytes(buf);
         this.pathSize = buf.readInt();
         this.type = GridSyncPacketType.get(buf.readInt());
         this.path = new GID[pathSize];
@@ -44,11 +45,11 @@ public class GridPathUpdateS2CPacket implements Packetable {
 
     @Override
     public void toBytes(FriendlyByteBuf buf) {
-        buf.writeInt(rate);
+        rate.toBytes(buf);
         buf.writeInt(pathSize);
         buf.writeInt(type.ordinal());
         for(GID id : path) {
-            buf.writeBlockPos(id.getPos());
+            buf.writeBlockPos(id.getBlockPos());
             buf.writeInt(id.getSubIndex());
         }
     }

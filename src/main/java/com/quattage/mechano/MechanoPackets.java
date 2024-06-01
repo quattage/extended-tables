@@ -1,11 +1,13 @@
 package com.quattage.mechano;
 
 import com.quattage.mechano.foundation.network.Packetable;
+import com.quattage.mechano.foundation.network.WattModeSyncS2CPacket;
 import com.quattage.mechano.content.block.power.alternator.rotor.AlternatorUpdateS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.sync.GridEdgeUpdateSyncS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.sync.GridPathUpdateS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.sync.GridVertDestroySyncS2CPacket;
-import com.quattage.mechano.foundation.network.AnchorRefreshS2CPacket;
+import com.quattage.mechano.foundation.network.AnchorStatSummaryS2CPacket;
+import com.quattage.mechano.foundation.network.AnchorStatRequestC2SPacket;
 import com.quattage.mechano.foundation.network.AnchorSelectC2SPacket;
 import com.quattage.mechano.foundation.network.WattSyncS2CPacket;
 
@@ -42,6 +44,12 @@ public class MechanoPackets {
             .consumerMainThread(WattSyncS2CPacket::handle)
             .add();
 
+        NETWORK.messageBuilder(WattModeSyncS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
+            .decoder(WattModeSyncS2CPacket::new)
+            .encoder(WattModeSyncS2CPacket::toBytes)
+            .consumerMainThread(WattModeSyncS2CPacket::handle)
+            .add();
+
         NETWORK.messageBuilder(GridVertDestroySyncS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
             .decoder(GridVertDestroySyncS2CPacket::new)
             .encoder(GridVertDestroySyncS2CPacket::toBytes)
@@ -66,10 +74,16 @@ public class MechanoPackets {
             .consumerMainThread(AlternatorUpdateS2CPacket::handle)
             .add();
 
-        NETWORK.messageBuilder(AnchorRefreshS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
-            .decoder(AnchorRefreshS2CPacket::new)
-            .encoder(AnchorRefreshS2CPacket::toBytes)
-            .consumerMainThread(AnchorRefreshS2CPacket::handle)
+        NETWORK.messageBuilder(AnchorStatRequestC2SPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
+            .decoder(AnchorStatRequestC2SPacket::new)
+            .encoder(AnchorStatRequestC2SPacket::toBytes)
+            .consumerMainThread(AnchorStatRequestC2SPacket::handle)
+            .add();
+
+        NETWORK.messageBuilder(AnchorStatSummaryS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
+            .decoder(AnchorStatSummaryS2CPacket::new)
+            .encoder(AnchorStatSummaryS2CPacket::toBytes)
+            .consumerMainThread(AnchorStatSummaryS2CPacket::handle)
             .add();
 
         //C2S
@@ -77,6 +91,12 @@ public class MechanoPackets {
             .decoder(AnchorSelectC2SPacket::new)
             .encoder(AnchorSelectC2SPacket::toBytes)
             .consumerMainThread(AnchorSelectC2SPacket::handle)
+            .add();
+        
+        NETWORK.messageBuilder(AnchorStatRequestC2SPacket.class, nextId(), NetworkDirection.PLAY_TO_SERVER)
+            .decoder(AnchorStatRequestC2SPacket::new)
+            .encoder(AnchorStatRequestC2SPacket::toBytes)
+            .consumerMainThread(AnchorStatRequestC2SPacket::handle)
             .add();
     }
 

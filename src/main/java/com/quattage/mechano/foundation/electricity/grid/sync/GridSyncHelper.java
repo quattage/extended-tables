@@ -8,13 +8,12 @@ import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -45,7 +44,7 @@ public class GridSyncHelper {
     }
 
     public static void informPlayerVertexDestroyed(GridSyncPacketType type, GID edge) {
-        MechanoPackets.sendToAllClients(new GridVertDestroySyncS2CPacket(type, edge.getPos()));
+        MechanoPackets.sendToAllClients(new GridVertDestroySyncS2CPacket(type, edge.getBlockPos()));
     }
 
     public static void markChunksChanged(ClientLevel world, BlockPos pos) {
@@ -62,7 +61,7 @@ public class GridSyncHelper {
         if(!(player instanceof ServerPlayer sPlayer)) return;
         for(LocalTransferGrid sys : grid.getSubgrids()) {
             for(GridEdge edge : sys.allEdges()) {
-                if(chunkPos.equals(new ChunkPos(edge.getSideA().getPos()))) 
+                if(chunkPos.equals(new ChunkPos(edge.getSideA().getBlockPos()))) 
                     MechanoPackets.sendToClient(new GridEdgeUpdateSyncS2CPacket(type, edge.toLightweight()), sPlayer);
             }
         }

@@ -10,7 +10,7 @@ import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.spool.WireSpool;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.simibubi.create.AllSpecialTextures;
@@ -87,7 +87,7 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
         
         for(GridClientEdge edge : cache.getAllNewEdges()) {
 
-            if(!edge.getSideA().getPos().equals(be.getBlockPos())) continue;
+            if(!edge.getSideA().getBlockPos().equals(be.getBlockPos())) continue;
 
             float age = edge.getAge();
             if(age == 0) continue;
@@ -168,7 +168,7 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
             toPos = oldToPos.lerp(selectedAnchor.getPos(), pTicks * delta * 0.1);
         }
         else if(instance.hitResult instanceof BlockHitResult hit)
-            toPos = oldToPos.lerp(hit.getBlockPos().relative(hit.getDirection(), 1).getCenter(), pTicks * delta * 0.01);
+            toPos = oldToPos.lerp(hit.getBlockPos().relative(hit.getDirection(), 1).getCenter(), pTicks * delta * 0.04);
         else
             toPos = oldToPos;
 

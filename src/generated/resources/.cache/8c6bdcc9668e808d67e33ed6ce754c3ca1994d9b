@@ -1,4 +1,4 @@
-// 1.20.1	2024-04-20T21:03:50.604873	Registrate Provider for mechano [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
+// 1.20.1	2024-05-29T14:04:22.3830828	Registrate Provider for mechano [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
 36d58ef389ec7fc88bb0130fc30fb0fca0e24913 assets/mechano/blockstates/big_rotor.json
 faed7284078bd4637397b90dd711bdef181152aa assets/mechano/blockstates/big_rotor_dummy.json
 e9949528359a2c89400103aef3696b5fc70f7e1d assets/mechano/blockstates/big_stator.json
@@ -13,13 +13,14 @@ ed9c36a7aec63784b6490d40afaeb1a84a303399 assets/mechano/blockstates/test_block.j
 0239159ae06506bec94f0b1417bcda8563dbc9b8 assets/mechano/blockstates/tool_forge.json
 3899b7f5e0bbd749289d26e87726e9d71e04ea4d assets/mechano/blockstates/tool_station.json
 ce5fbce78788ee0159f955002ba87f5664a31806 assets/mechano/blockstates/voltometer.json
-8f78d12e94e5b723be6cb7e282376b5d3e8533fe assets/mechano/lang/en_ud.json
-b1501295f5af2388ecf80c071a4a7015439311d4 assets/mechano/lang/en_us.json
+631d1a44f68132f759ab33da62b5bd680a22e076 assets/mechano/lang/en_ud.json
+7d5e7e92e1e587abba9841042698416d80cb90ca assets/mechano/lang/en_us.json
 1a3bcd28a77299029ffdefa180564a49683695b6 assets/mechano/models/item/big_rotor.json
 4c7bd224163908944a5cb2675470da6a7fb2c08e assets/mechano/models/item/big_stator.json
 5a76ccb4835b4e939685c5735f5565778a0091ba assets/mechano/models/item/connector_tier_one.json
 f6ac0de07737f88625c45bd8ad5712cf83250ae2 assets/mechano/models/item/connector_tier_two.json
 a0d388cca5800a347cb71b376a5118273f9f6abb assets/mechano/models/item/connector_tier_zero.json
+a6aed88e1ee06c0ae597c50db9c504ddf25cd50e assets/mechano/models/item/debug_butter.json
 c3003a6e1cdf08f84f6b912a7b7707f0a307984f assets/mechano/models/item/diagonal_girder.json
 9ed5ec0f12a35110ce1fbea475dd13937b9d21c8 assets/mechano/models/item/empty_spool.json
 ffaab51f35f9b4b32cb3217c9fdc279b56628b1c assets/mechano/models/item/hookup_spool.json

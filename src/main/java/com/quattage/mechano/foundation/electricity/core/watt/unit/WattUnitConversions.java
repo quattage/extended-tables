@@ -95,4 +95,8 @@ public class WattUnitConversions {
     public static int toFE(int watts) {
         return watts * MechanoSettings.FE2W_RATE;
     } 
+
+    public static float toWattsSimple(int fe) {
+        return (float)fe / (float)MechanoSettings.FE2W_RATE;
+    }
 }
