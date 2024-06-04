@@ -4,7 +4,8 @@ public enum GridSyncPacketType {
     ADD_NEW,
     ADD_WORLD,
     REMOVE,
-    SYNC;
+    SYNC,
+    CLEAR;
 
     public static GridSyncPacketType get(int x) {
         return GridSyncPacketType.values()[x];

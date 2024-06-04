@@ -1,18 +1,27 @@
 package com.quattage.mechano.content.item;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.quattage.mechano.Mechano;
+import com.quattage.mechano.MechanoPackets;
+import com.quattage.mechano.foundation.behavior.GridEdgeDebugBehavior;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
+import com.quattage.mechano.foundation.electricity.grid.sync.GridPathUpdateSyncS2CPacket;
+import com.quattage.mechano.foundation.electricity.grid.sync.GridSyncPacketType;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -31,6 +40,7 @@ import static com.quattage.mechano.Mechano.lang;
 public class DebugButter extends Item {
 
     private static byte confirmed = 0;
+    private static boolean hasMask = false;
 
     public DebugButter(Properties properties) {
         super(properties);
@@ -70,23 +80,24 @@ public class DebugButter extends Item {
         } 
         else if(confirmed == 2) {
 
-            int invalids = 0;
+            Set<BlockPos> invalids = new HashSet<BlockPos>();
 
-            for(LocalTransferGrid subgrid : grid.getSubgrids()) {
-                if(subgrid == null) {
-                    invalids++;
-                    continue;
-                }
-                for(GridVertex vert : subgrid.allVerts()) {
-                    if(!(world.getBlockEntity(vert.getID().getBlockPos()) instanceof WireAnchorBlockEntity wbe))
-                        continue;
-                    world.destroyBlock(wbe.getBlockPos(), true);
-                    vert = null;
-                }
+            for(BlockPos vertPos : grid.poolAllPositions()) {
+                if(world.getBlockEntity(vertPos) instanceof WireAnchorBlockEntity)
+                    world.destroyBlock(vertPos, true);
+                else 
+                    invalids.add(vertPos);
             }
-            grid.getSubgrids().clear();
+
+            int invalidCount = 0;
+            for(BlockPos vertPos : invalids) 
+                invalidCount += grid.removeAllVertsAt(vertPos);
+
+            grid.clear();
             message = "\n§c§l Wiped all data!";
-            if(invalids > 0) message += " - §aremoved §l" + invalids + " §r§ainvalid subsgrids!";
+            MechanoPackets.sendToAllClients(new GridPathUpdateSyncS2CPacket(null, GridSyncPacketType.CLEAR));
+            if(invalidCount > 0) message += " - §aremoved §l" + invalids + " §r§ainvalid subsgrids!";
+            Mechano.LOGGER.warn("Network was wiped, here's the resulting NBT: " + grid.writeTo(new CompoundTag()));
             confirmed = 0;
         }
 
@@ -98,10 +109,17 @@ public class DebugButter extends Item {
     public void inventoryTick(ItemStack pStack, Level pLevel, Entity entity, int pSlotId, boolean pIsSelected) {
         super.inventoryTick(pStack, pLevel, entity, pSlotId, pIsSelected);
 
-        if(!(entity instanceof Player player)) return;
-        if(!pIsSelected && confirmed != 0) {
-            confirmed = 0;
-            player.displayClientMessage(Component.literal("\n§r§7Global grid wipe cancelled."), false);
+        if(!(entity instanceof ServerPlayer player)) return;
+        if(!pIsSelected) {
+            if(hasMask == true) {
+                GridEdgeDebugBehavior.setMask(pLevel, null, player);
+                hasMask = false;
+            }
+
+            if(confirmed != 0) {
+                confirmed = 0;
+                player.displayClientMessage(Component.literal("\n§r§7Global grid wipe cancelled."), false);
+            }
         }
     }
     
@@ -109,16 +127,19 @@ public class DebugButter extends Item {
     public InteractionResult useOn(UseOnContext context) {
 
         Player guy = context.getPlayer();
+        if(context.getLevel().isClientSide()) 
+            return InteractionResult.PASS;
 
-        if(context.getLevel().isClientSide()) return InteractionResult.PASS;
-        if(!(context.getLevel().getBlockEntity(context.getClickedPos()) instanceof WireAnchorBlockEntity wbe)) return InteractionResult.PASS;
+        if(!(context.getLevel().getBlockEntity(context.getClickedPos()) instanceof WireAnchorBlockEntity wbe)) 
+            return InteractionResult.PASS;
+
+        final GlobalTransferGrid network = GlobalTransferGrid.of(context.getLevel());
 
         if(!guy.isCrouching()) {
 
             int count = 0;
             final List<Boolean> forced = new ArrayList<>();
             final List<LocalTransferGrid> grids = new ArrayList<>();
-            final GlobalTransferGrid network = GlobalTransferGrid.of(context.getLevel());
 
             for(int x = 0; x <  wbe.getAnchorBank().size(); x++) {
 
@@ -158,8 +179,25 @@ public class DebugButter extends Item {
             guy.displayClientMessage(Component.literal(message), false);
 
         } else {
-            wbe.getWattBatteryHandler().cycleMode();
-            context.getPlayer().displayClientMessage(Component.literal("MODE: " + wbe.getWattBatteryHandler().getMode()), true);
+
+            if(!(context.getPlayer() instanceof ServerPlayer sp)) return InteractionResult.PASS;
+
+            final Set<GID> ids = new HashSet<>();
+            for(AnchorPoint anchor : wbe.getAnchorBank().getAll()) {
+                GridVertex vert = anchor.getParticipant();
+                if(vert == null) vert = network.getVertAt(anchor.getID());
+                if(vert == null) continue; 
+                ids.add(vert.getID());
+            }
+
+            if(ids.size() == 0) {
+                GridEdgeDebugBehavior.setMask(context.getLevel(), null, sp);
+                hasMask = false;
+            }
+            else {
+                GridEdgeDebugBehavior.setMask(context.getLevel(), ids, sp);
+                hasMask = true;
+            }
         }
 
         return InteractionResult.PASS;

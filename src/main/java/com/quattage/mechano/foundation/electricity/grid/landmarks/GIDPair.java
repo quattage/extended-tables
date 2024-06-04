@@ -1,5 +1,9 @@
 package com.quattage.mechano.foundation.electricity.grid.landmarks;
 
+import java.util.Set;
+
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import net.minecraft.nbt.CompoundTag;
 
 /***
@@ -39,6 +43,10 @@ public class GIDPair {
         in.put("a", idA.writeTo(new CompoundTag()));
         in.put("b", idB.writeTo(new CompoundTag()));
         return in;
+    }
+
+    public boolean isIn(Set<GID> ids) {
+        return idA.isIn(ids) || idB.isIn(ids);
     }
 
     public boolean equals(Object o) {

@@ -43,17 +43,18 @@ public class GridSyncHelper {
         MechanoPackets.sendToAllClients(new GridEdgeUpdateSyncS2CPacket(type, edge));
     }
 
-    public static void informPlayerVertexDestroyed(GridSyncPacketType type, GID edge) {
-        MechanoPackets.sendToAllClients(new GridVertDestroySyncS2CPacket(type, edge.getBlockPos()));
+    public static void informPlayerVertexUpdate(GridSyncPacketType type, GID edge) {
+        MechanoPackets.sendToAllClients(new GridVertUpdateSyncS2CPacket(type, edge.getBlockPos()));
     }
+
+    public static void informPlayerPathUpdate(GridSyncPacketType type, GridPath path) {
+        MechanoPackets.sendToAllClients(new GridPathUpdateSyncS2CPacket(path, type));
+    }
+
 
     public static void markChunksChanged(ClientLevel world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         world.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL_IMMEDIATE);
-    }
-
-    public static void sendPathDebug(GridPath path, GridSyncPacketType type) {
-        MechanoPackets.sendToAllClients(new GridPathUpdateS2CPacket(path, type));
     }
 
     private static void syncGridChunkWithPlayer(Level world, ChunkPos chunkPos, Player player, GridSyncPacketType type) {
@@ -88,9 +89,8 @@ public class GridSyncHelper {
 
         GlobalTransferGrid allGrids = GlobalTransferGrid.of(world);
         for(LocalTransferGrid grid : allGrids.getSubgrids()) {
-            for(GridPath path : grid.allPaths()) {
-                MechanoPackets.sendToClient(new GridPathUpdateS2CPacket(path, GridSyncPacketType.ADD_NEW), player);
-            }
+            for(GridPath path : grid.allPaths())
+                MechanoPackets.sendToClient(new GridPathUpdateSyncS2CPacket(path, GridSyncPacketType.ADD_NEW), player);
         }
     }
 }

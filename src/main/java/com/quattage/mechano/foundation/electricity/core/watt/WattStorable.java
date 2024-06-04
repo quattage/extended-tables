@@ -7,7 +7,6 @@ import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
 
 /**
  * Provides the basic framework for expressing points of "energy" as a product of both potential (volts) and

@@ -1,6 +1,9 @@
 package com.quattage.mechano.foundation.electricity.grid;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
@@ -11,6 +14,7 @@ import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.simibubi.create.foundation.utility.Pair;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -61,7 +65,7 @@ public class GlobalTransferGrid {
         }
     }
 
-    protected CompoundTag writeTo(CompoundTag in) {
+    public CompoundTag writeTo(CompoundTag in) {
         CompoundTag out = new CompoundTag();
         out.put("all", writeAllSubsystems());
         in.put(getDimensionName(), out);
@@ -200,7 +204,7 @@ public class GlobalTransferGrid {
     private void declusterize(LocalTransferGrid grid) {
         ArrayList<LocalTransferGrid> evaluated = new ArrayList<>();
         evaluated.addAll(grid.trySplit());
-        subgrids.clear();
+        subgrids.remove(grid);
         subgrids.addAll(evaluated);
 
         for(LocalTransferGrid g : subgrids)
@@ -252,6 +256,41 @@ public class GlobalTransferGrid {
         
         if(anchor.getMaxConnections() > vert.links.size()) return true;
         return false;
+    }
+
+    public Set<BlockPos> poolAllPositions() {
+
+        Set<BlockPos> out = new HashSet<>();
+
+        for(LocalTransferGrid subgrid : subgrids) {
+            for(GridVertex vert : subgrid.allVerts())
+                out.add(vert.getID().getBlockPos());
+        }
+
+        return out;
+    }
+
+    public int removeAllVertsAt(BlockPos pos) {
+        int removed = 0;
+        for(LocalTransferGrid subgrid : subgrids) {
+            Iterator<GridVertex> matrixIterator = subgrid.allVerts().iterator();
+            while(matrixIterator.hasNext()) {
+                GridVertex vert = matrixIterator.next();
+                if(vert.getID().getBlockPos().equals(pos)) {
+                    vert.markRemoved();
+                    matrixIterator.remove();
+                    removed++;
+                }
+            }
+            subgrid.cleanEdges();
+            declusterize(subgrid);
+        }
+        
+        return removed;
+    }
+
+    public void clear() {
+        subgrids.clear();
     }
 
     public ArrayList<LocalTransferGrid> getSubgrids() {

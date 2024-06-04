@@ -237,9 +237,10 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
     public void setMode(ExternalInteractMode mode) {
         if(this.mode != mode) {
             this.mode = mode;
-            MechanoPackets.sendToAllClients(new WattModeSyncS2CPacket(target.getBlockPos(), mode));
             if(!(target instanceof WireAnchorBlockEntity wbe)) return;
+            MechanoPackets.sendToAllClients(new WattModeSyncS2CPacket(target.getBlockPos(), mode));
             wbe.getAnchorBank().sync(target.getLevel());
+            wbe.setChanged();
         }
     }
 

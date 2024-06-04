@@ -58,22 +58,47 @@ public class GridPath {
         return transferStats;
     }
 
+    /**
+     * Gets the "starting" point GridVertex. <p>
+     * <strong>Note:</strong> Paths technically don't have any directionality/handedness. 
+     * The terms "start" and "end" are used here colloquially and only indicate the arbitrary order that
+     * this path was made in, but the path itself can work in both directions.
+     * @return The GridVertex at index <code>0</code> of this path.
+     */
     public GridVertex getStart() {
         return path[0];
     }
 
+    /**
+     * Gets the "ending" point GridVertex <p>
+     * <strong>Note:</strong> Paths technically don't have any directionality/handedness. 
+     * The terms "start" and "end" are used here colloquially and only indicate the arbitrary order that
+     * this path was made in, but the path itself can work in both directions.
+     * @return The GridVertex at index <code>length - 1</code> of this path.
+     */
     public GridVertex getEnd() {
         return path[path.length - 1];
     }
 
+    /**
+     * Converts this GridPath into a {@link GIDPair <code>GIDPair</code>} object
+     * for easy hashing
+     * @return A new GIDPair instance containing the two ends of this path.
+     */
     public GIDPair getHashable() {
         return new GIDPair(path[0].getID(), path[path.length - 1].getID());
     }
 
+    /**
+     * @return An array representing each "leap" in this path
+     */
     public GridVertex[] members() {
         return path;
     }
 
+    /**
+     * @return The amount of members in this path
+     */
     public int size() { 
         return path.length;
     }
@@ -90,13 +115,24 @@ public class GridPath {
         return out;
     }
 
+    /**
+     * 
+     * @param other GridVertex to compare
+     * @return <code>TRUE</code> if the provided GridVertex is at index <code>0</code> or <code>length - 1</code> in this GridPath.
+     */
     public boolean isEnd(GridVertex other) {
         return path[0].equals(other) || path[path.length - 1].equals(other); 
     }
 
-    public boolean contains(GridVertex other) {
+    public boolean containsVertex(GridVertex other) {
         for(GridVertex vert : path)
             if(other.equals(vert)) return true;
+        return false;
+    }
+
+    public boolean containsKey(GID key) {
+        for(GridVertex vert : path) 
+            if(vert.getID().equals(key)) return true;
         return false;
     }
 }

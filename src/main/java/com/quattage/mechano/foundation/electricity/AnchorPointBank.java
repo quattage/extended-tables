@@ -97,8 +97,8 @@ public class AnchorPointBank<T extends BlockEntity> {
     }
 
     /***
-     * Retrieves this AnchorHolder as an array
-     * @return The raw aray stored within this AnchorHolder
+     * Retrieves this AnchorPointBank as an array
+     * @return The raw aray stored within this AnchorPointBank
      */
     public AnchorPoint[] getAll() {
         return anchorPoints;
@@ -119,7 +119,7 @@ public class AnchorPointBank<T extends BlockEntity> {
     }
 
     public String toString() {
-        String out = "\nAnchorHolder { \n\tTarget: " + target.getClass().getSimpleName() + " \n\tLocation: " + target.getBlockPos() + ":\n";
+        String out = "\nAnchorPointBank { \n\tTarget: " + target.getClass().getSimpleName() + " \n\tLocation: " + target.getBlockPos() + ":\n";
         for(int x = 0; x < anchorPoints.length; x++) 
             out += x + ": " + anchorPoints[x] + "\n";
         return out + "}\n\n";

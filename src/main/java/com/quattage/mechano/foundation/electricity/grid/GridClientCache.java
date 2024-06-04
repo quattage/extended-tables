@@ -298,6 +298,12 @@ public class GridClientCache {
         lastTime = time;
     }
 
+    public void clearAll() {
+        edgeCache.clear();
+        newEdgeCache.clear();
+        pathCache.clear();
+    }
+
     private Function<RenderType, VertexConsumer> getBufferFromChunk(RenderChunk renderChunk, Set<RenderType> renderTypes, ChunkBufferBuilderPack chunkBuffers) {
         return renderType -> {
             BufferBuilder builder = chunkBuffers.builder(renderType);

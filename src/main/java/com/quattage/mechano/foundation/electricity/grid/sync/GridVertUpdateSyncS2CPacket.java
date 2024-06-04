@@ -9,17 +9,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
-public class GridVertDestroySyncS2CPacket implements Packetable {
+public class GridVertUpdateSyncS2CPacket implements Packetable {
     
     private final GridSyncPacketType type;
     private final BlockPos pos;
 
-    public GridVertDestroySyncS2CPacket(GridSyncPacketType type, BlockPos pos) {
+    public GridVertUpdateSyncS2CPacket(GridSyncPacketType type, BlockPos pos) {
         this.type = type;
         this.pos = pos;
     }
 
-    public GridVertDestroySyncS2CPacket(FriendlyByteBuf buf) {
+    public GridVertUpdateSyncS2CPacket(FriendlyByteBuf buf) {
         this.type = GridSyncPacketType.get(buf.readInt());
         this.pos = buf.readBlockPos();
     }

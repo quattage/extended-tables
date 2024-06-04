@@ -31,8 +31,8 @@ import net.minecraft.world.phys.AABB;
 public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
 
     private final AnchorPointBank<WireAnchorBlockEntity> anchors;
+    
     private long oldTime = 0;
-
     private static double time = 0;
 
     @Override

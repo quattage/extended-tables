@@ -30,8 +30,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  */
 public class GridVertex {
 
-    
-    
     public static final VertexComparator GUIDANCE_COMPARATOR = new VertexComparator();
 
     // Grid architecture

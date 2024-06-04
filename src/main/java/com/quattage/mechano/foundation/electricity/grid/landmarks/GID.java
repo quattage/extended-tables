@@ -1,5 +1,7 @@
 package com.quattage.mechano.foundation.electricity.grid.landmarks;
 
+import java.util.Set;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 
@@ -63,6 +65,10 @@ public class GID {
         }
 
         return false;
+    }
+
+    public boolean isIn(Set<GID> ids) {
+        return ids.contains(this);
     }
 
     @Override
