@@ -57,7 +57,7 @@ public class GIDPair {
     }
 
     public String toString() {
-        return "{" + idA.toString() + " , " + idB.toString() + "}";
+        return "{" + idA.toString() + "->" + idB.toString() + "}";
     }
 
     public int hashCode() {

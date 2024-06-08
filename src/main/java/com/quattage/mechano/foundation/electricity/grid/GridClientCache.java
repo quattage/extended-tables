@@ -241,7 +241,6 @@ public class GridClientCache {
 
     public void markValidPath(GID[] path) {
         pathCache.put(new GIDPair(path[0], path[path.length - 1]), path);
-        Mechano.log("Put " + path + " to chache");
     }
 
     public void unmarkPath(GID[] path) {

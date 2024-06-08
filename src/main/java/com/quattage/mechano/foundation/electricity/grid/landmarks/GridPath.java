@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 
 public class GridPath {
@@ -26,28 +27,21 @@ public class GridPath {
 
     /**
      * Unwinds a Map, where key-value pairs represent links, into a <code>GridPath</code> and returns it.
-     * @param start The starting GridVertex, just provided to reset A* guidance variables
      * @param path Map of GridVertices describing a path
      * @param goal The ending GridVertex, used to establish insertion order of the resulting GridPath
      * @param slowestRate The slowest rate encountered during each leap of this GridPath, used to describe the total TransferRate of the resulting GridPath.
-     * @param reset If <code>TRUE</code> this call will reset the A* values of each supplied <code>GridVertex</code> instance during iteration.
      * @return A new GridPath instance, or null if no valid path could be created frorm the supplied map.
      */
     @Nullable
-    public static GridPath ofUnwound(GridVertex start, Map<GridVertex, GridVertex> path, GridVertex goal, WattUnit slowestRate, boolean reset) {
-        
+    public static GridPath ofUnwound(Map<GridVertex, GridVertex> path, GridVertex goal, WattUnit slowestRate) {
+
         if(path == null || path.isEmpty()) return null;
 
         final List<GridVertex> pathList = new ArrayList<GridVertex>();
         pathList.add(goal);
-        if(reset) {
-            start.resetHeuristics();
-            goal.resetHeuristics();
-        }
 
         while(path.containsKey(goal)) {
             goal = path.get(goal);
-            if(reset) goal.resetHeuristics();
             pathList.add(goal);
         }
 
@@ -104,8 +98,8 @@ public class GridPath {
     }
 
     public String toString() {
-        if(path.length == 0) return "Path {EMPTY}";
-        String out = "Path {";
+        if(path.length == 0) return "{EMPTY}";
+        String out = "{";
 
         int x = 0;
         for(GridVertex vert : path) {

@@ -142,6 +142,10 @@ public class GridEdge {
         return new GridClientEdge(this.target, this.wireType.getSpoolID());
     }
 
+    public String toString() {
+        return "[" + target + ", type: " + (canTransfer ? wireType.getName().toUpperCase() : "NO TRANSFER") + "]";
+    }
+
     public Pair<Vec3, Vec3> getPositions(Level world) {
         Pair<AnchorPoint, WireAnchorBlockEntity> cA = AnchorPoint.getAnchorAt(world, getSideA());
         Pair<AnchorPoint, WireAnchorBlockEntity> cB = AnchorPoint.getAnchorAt(world, getSideB());

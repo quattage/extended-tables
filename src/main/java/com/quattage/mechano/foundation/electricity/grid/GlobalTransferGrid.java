@@ -192,9 +192,6 @@ public class GlobalTransferGrid {
             evaluated.addAll(grid.trySplit());
         subgrids.clear();
         subgrids.addAll(evaluated);
-
-        for(LocalTransferGrid g : subgrids)
-            g.resetVertices();
     } 
 
     /***
@@ -206,9 +203,6 @@ public class GlobalTransferGrid {
         evaluated.addAll(grid.trySplit());
         subgrids.remove(grid);
         subgrids.addAll(evaluated);
-
-        for(LocalTransferGrid g : subgrids)
-            g.resetVertices();
     }
 
     /***
@@ -220,7 +214,7 @@ public class GlobalTransferGrid {
     public Pair<Integer, LocalTransferGrid> getSystemContaining(GID id) {
         int x = 0;
         for(LocalTransferGrid grid : subgrids) {
-            if(grid.getVert(id) != null) return Pair.of(x, grid);
+            if(grid.getVertAt(id) != null) return Pair.of(x, grid);
             x++;
         }
         return null;
@@ -228,7 +222,7 @@ public class GlobalTransferGrid {
 
     public GridVertex getVertAt(GID id) {
         for(LocalTransferGrid grid : subgrids) {
-            GridVertex node = grid.getVert(id);
+            GridVertex node = grid.getVertAt(id);
             if(node != null) return node;
         }
         return null;
@@ -236,7 +230,7 @@ public class GlobalTransferGrid {
 
     private boolean doesLinkExist(GID idA, GID idB) {
         for(LocalTransferGrid subgrid : subgrids) 
-            if(subgrid.getEdgeMap().containsKey(new GIDPair(idA, idB))) return true;
+            if(subgrid.containsEdge(new GIDPair(idA, idB))) return true;
         return false;
     }
 

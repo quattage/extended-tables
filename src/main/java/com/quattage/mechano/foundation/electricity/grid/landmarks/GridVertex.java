@@ -44,6 +44,7 @@ public class GridVertex {
     private float f = 0;
     private float heuristic = 0;
     private float cumulative = Float.MAX_VALUE;
+    private boolean visited = false;
     
     // functional variables
     private boolean isMember = false;
@@ -253,15 +254,24 @@ public class GridVertex {
         this.cumulative = g;
     }
 
+    public void markVisited() {
+        this.visited = true;
+    }
+
+    public boolean hasBeenVisited() {
+        return visited;
+    }
+
     /**
-     * Resets the F, heuristic, and cumulative values
-     * to their defaults
+     * Resets the F, heuristic, cumulative, and visited values
+     * of this GridVertex to their defaults. 
      * @return this GridVertex, modified as a result of this call.
      */
     public GridVertex resetHeuristics() {
         this.f = 0;
         this.heuristic = 0;
         this.cumulative = Float.MAX_VALUE;
+        this.visited = false;
         return this;
     }
 
@@ -333,7 +343,7 @@ public class GridVertex {
         //     if(x < links.size() - 1)
         //         content += ", ";
         // }
-        return "GridVertex {" + sig  + ", " + mode + ", At " + posAsString() + "}";
+        return "GridVertex {" + sig  + ", " + mode + ", At " + posAsString() + ", H: " + hashCode() + "}";
     }
 
     public String toFormattedString() {
