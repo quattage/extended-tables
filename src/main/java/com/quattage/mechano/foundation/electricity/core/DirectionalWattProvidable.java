@@ -5,8 +5,10 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import com.quattage.mechano.Mechano;
+import com.quattage.mechano.foundation.electricity.core.InteractionJunction.ExternalInteractStatus;
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
@@ -30,7 +32,7 @@ public interface DirectionalWattProvidable {
     /***
      * @return the WattStorable object backing this handler
      */
-    public abstract WattStorable getBattery();
+    public abstract WattStorable getEnergyHolder();
 
     public default boolean isInExtractMode() {
         return getMode().canExtract();
@@ -41,10 +43,10 @@ public interface DirectionalWattProvidable {
     }
 
     /***
-     * Should check whether the implementing class is directly connected to any BlockEntities that have ForgeEnergy or WattStorable capabilites.
+     * Should check whether the implementing object is directly connected to any BlockEntities that have ForgeEnergy or WattStorable capabilites.
      * @return <code>TRUE</code> if this WattBatteryHandler is interacting with a WattStorable or IEnergyStorage capability
      */
-    public abstract boolean isInteractingExternally();
+    public abstract ExternalInteractStatus getInteractionStatus();
 
     /***
      * Expects a WattStorable object belonging to the implementing handler. 
@@ -66,7 +68,7 @@ public interface DirectionalWattProvidable {
      * @param <T> A Generic LazyOptional 
      * @param cap The capability in question.
      * @param side Side to check, if <code>null</code> will always return <code>LazyOptional.empty()</code>
-     * @param energyDirs A list of all interaction directions the implementing
+     * @param energyDirs An array containing all interaction directions the implementing
      * object can accommodate, or <code>null</code> to ignore this step.
      * @return Infered generic LazyOptional containing a <code>WattStorable or IEnergyStorage</code> capability.
      */
@@ -74,7 +76,7 @@ public interface DirectionalWattProvidable {
         @Nullable Direction side, @Nullable Direction[] energyDirs) {
 
         if(side == null) return LazyOptional.empty();
-        if(energyDirs.length >= 6)
+        if(energyDirs == null || energyDirs.length >= 6)
             return getOrFake(cap);
 
         for(int x = 0; x < energyDirs.length; x++) 
@@ -103,8 +105,8 @@ public interface DirectionalWattProvidable {
      * @return OptionalWattOrFE object, regardless of targetBE's capability content. 
      */
     static OptionalWattOrFE getFEOrWattsAt(BlockEntity targetBE, @Nullable Direction dir) {
-        if(targetBE == null) return new OptionalWattOrFE(null, null);
-        return new OptionalWattOrFE(targetBE.getCapability(ForgeCapabilities.ENERGY, dir).orElse(null), targetBE.getCapability(Mechano.CAPABILITIES.WATT_CAPABILITY).orElse(null));
+        if(targetBE == null) return new OptionalWattOrFE(null, null, null);
+        return new OptionalWattOrFE(targetBE.getBlockPos(), targetBE.getCapability(ForgeCapabilities.ENERGY, dir).orElse(null), targetBE.getCapability(Mechano.CAPABILITIES.WATT_CAPABILITY).orElse(null));
     }
 
     public abstract ExternalInteractMode getMode();
@@ -116,8 +118,10 @@ public interface DirectionalWattProvidable {
     public class OptionalWattOrFE {
         final IEnergyStorage feBattery;
         final WattStorable wattBattery;
+        final BlockPos pos;
 
-        public OptionalWattOrFE(@Nullable IEnergyStorage feBattery, @Nullable WattStorable wattBattery) {
+        public OptionalWattOrFE(BlockPos pos, @Nullable IEnergyStorage feBattery, @Nullable WattStorable wattBattery) {
+            this.pos = pos;
             this.feBattery = feBattery;
             this.wattBattery = wattBattery;
         }
@@ -142,6 +146,10 @@ public interface DirectionalWattProvidable {
             return feBattery;
         }
 
+        public BlockPos getBlockPos() {
+            return pos;
+        }
+
         public String toString() {
             if(isFE()) return "FE: [" + feBattery.getEnergyStored() + " / " + feBattery.getMaxEnergyStored() + "]";
             if(isWatt()) return "Watts: [" + wattBattery.getStoredWatts() + " / " + wattBattery.getCapacity() + "]";
@@ -151,8 +159,8 @@ public interface DirectionalWattProvidable {
 
     public enum ExternalInteractMode {
         NONE(false, false),
-        PUSH_OUT(true, false),
-        PULL_IN(false, true),
+        PUSH_OUT(true, false), // SENDS ENERGY (pushes energy out to external blocks)
+        PULL_IN(false, true), // RECEIVES ENERGY (has energy pushed in from external blocks)
         BOTH(true, true);
 
         private final boolean canExtract;
@@ -182,7 +190,7 @@ public interface DirectionalWattProvidable {
         public boolean isCompatableWith(ExternalInteractMode other) {
             if(this == NONE || other == NONE) return false;
             if(this == BOTH || other == BOTH) return true;
-            return this != other;
+            return this == PULL_IN && other == PUSH_OUT;
         }
     }
 }

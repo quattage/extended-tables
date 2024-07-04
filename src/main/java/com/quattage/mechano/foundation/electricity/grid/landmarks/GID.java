@@ -54,10 +54,6 @@ public class GID {
         return new GID(pos, subIndex);
     }
 
-    public GIDPair combine(GID other) {
-        return new GIDPair(this, other);
-    }
-
     @Override
     public boolean equals(Object o) {
         if(o instanceof GID other) {

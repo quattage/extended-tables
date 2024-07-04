@@ -10,8 +10,10 @@ import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.core.anchor.interaction.AnchorInteractType;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
+import com.quattage.mechano.foundation.electricity.grid.network.GridSyncHelper;
+import com.quattage.mechano.foundation.electricity.grid.network.GridSyncPacketType;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.core.BlockPos;
@@ -95,12 +97,12 @@ public class GlobalTransferGrid {
      * @param idA
      * @param idB
      */
-    public AnchorInteractType link(GID idA, GID idB, int wireType) {
+    public AnchorInteractType link(GID idA, GID idB, int typeID) {
         Pair<Integer, LocalTransferGrid> sysA = getSystemContaining(idA);
         Pair<Integer, LocalTransferGrid> sysB = getSystemContaining(idB);
 
         if(idA.equals(idB)) return AnchorInteractType.GENERIC;
-        if(doesLinkExist(idA, idB)) return AnchorInteractType.LINK_EXISTS;
+        //if(getLinkBetween(idA, idB) != null) return AnchorInteractType.LINK_EXISTS;
 
         BlockEntity beA = world.getBlockEntity(idA.getBlockPos());
         if(!(beA instanceof WireAnchorBlockEntity wbeA)) return AnchorInteractType.GENERIC;
@@ -115,32 +117,35 @@ public class GlobalTransferGrid {
 
             newSystem.addVert(vA);
             newSystem.addVert(vB);
-            newSystem.linkVerts(vA, vB, wireType, true);
+            newSystem.linkVerts(vA, vB, typeID, true);
             subgrids.add(newSystem);
 
         } else if(sysA != null && sysB == null) {
             
             sysA.getSecond().addVert(new GridVertex(wbeB, sysA.getSecond(), idB));
-            sysA.getSecond().linkVerts(idA, idB, wireType, true);
+            sysA.getSecond().linkVerts(idA, idB, typeID, true);
 
         } else if(sysA == null && sysB != null) {
             sysB.getSecond().addVert(new GridVertex(wbeA, sysB.getSecond(), idA));
-            sysB.getSecond().linkVerts(idA, idB, wireType, true);
+            sysB.getSecond().linkVerts(idA, idB, typeID, true);
 
         } else if(sysA.getFirst() == sysB.getFirst()) {
-            sysA.getSecond().linkVerts(idA, idB, wireType, true);
+            if(!sysA.getSecond().linkVerts(idA, idB, typeID, true))
+                return AnchorInteractType.LINK_EXISTS;
 
         } else if(sysA.getFirst() != sysB.getFirst()) {
 
             subgrids.remove((int)sysA.getFirst());
             subgrids.remove(sysB.getSecond());
             LocalTransferGrid merged = LocalTransferGrid.ofMerged(this, true, sysA.getSecond(), sysB.getSecond());
-            merged.linkVerts(idA, idB, wireType, false);
+            merged.linkVerts(idA, idB, typeID, false);
             merged.findAllPaths(true); 
 
             subgrids.add(merged);
         }
 
+        Mechano.log("Informing update [" + idA + " -> " + idB + "]");
+        GridSyncHelper.informPlayerEdgeUpdate(GridSyncPacketType.ADD_NEW, new GridClientEdge(idA, idB, typeID));
         return AnchorInteractType.LINK_ADDED;
     }
 
@@ -153,31 +158,33 @@ public class GlobalTransferGrid {
      * will be declusterized at the end of the unlinking operation.
      */
     public void unlink(GID linkOne, GID linkTwo, boolean clean) {
-        GridVertex nodeOne = getVertAt(linkOne);
-        GridVertex nodeTwo = getVertAt(linkTwo);
-        if(nodeOne == null) throw new NullPointerException("Failed to unlink GridVertex from a global context - " + 
+        GridVertex vertOne = getVertAt(linkOne);
+        GridVertex vertTwo = getVertAt(linkTwo);
+        if(vertOne == null) throw new NullPointerException("Failed to unlink GridVertex from a global context - " + 
             "No valid GridVertex at " + linkOne + " could be found! (first provided parameter)");
 
-        if(nodeTwo == null) throw new NullPointerException("Failed to unlink GridVertex from a global context - " + 
+        if(vertTwo == null) throw new NullPointerException("Failed to unlink GridVertex from a global context - " + 
             "No valid GridVertex at " + linkTwo + " could be found! (second provided parameter)");
 
-        nodeOne.unlinkFrom(nodeTwo);
-        nodeTwo.unlinkFrom(nodeOne);
+        vertOne.popLink(vertTwo);
+        vertTwo.popLink(vertOne);
 
-        if(clean)
-            declusterize();
+        if(clean) declusterize();
 
     }
 
     public void findAndDestroyVertex(GID id, boolean shouldClean) {
-        boolean modified = false;
-        for(LocalTransferGrid grid : subgrids)
-            if(grid.removeVert(id)) modified = true;
-        if(modified && shouldClean) declusterize();
+        for(LocalTransferGrid grid : subgrids) {
+            GridVertex vert = grid.popVert(id);
+            if(vert != null) {
+                declusterize(vert.getOrFindParent());
+                return;
+            }
+        }
     }
 
     public void destroyVertex(GridVertex vert, boolean shouldClean) {
-        if(vert.getOrFindParent().removeVert(vert.getID()) && shouldClean)
+        if((vert.getOrFindParent().popVert(vert.getID()) != null) && shouldClean)
             declusterize(vert.getOrFindParent());
     }
 
@@ -228,12 +235,6 @@ public class GlobalTransferGrid {
         return null;
     }
 
-    private boolean doesLinkExist(GID idA, GID idB) {
-        for(LocalTransferGrid subgrid : subgrids) 
-            if(subgrid.containsEdge(new GIDPair(idA, idB))) return true;
-        return false;
-    }
-
     /***
      * @return True if the vertex at the given GID is both present and has available connections. A Vertex is
      * assumed available if it does not currently exist.
@@ -252,52 +253,12 @@ public class GlobalTransferGrid {
         return false;
     }
 
-    public Set<BlockPos> poolAllPositions() {
-
-        Set<BlockPos> out = new HashSet<>();
-
-        for(LocalTransferGrid subgrid : subgrids) {
-            for(GridVertex vert : subgrid.allVerts())
-                out.add(vert.getID().getBlockPos());
-        }
-
-        return out;
-    }
-
-    public int removeAllVertsAt(BlockPos pos) {
-        int removed = 0;
-        for(LocalTransferGrid subgrid : subgrids) {
-            Iterator<GridVertex> matrixIterator = subgrid.allVerts().iterator();
-            while(matrixIterator.hasNext()) {
-                GridVertex vert = matrixIterator.next();
-                if(vert.getID().getBlockPos().equals(pos)) {
-                    vert.markRemoved();
-                    matrixIterator.remove();
-                    removed++;
-                }
-            }
-            subgrid.cleanEdges();
-            declusterize(subgrid);
-        }
-        
-        return removed;
-    }
-
-    public void clear() {
-        subgrids.clear();
-    }
-
-    public ArrayList<LocalTransferGrid> getSubgrids() {
-        return subgrids;
-    }
-
-    public boolean isClient() {
-        return world.isClientSide();
-    }
-
     public Level getWorld() {
         return world;
     }
+
+
+    //////////////////////////////////////////// debugging helpers ////////////////////////////////////////////
 
     public String toString() {
         String head = "[";
@@ -311,5 +272,50 @@ public class GlobalTransferGrid {
         }
 
         return head + "\n" + systems + "]";
+    }
+
+    /**
+     * @return A Set containing every unique BlockPos addressed by this GlobalTransferGrid
+     */
+    public Set<BlockPos> collectAllVertexPositions() {
+        Set<BlockPos> out = new HashSet<>();
+        for(LocalTransferGrid subgrid : subgrids) {
+            for(GridVertex vert : subgrid.allVerts())
+                out.add(vert.getID().getBlockPos());
+        }
+
+        return out;
+    }
+
+    /**
+     * Removes every GridVertex in this GlobalTranferGrid that belongs 
+     * to the provided BlockPos
+     * @param pos
+     * @return The number of GridVertex objects that were removed
+     */
+    public int removeAllVertsAt(BlockPos pos) {
+        int removed = 0;
+        for(LocalTransferGrid subgrid : subgrids) {
+            Iterator<GridVertex> matrixIterator = subgrid.allVerts().iterator();
+            while(matrixIterator.hasNext()) {
+                GridVertex vert = matrixIterator.next();
+                if(vert.getID().getBlockPos().equals(pos)) {
+                    vert.markRemoved();
+                    matrixIterator.remove();
+                    removed++;
+                }
+            }
+            declusterize(subgrid);
+        }
+        
+        return removed;
+    }
+
+    public void clear() {
+        subgrids.clear();
+    }
+
+    public ArrayList<LocalTransferGrid> getSubgrids() {
+        return subgrids;
     }
 }

@@ -1,13 +1,15 @@
 package com.quattage.mechano.foundation.electricity;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.simibubi.create.foundation.utility.Pair;
 
@@ -28,7 +30,7 @@ public class AnchorPointBank<T extends BlockEntity> {
     public boolean isAwaitingConnection = false;
     private final AnchorPoint[] anchorPoints;
     private GlobalTransferGrid net;
-    private List<T> pathDestinations = new ArrayList<>();
+
 
     public AnchorPointBank(T target, ArrayList<AnchorPoint> nodesToAdd) {
         this.target = target;
@@ -174,6 +176,25 @@ public class AnchorPointBank<T extends BlockEntity> {
             if(part == null) net.findAndDestroyVertex(anchor.getID(), true);
             else net.destroyVertex(part, true);
             anchor.nullifyParticipant();
+        }
+    }
+
+    public void forEachPath(Consumer<GridPath> operation) {
+        
+        for(AnchorPoint anchor : anchorPoints) {
+            
+            GridVertex from = anchor.getParticipant();
+            if(from == null) 
+                throw new NullPointerException("Error addressing AnchorPoint " + indexOf(anchor) + " in AnchorPointBank bound to " + target.getClass().getName() + " - AnchorPoint at " + anchor.getID() + " has no participant!");
+            
+            LocalTransferGrid parent = from.getOrFindParent();
+            if(parent == null) 
+                throw new NullPointerException("Error addressing AnchorPoint " + indexOf(anchor) + " in AnchorPointBank bound to " + target.getClass().getName() + " - GridVertex at " + from.getID() + " has no parent LocalTransferGrid!");
+            
+            parent.getPathManager().forEachPathAt(from.getID(), 
+                path -> {
+                    operation.accept(path);
+                });
         }
     }
 

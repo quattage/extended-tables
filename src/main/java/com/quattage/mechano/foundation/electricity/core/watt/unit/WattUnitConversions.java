@@ -9,7 +9,7 @@ public class WattUnitConversions {
      * Converts a standard integer voltage input into a stored voltage value such that 
      * <code>(input - 32,768) / 4 = output</code><p>
      * 
-     * @param input Any int value - will be cut off if it is less than <code>zero</code> 
+     * @param input Accepts any int value will, but it be cut off if it is less than <code>zero</code> 
      * or greater than <code>262141</code>.
      * @return A short representing the input voltage value.
      * @see WattUnitConversions#toRealVolts(short) performing the inverse operation.
@@ -33,7 +33,7 @@ public class WattUnitConversions {
      * @see WattUnitConversions#toStoredVolts(int) performing the inverse operation.
      */
     public static int toRealVolts(short input) {
-        return (int)(input + 32768) * 4;
+        return (((int)(input)) + 32768) * 4;
     }
 
     /**

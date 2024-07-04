@@ -1,8 +1,9 @@
 package com.quattage.mechano.foundation.electricity.grid.landmarks;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -33,11 +34,8 @@ public class GridVertex {
     public static final VertexComparator GUIDANCE_COMPARATOR = new VertexComparator();
 
     // Grid architecture
-    @Nullable
-    private LocalTransferGrid parent;
-    @Nullable
-    private final WireAnchorBlockEntity host;
-    
+    @Nullable private LocalTransferGrid parent;
+    @Nullable private WireAnchorBlockEntity host;
     private final GID id;
 
     // A* guidance variables
@@ -48,7 +46,7 @@ public class GridVertex {
     
     // functional variables
     private boolean isMember = false;
-    public final LinkedList<GridVertex> links = new LinkedList<GridVertex>();
+    public final List<GridEdge> links = new ArrayList<GridEdge>();
 
     public GridVertex(WireAnchorBlockEntity wbe, LocalTransferGrid parent, GID id) {
         this.parent = parent;
@@ -66,17 +64,48 @@ public class GridVertex {
         else this.host = null;
     }
 
+    /**
+     * Creates a new GridVertex from NBT. <p>
+     * <strong>Important note:</strong> - This constructor makes more GridVertex objects
+     * than just the one returned! Vertex data contains links to other vertices. These
+     * vertices are traversed depth-first in order to make sure all links refer to the
+     * same GridVertex instance at a given GID. These additional GridVertices are added
+     * to <code>parent</code>.
+     * @param world World to operate within
+     * @param parent LocalTransferGrid initiator
+     * @param in CompoundTag containing relevent data
+     */
     public GridVertex(Level world, LocalTransferGrid parent, CompoundTag in) {
         this.parent = parent;
         this.id = GID.of(in);
         this.isMember = in.getBoolean("m");
+        readLinks(world, in.getList("l", Tag.TAG_COMPOUND));
 
-        readLinks(in.getList("l", Tag.TAG_COMPOUND), world);
         if(!isEmpty()) {
             BlockEntity be = world.getBlockEntity(id.getBlockPos());
             if(be instanceof WireAnchorBlockEntity wbe) this.host = wbe;
             else this.host = null;
         } else this.host = null;
+    }
+
+    /**
+     * Refreshes this GridVertex with new data from a CompoundTag.
+     * Essentially the same thing as {@link GridVertex the constructor that takes a CompoundTag}, 
+     * but can be used on instances that already exist.
+     */
+    public void readRetroactive(Level world, CompoundTag in) {
+        if(hasNoHost()) {
+            throw new IllegalStateException("Error reading retroactively on GridVertex " + getID() + 
+                " - This GridVertex is invalid or has been marked for removal! (Host BlockEntity is null)");
+        }
+
+        setMemberStatus(in.getBoolean("m"));
+        readLinks(world, in.getList("l", Tag.TAG_COMPOUND));
+    }
+
+    public void readLinks(Level world, ListTag list) {
+        for(int x = 0; x < list.size(); x++) 
+            GridEdge.deserializeLink(world, getOrFindParent(), this, list.getCompound(x));
     }
 
     public CompoundTag writeTo(CompoundTag in) {
@@ -88,23 +117,12 @@ public class GridVertex {
 
     private ListTag writeLinks() {
         ListTag out = new ListTag();
-        for(GridVertex v : links) {
-            CompoundTag coord = new CompoundTag();
-            v.id.writeTo(coord);
-            out.add(coord);
+        for(GridEdge edge : links) {
+            CompoundTag edgeTag = new CompoundTag();
+            edge.writeTo(edgeTag);
+            out.add(edgeTag);
         }
         return out;
-    }
-
-    public void readLinks(ListTag list, Level world) {
-        for(int x = 0; x < list.size(); x++) {
-            GID id = GID.of(list.getCompound(x));
-            GridVertex target = getOrFindParent().getOrCreateOnLoad(world, id);
-            if(!links.contains(target))
-                this.linkTo(target);
-            if(!target.links.contains(this))
-                target.linkTo(this);
-        }
     }
 
     /**
@@ -119,20 +137,20 @@ public class GridVertex {
 
         if(hasNoHost()) throw new IllegalStateException("Could not fully sync GridVertex at  " + id + " - This GridVertex is invalid or has been marked for removal! (Host BlockEntity reference is null)");
 
-        if(host.getWattBatteryHandler().isInteractingExternally()) {
+        if(host.battery.getInteractionStatus().isInteracting()) {
             getCoorespondingAnchor().setParticipant(this);
             if(!isMember()) {
                 setMemberStatus(true);
                 // TODO other such goodness
             }
 
-            if(repath) getOrFindParent().pathfindFrom(this, true);
+            if(repath) getOrFindParent().pathfindFrom(this, true, false);
 
         } else {
             getCoorespondingAnchor().nullifyParticipant();
             if(isMember()) {
                 setMemberStatus(false);
-                if(!isEmpty()) getOrFindParent().removePathsEndingIn(this);
+                if(!isEmpty()) getOrFindParent().getPathManager().removePathsEndingIn(getID());
             }
         }
     }
@@ -160,17 +178,33 @@ public class GridVertex {
     }
 
     /**
-     * Syncs this <code>GridVertex</code> to its cooresponding {@link AnchorPoint <code>AnchorPoint</code>}
-     * without accessing BlockEntity capabilities. This method is designed to be invoked during the world loading
-     * process. For any other case, use {@link GridVertex#doFullSync(boolean) <code>syncToHostBE()</code>}.
+     * Nullifies the data in this GridVertex as well as any BE-sided instances that may exist.
+     * Nullifying this data guarantees that accessing a GridVertex instance after it has been
+     * removed from its LocalTransferGrid will throw an exception. It is reccomended call this 
+     * whenever possible to enforce this convention and make bugs easier to find.
+     * <p>This may or may not also speed up garbage collection, but that is not its intended purpose.
      */
     public void markRemoved() {
+
         if(hasNoHost()) throw new IllegalStateException("Error marking GridVertex for removal at " + id + " - This GridVertex has already been marked for removal!");
+        stripHostInstances();
+
+        this.host = null;
+        links.clear();
+
+        AnchorStatSummaryS2CPacket.resetAwaiting();
+    }
+
+    /**
+     * Instructs the cooresponding AnchorPoint to forget its cached GridVertex instance.
+     * This is required in order to ensure that the BE has the most up-to-date information
+     * about its GridVertices.
+     */
+    public void stripHostInstances() {
         for(AnchorPoint anchor : host.getAnchorBank().getAll()) {
             if(anchor.getID().equals(id)) 
                 anchor.nullifyParticipant();
         }
-        AnchorStatSummaryS2CPacket.resetAwaiting();
     }
 
     /**
@@ -179,7 +213,8 @@ public class GridVertex {
      */
     public void refreshLinkedChunks() {
         final Set<BlockPos> visited = new HashSet<>(11);
-        for(GridVertex vert : links) {
+        for(GridEdge edge : links) {
+            GridVertex vert = edge.getDestinationVertex();
             if(!vert.isAt(id))
                 visited.add(vert.id.getBlockPos());
         }
@@ -188,6 +223,14 @@ public class GridVertex {
             MechanoPackets.sendToAllClients(new AnchorStatRequestC2SPacket(pos));
     }
 
+    /**
+     * Evaluates whether or not this GridVertex is currently compatable with the provided
+     * GridVertex. <p><strong>Note:</strong> Paths are treated as directional in this context.
+     * For example, <code>this.canFormPathTo(o)</code> may evaluate to true, but that does not
+     * guarantee the same outcome for <code>o.canFormPathTo(this)</code>.
+     * @param o GridVertex to compare
+     * @return <code>TRUE</code> if a path can be formed from <code>this</code> to <code>o</code>
+     */
     public boolean canFormPathTo(GridVertex o) {
         if(!this.isMember()) return false;
         if(!o.isMember()) return false;
@@ -208,42 +251,37 @@ public class GridVertex {
         return host.getAnchorBank().get(id.getSubIndex());
     }
 
+    public float getF() {
+        return f;
+    }
+
+    public float getStoredHeuristic() {
+        return heuristic;
+    }
+
     /**
      * Calculates a heuristic value for A* guidance based on euclidean distance and store it in this GridVertex.
-     * Whenever possible, implementations should use {@link GridVertex#getAndStoreHeuristic(GridEdge) the overload } instead.
+     * Whenever possible, implementations should use {@link GridVertex#getAndStoreFastHeuristic(GridEdge) the faster alternative } instead.
      * @param other GridVertex to calculate heuristic with
      * @return The Euclidian distance between this vertex and the given vertex
      */
     public float getAndStoreHeuristic(GridVertex other) {
         BlockPos a = id.getBlockPos();
         BlockPos b = other.id.getBlockPos();
-        this.heuristic = (float)Math.sqrt(Math.pow(a.getX() - b.getX(), 2f) + Math.pow(a.getY() - b.getY(), 2f) + Math.pow(a.getZ() - b.getZ(), 2f));
-        this.f = this.cumulative + this.heuristic;
-        return this.heuristic;
+        heuristic = GridEdge.getEuclideanDistance(a, b);
+        f = cumulative + heuristic;
+        return heuristic;
     }
 
     /**
-     * Gets the pre-computed heuristic value from the provided GridEdge and store it in this GridVertex.
+     * Gets the pre-computed heuristic value from the provided GridEdge and stores it in this GridVertex.
      * @param other GridEdge to grab the pre-computed heuristic from
      * @return The Euclidian distance (length) of the given edge.
      */
-    public float getAndStoreHeuristic(GridEdge edge) {
-        this.heuristic = edge.getDistance();
-        this.f = cumulative + heuristic;
+    public float getAndStoreFastHeuristic(GridEdge edge) {
+        heuristic = edge.getDistance();
+        f = cumulative + heuristic;
         return this.heuristic;
-    }
-
-    /**
-     * Gets the current heuristic value without modification. Not particularly useful for anything
-     * other than debugging.
-     * @see {@link GridVertex#getAndStoreHeiristic(Gridvertex)} for use with A* stuff
-     */
-    public float getStoredHeuristic() {
-        return this.heuristic;
-    }
-
-    public float getF() {
-        return this.f;
     }
 
     public float getCumulative() {
@@ -254,15 +292,22 @@ public class GridVertex {
         this.cumulative = g;
     }
 
+    /***
+     * Mark this GridVertex as visited during iteration. Used for A*
+     */
     public void markVisited() {
         this.visited = true;
     }
-
+    
+    /***
+     * @return <code>TRUE</code> if this GridVertex has been marked as visited by 
+     * calling {@link GridVertex#markVisited() <code>markVisited()</code>}
+     */
     public boolean hasBeenVisited() {
         return visited;
     }
 
-    /**
+    /***
      * Resets the F, heuristic, cumulative, and visited values
      * of this GridVertex to their defaults. 
      * @return this GridVertex, modified as a result of this call.
@@ -275,40 +320,94 @@ public class GridVertex {
         return this;
     }
 
-    /***
-     * Generate a unique identifier for this GridVertex for storing in datasets
-     * that require hashing.
-     * @return a new GID object representing this GridVertex's BlockPos and SubIndex summarized as a String.
+    /*** 
+     * Gets the hashable version of this GridVertex.
+     * @return the GID stored within this GridVertex.
      */
     public GID getID() {
         return id;
     }
 
+    /***
+     * @param pos BlockPos to check
+     * @return <code>TRUE</code> if this GridVertex resides at the provided BlockPos
+     */
     public boolean isAt(BlockPos pos) {
         return id.getBlockPos().equals(pos);
     }
 
+    /**
+     * @param id GID to check
+     * @return <code>TRUE</code> if this GridVertex resides at the provided GID
+     */
     public boolean isAt(GID id) {
         return this.id.equals(id);
     }
 
-    /***
-     * Adds a link from the given GridVertex to this GridVertex.
-     * @param other Other GridVertex within the given LocalTransferGrid to add to this GridVertex
-     * @return True if the list of connections within this GridVertex was changed.
+    /**
+     * Adds a previously created GridEdge to this GridVertex's links.
+     * @throws IllegalArgumentException <code>edge</code>'s origin vertex
+     * must belong to this GridVertex such that <code>edge.getOriginVertex().equals(this)</code>
+     * evaluates to <code>TRUE</code> - otherwise, this exception is thrown.
+     * @param edge GridEdge to add
+     * @return <code>TRUE</code> if this GridVertex was modified as a result of this call
      */
-    public boolean linkTo(GridVertex other) {
-        if(links.contains(other)) return false;
-        return links.add(other);
+    public boolean 
+    addLink(GridEdge edge) {
+        if(!edge.getOriginVertex().equals(this))
+            throw new IllegalArgumentException("Error adding link to " + this + " - Cannot add a GridEdge whos origin doesn't belong to this GridVertex!");
+        if(links.contains(edge)) return false;
+        return links.add(edge);
     }
 
-    /***
-     * Removes the link from this GridVertex to the given GridVertex.
-     * @param other
-     * @returns True if this GridVertex was modified as a result of this call
+    /**
+     * Adds a new edge to this GridVertex from this GridVertex to <code>other</code>
+     * @param other GridVertex to link
+     * @return <code>TRUE</code> if this GridVertex was modified as a result of this call
      */
-    public boolean unlinkFrom(GridVertex other) {
-        return links.remove(other);
+    public boolean addLink(GridVertex other, int linkType) {
+        if(isLinkedTo(other)) return false;
+        links.add(new GridEdge(this, other, linkType));
+        return true;
+    }
+
+    /**
+     * Removes the link from this GridVertex to the given GridVertex and returns it.
+     * @param other GID or GridVertex
+     * @returns The edge that was removed from this GridVertex, or null of no edge matching the provided GridVertex was found.
+     */
+    @Nullable
+    public GridEdge popLink(GridVertex other) {
+        
+        int index = -1;
+        for(int x = 0; x < links.size(); x++) {
+            if(links.get(x).getDestinationVertex().equals(other))
+                index = x;
+        }
+
+        if(index >= 0)
+            return links.remove(index);
+
+        return null;
+    }
+
+    /**
+     * Removes the link from this GridVertex to the given GridVertex and returns it.
+     * @param other GID or GridVertex
+     * @returns The edge that was removed from this GridVertex, or null of no edge matching the provided GridVertex was found.
+     */
+    @Nullable
+    public GridEdge popLink(GID other) {
+        int index = -1;
+        for(int x = 0; x < links.size(); x++) {
+            if(links.get(x).getDestinationVertex().getID().equals(other))
+                index = x;
+        }
+
+        if(index >= 0) 
+            return links.remove(index);
+
+        return null;
     }
 
     /***
@@ -317,7 +416,25 @@ public class GridVertex {
      * @return True if this GridVertex contains a link to the given GridVertex
      */
     public boolean isLinkedTo(GridVertex other) {
-        return this.links.contains(other);
+        for(int x = 0; x < links.size(); x++) {
+            if(links.get(x).getDestinationVertex().equals(other)) 
+                return true;
+        }
+        return false;
+    }
+
+    /***
+     * Gets the GridEdge from this GridVertex to the given GridVertex.
+     * @param other GridVertex to check for 
+     * @return The GridEdge whose starting position is <code>this</code> and whose ending position is <code>other</code>, or null if no such GridEdge exists.
+     */
+    public GridEdge getLinkTo(GridVertex other) {
+        for(int x = 0; x < links.size(); x++) {
+            GridEdge edge = links.get(x);
+            if(edge.getDestinationVertex().equals(other)) 
+                return edge;
+        }
+        return null;
     }
 
     protected void unlinkAll() {
@@ -335,15 +452,14 @@ public class GridVertex {
 
     public String toString() {
         String sig = isMember ? "Type - 'M'" : "Type - 'A'";
-        String mode = "Mode - '" + getHostCapabilityMode().toString() + "'";
-        // String content = "at " + posAsString() + ", ---> ";
-        // for(int x = 0; x < links.size(); x++) {
-        //     GridVertex connectionTarget = links.get(x);
-        //     content += connectionTarget.posAsString();
-        //     if(x < links.size() - 1)
-        //         content += ", ";
-        // }
-        return "GridVertex {" + sig  + ", " + mode + ", At " + posAsString() + ", H: " + hashCode() + "}";
+        String mode = "Mode -'";
+        try {
+            mode += getHostCapabilityMode().toString() + "'";
+        } catch(IllegalStateException e) {
+            mode += "DIRTY'";
+        }
+        
+        return "{" + sig  + ", " + mode + ", At " + posAsString() + ", H: " + hashCode() + "}";
     }
 
     public String toFormattedString() {
@@ -356,8 +472,10 @@ public class GridVertex {
         return id.toString();
     }
 
-    /***
-     * Equivalence comparison by position. Does not compare links to other nodes.
+    /**
+     * Compares equivalence of two GridVertex objects based on position. Does not compare the content
+     * of either GridVertex's edge list.
+     * @return <code>TRUE</code> if <code>this</code> and <code>other</code> both have the same GID position.
      */
     public boolean equals(Object other) {
         if(other instanceof GridVertex ov)
@@ -375,12 +493,11 @@ public class GridVertex {
 
     public boolean isMember() {
         return isMember;
-        // return !isEmpty() && isMember;
     }
 
     public ExternalInteractMode getHostCapabilityMode() {
         if(hasNoHost()) throw new IllegalStateException("Error getting ExternalInteractMode for GridVertex at " + id + " - This GridVertex is invalid or has been marked for removal! (Host BlockEntity reference is null)");
-        return host.getWattBatteryHandler().getMode();
+        return host.battery.getMode();
     }
 
     public LocalTransferGrid getOrFindParent() {
@@ -401,13 +518,21 @@ public class GridVertex {
 
     /**
      * A GridVertex has no host if its parent BlockEntity is null. This can happen in two ways:
-     * <li> <code>-</code> No BlockEntity could be found at this GridVertex's cooresponding <code>GID</code> block position. In this case, the constructor attempts to find a BE, but will leave this GridVertex in an invalid state if one cannot be found.
-     * <li> <code>-</code> This GridVertex doesn't have at least one link during construction. In this case, the constructor never populates the links list. If the list is empty, the BE finding step is skipped, leaving it null.
-     * <li> <strong>The host is a final field</strong> - GridVertices with no host must be properly invalidated and dumped.
+     * <li> <code>-</code> No BlockEntity could be found at this GridVertex's cooresponding <code>GID</code> block position. This can only happen if the constructor fails to find a BE during NBT loading, and will leave this GridVertex in an invalid state if one cannot be found.
+     * <li> <code>-</code> This GridVertex has been marked for removal, either because it was simply removed, or because it has invalid/outdated data.
      * @return <code>TRUE</code> if this GridVertex host is null.
      */
     public boolean hasNoHost() {
         return host == null;
+    }
+
+    public WireAnchorBlockEntity getHost() {
+        if(hasNoHost()) throw new NullPointerException("Error getting host from GridVertex at " + id + " - This GridVertex has no host!");
+        return host;
+    }
+
+    public Set<GridPath> getConnectedPaths() {
+        return getOrFindParent().getPathManager().getPathsAt(getID());
     }
 
     // Used to sort the tentative vertex list during A* pathfinding to achieve a deterministic sorting order guided by a heuristic.

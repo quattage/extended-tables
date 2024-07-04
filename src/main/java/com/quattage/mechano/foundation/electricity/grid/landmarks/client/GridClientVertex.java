@@ -2,7 +2,7 @@ package com.quattage.mechano.foundation.electricity.grid.landmarks.client;
 
 public class GridClientVertex {
 
-    private final int cc;
+    private final int connectionCount;
 
     // for testing only
     private final float f;
@@ -11,14 +11,14 @@ public class GridClientVertex {
     private final boolean isMember;
 
     public GridClientVertex(int cc, float f, float heur, float cum, boolean isMember) {
-        this.cc = cc;
+        this.connectionCount = cc;
         this.f = f;
         this.heur = heur;
         this.cum = cum;
         this.isMember = isMember;
     }
 
-    public int getConnections() { return cc; }
+    public int getConnections() { return connectionCount; }
     public float getF() { return f; } 
     public float getHeuristic() { return heur; }
     public float getCumulative() { return cum; }

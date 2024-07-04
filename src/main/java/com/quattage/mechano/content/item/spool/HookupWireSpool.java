@@ -1,7 +1,7 @@
 package com.quattage.mechano.content.item.spool;
 
 import com.quattage.mechano.MechanoItems;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
 import com.quattage.mechano.foundation.electricity.spool.WireSpool;
 
 import net.minecraft.world.item.Item;
@@ -13,8 +13,13 @@ public class HookupWireSpool extends WireSpool {
     }
 
     @Override
-    protected WattUnit setRating() {
-        return new WattUnit(4, 16);
+    protected Voltage setOptimalVoltage() {
+        return new Voltage((int)128);
+    }
+
+    @Override
+    protected float setMaxWatts() {
+        return 1024;
     }
 
     @Override

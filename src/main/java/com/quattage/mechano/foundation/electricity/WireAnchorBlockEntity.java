@@ -1,17 +1,21 @@
 package com.quattage.mechano.foundation.electricity;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.quattage.mechano.Mechano.lang;
 
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.MechanoSettings;
+import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.builder.AnchorBankBuilder;
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.ExternalInteractMode;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientVertex;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.quattage.mechano.foundation.network.AnchorStatRequestC2SPacket;
 import com.quattage.mechano.foundation.network.AnchorStatSummaryS2CPacket;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -69,6 +73,13 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
     }
 
     @Override
+    public void tick() {
+        if(getLevel().isClientSide()) return;
+        tickPaths();
+        super.tick();
+    }
+
+    @Override
     public void reOrient(BlockState state) {
         anchors.reflectStateChange(state);
         super.reOrient(state);
@@ -107,6 +118,7 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
     }
 
     @Override
+
     public AABB getRenderBoundingBox() {
         if(anchors.isAwaitingConnection || GridClientCache.hasNewEdge(this)) 
             return AABB.ofSize(getBlockPos().getCenter(), Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
@@ -125,6 +137,8 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
 
+        lang().text(getWattBatteryHandler().getEnergyHolder().getStoredWatts() + " watts").forGoggles(tooltip);
+
         AnchorStatSummaryS2CPacket summary = AnchorStatSummaryS2CPacket.getAwaiting();
         if(summary == null || (!summary.getBlockPos().equals(this.getBlockPos()))) {
             requestClientUpdate(true);
@@ -134,21 +148,67 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
 
         requestClientUpdate(false);
 
-        lang().text("Mode - " + getWattBatteryHandler().getMode()).style(ChatFormatting.GRAY).forGoggles(tooltip);
+        lang().text("Mode - " + battery.getMode()).style(ChatFormatting.GRAY).forGoggles(tooltip);
 
         for(int x = 0; x < summary.getVertices().length; x++) {
 
             AnchorPoint anchor = getAnchorBank().get(x);
-            GridClientVertex vert = summary.getVertices()[x];
-
-            lang().text("Anchor " + (anchor.getID().getSubIndex() + 1) + ": ").style(ChatFormatting.GRAY).forGoggles(tooltip);
-            lang().text("    member: " + vert.isMember()).style(ChatFormatting.GRAY).forGoggles(tooltip);
-            lang().text("    f: " + vert.getF()).style(ChatFormatting.GRAY).forGoggles(tooltip);
-            lang().text("    heuristic: " + vert.getHeuristic()).style(ChatFormatting.GRAY).forGoggles(tooltip);
-            lang().text("    cumulative: " + vert.getCumulative()).style(ChatFormatting.GRAY).forGoggles(tooltip);
-            lang().text("    connections: " + vert.getConnections() + "/" + anchor.getMaxConnections()).style(ChatFormatting.GRAY).forGoggles(tooltip);
         }
         return true;
+    }
+
+    private void tickPaths() {
+        if(getLevel().isClientSide()) return;
+        if(!battery.getEnergyHolder().canExtract()) return;
+        
+        for(AnchorPoint anchor : anchors.getAll()) {
+            GridVertex participant = anchor.getParticipant();
+            if(participant == null) continue;
+            sendWattsAcross(participant.getConnectedPaths());
+        }
+    }
+
+    /**
+     * Sends watts through the given set of paths.
+     * @param paths Paths that watts will follow - Can be acquired in the BE context via <code>participant.getConnectedPaths()</code>
+     */
+    public void sendWattsAcross(final Set<GridPath> paths) {
+
+
+        if(paths == null || paths.isEmpty()) return;
+        final List<WattSendSummary> sends = new ArrayList<>();
+        GridVertex startVert = null;
+
+        for(GridPath path : paths) {
+            if(startVert == null)
+                startVert = path.getStart();
+            else if(!startVert.getID().getBlockPos().equals(this.getBlockPos())) {
+                throw new IllegalStateException("Error ticking path (" + path + ") at GridVertex " + startVert.getID() 
+                    + " - This vertex's path set has conflicting start points! (Bad data has populated this LocalTransferGrid, you may need to reset)");
+            }
+
+            final GridVertex endVert = path.getEnd();
+            if(startVert.getID().getBlockPos().equals(endVert.getID().getBlockPos())) {
+                throw new IllegalStateException("Error ticking path (" + path 
+                    + ") - Start and ending positions are the same! (Bad data has populated this LocalTransferGrid, you may need to reset))");
+            }
+
+            if(!startVert.canFormPathTo(endVert)) continue;
+
+            WattBatteryHandler<?> destination = endVert.getHost().battery;
+            if(destination != null) {
+                sends.add(
+                    new WattSendSummary(
+                        destination, this.getBlockPos(), 
+                        endVert.getID().getBlockPos(), 
+                        path
+                    )
+                );
+            }
+        }
+
+        if(sends.isEmpty()) return;
+        battery.distributeWattsTo(sends);
     }
 
     @Override

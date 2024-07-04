@@ -3,12 +3,12 @@ package com.quattage.mechano;
 import com.quattage.mechano.foundation.network.Packetable;
 import com.quattage.mechano.foundation.network.WattModeSyncS2CPacket;
 import com.quattage.mechano.content.block.power.alternator.rotor.AlternatorUpdateS2CPacket;
-import com.quattage.mechano.foundation.electricity.grid.sync.GridEdgeUpdateSyncS2CPacket;
-import com.quattage.mechano.foundation.electricity.grid.sync.GridPathUpdateSyncS2CPacket;
-import com.quattage.mechano.foundation.electricity.grid.sync.GridVertUpdateSyncS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorStatSummaryS2CPacket;
 import com.quattage.mechano.foundation.network.GridPathViewMaskS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorStatRequestC2SPacket;
+import com.quattage.mechano.foundation.electricity.grid.network.GridEdgeUpdateSyncS2CPacket;
+import com.quattage.mechano.foundation.electricity.grid.network.GridPathUpdateSyncS2CPacket;
+import com.quattage.mechano.foundation.electricity.grid.network.GridVertUpdateSyncS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorSelectC2SPacket;
 import com.quattage.mechano.foundation.network.WattSyncS2CPacket;
 

@@ -2,7 +2,7 @@ package com.quattage.mechano;
 
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
-import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridProvider;
+import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridDispatcher;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCacheProvider;
 
@@ -36,7 +36,7 @@ public class MechanoCapabilities {
             event.addCapability(Mechano.asResource("transfer_grid_client_cache"), new GridClientCacheProvider((ClientLevel)event.getObject()));
         } else {
             Mechano.LOGGER.info("Attaching ServerGrid capability to " + event.getObject().dimension().location());
-            event.addCapability(Mechano.asResource("transfer_grid_server_manager"), new GlobalTransferGridProvider(event.getObject()));
+            event.addCapability(Mechano.asResource("transfer_grid_server_manager"), new GlobalTransferGridDispatcher(event.getObject()));
         }
     }
 

@@ -171,44 +171,47 @@ public class GridClientCache {
             List<GridClientEdge> edgeList = edgeCache.get(SectionPos.of(pos));
             if(edgeList == null  || edgeList.isEmpty()) return;
 
-            Function<RenderType, VertexConsumer> builder = getBufferFromChunk(renderChunk, renderTypes, chunkBuffers);
-            
+            VertexConsumer builder = getBufferFromChunk(renderChunk, renderTypes, chunkBuffers).apply(RenderType.cutoutMipped());
             SectionPos sectionCenter = SectionPos.of(pos);
-            boolean failed = false;
+        
             for(GridClientEdge edge : edgeCache.get(sectionCenter)) {
 
+                // sanity checks
                 if(edge.getAge() > 0) continue;
+                Pair<AnchorPoint, WireAnchorBlockEntity> fromAnchor = 
+                    AnchorPoint.getAnchorAt(world, edge.getSideA());
+                if(fromAnchor == null || fromAnchor.getFirst() == null) 
+                    continue;
+
+                Pair<AnchorPoint, WireAnchorBlockEntity> toAnchor = 
+                    AnchorPoint.getAnchorAt(world, edge.getSideB());
+                if(toAnchor == null || toAnchor.getFirst() == null) 
+                    continue;
+                //////////
 
                 PoseStack matrixStack = new PoseStack();
                 matrixStack.pushPose(); 
-                BlockPos or = edge.getSideA().getBlockPos().subtract(pos);
 
-                Pair<AnchorPoint, WireAnchorBlockEntity> fromAnchor = AnchorPoint.getAnchorAt(world, edge.getSideA());
-                if(fromAnchor == null || fromAnchor.getFirst() == null) {
-                    failed = true;
-                    continue;
-                }
-
-                Pair<AnchorPoint, WireAnchorBlockEntity> toAnchor = AnchorPoint.getAnchorAt(world, edge.getSideB());
-                if(toAnchor == null || toAnchor.getFirst() == null) {
-                    failed = true;
-                    continue;
-                }
+                BlockPos posDiff = edge.getSideA().getBlockPos().subtract(pos);
 
                 Vec3 startOffset = fromAnchor.getFirst().getLocalOffset();
-                matrixStack.translate(or.getX() + startOffset.x, or.getY() + startOffset.y, or.getZ() + startOffset.z);
+                matrixStack.translate(posDiff.getX() + startOffset.x, posDiff.getY() + startOffset.y, posDiff.getZ() + startOffset.z);
 
                 Vec3 startPos = fromAnchor.getFirst().getPos();
                 Vec3 endPos = toAnchor.getFirst().getPos();
-
-                int[] lightmap = WireModelRenderer.deriveLightmap(world, startPos, endPos);
                 Vector3f wireOrigin = new Vector3f((float)(endPos.x - startPos.x), (float)(endPos.y - startPos.y), (float)(endPos.z - startPos.z));
 
                 float angleY = -(float)Math.atan2(wireOrigin.z(), wireOrigin.x());
                 matrixStack.mulPose(new Quaternionf().rotateXYZ(0, angleY, 0));
 
-                VertexConsumer buffer = builder.apply(RenderType.cutoutMipped());
-                WireModelRenderer.INSTANCE.renderStatic(new BakedModelHashKey(startPos, endPos), buffer, matrixStack, wireOrigin, lightmap[0], lightmap[1], lightmap[2], lightmap[3], WireSpool.ofType(edge.getTypeID()).getWireSprite());
+                int[] lightmap = WireModelRenderer.deriveLightmap(world, startPos, endPos);
+                WireModelRenderer.INSTANCE.renderStatic(
+                    new BakedModelHashKey(startPos, endPos), 
+                    builder, matrixStack, wireOrigin, 
+                    lightmap[0], lightmap[1], lightmap[2], lightmap[3], 
+                    WireSpool.ofType(edge.getTypeID()).getWireSprite()
+                );
+
                 matrixStack.popPose();
                 
             }

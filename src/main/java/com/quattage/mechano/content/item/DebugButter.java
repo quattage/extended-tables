@@ -12,10 +12,11 @@ import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
+import com.quattage.mechano.foundation.electricity.grid.TransferPathManager;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
-import com.quattage.mechano.foundation.electricity.grid.sync.GridPathUpdateSyncS2CPacket;
-import com.quattage.mechano.foundation.electricity.grid.sync.GridSyncPacketType;
+import com.quattage.mechano.foundation.electricity.grid.network.GridPathUpdateSyncS2CPacket;
+import com.quattage.mechano.foundation.electricity.grid.network.GridSyncPacketType;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -66,28 +67,34 @@ public class DebugButter extends Item {
         Level world = event.getLevel();
         if(world.isClientSide) return;
 
+        BlockPos clicked = event.getPos();
+        if(event.getLevel().getBlockEntity(clicked) instanceof WireAnchorBlockEntity wbe) {
+            wbe.getWattBatteryHandler().cycleMode();
+            return;
+        }
+
         GlobalTransferGrid grid = GlobalTransferGrid.of(world);
-        Mechano.log("ALL: " + grid);
 
         String message = "";
         if(confirmed == 0) {
-            message = "\n§cYou are about to wipe all data from §l" + grid.getSubsystemCount() + "§r§c subgrids. §r§7This will destroy all connectors and wires in the world.\n§bAre you sure? §r§7(r-click again to confirm)";
+            message = "\n§cYou are about to wipe all data from §l" + grid.getSubsystemCount() + "§r§c subgrids. §r§7This will destroy all connectors and wires in the world.\n§bAre you sure? §r§7(l-click again to confirm)";
             confirmed = 1;
         } 
         else if(confirmed == 1) {
-            message = "\n§cAre you §lAbsolutely sure? §r§7(r-click again to confirm)";
+            message = "\n§cAre you §lAbsolutely sure? §r§7(l-click again to confirm)";
             confirmed = 2;
         } 
         else if(confirmed == 2) {
 
             Set<BlockPos> invalids = new HashSet<BlockPos>();
 
-            for(BlockPos vertPos : grid.poolAllPositions()) {
+            for(BlockPos vertPos : grid.collectAllVertexPositions()) {
                 if(world.getBlockEntity(vertPos) instanceof WireAnchorBlockEntity)
                     world.destroyBlock(vertPos, true);
                 else 
                     invalids.add(vertPos);
             }
+
 
             int invalidCount = 0;
             for(BlockPos vertPos : invalids) 
@@ -165,13 +172,24 @@ public class DebugButter extends Item {
 
                 boolean force = forced.get(x);
                 LocalTransferGrid sub = grids.get(x);
+
                 if(sub == null) {
                     message += "  §c§lNo data §r§c(null)";
                     continue;
                 }
 
+                Mechano.log(sub);
+
                 message += "§r§7\n     -   Aquisition mode: §r§b§3" + (force ? " iterative brute force" : " cache retrieval") + ", §r§7(global subgrid §r§b§3" + (network.getSubgrids().indexOf(sub) + 1) + "§r§7 of §r§b§3" + (network.getSubsystemCount()) + "§r§7)";
-                message += "§r§7\n     -   Composition: §r§b§3" + sub.allVerts().size() + " §r§7vertices, §r§b§3" + sub.allEdges().size() + " §r§7edges, §r§b§3"  + sub.allPaths().size() +  " §r§7paths";
+                message += "§r§7\n     -   Composition: §r§b§3" + sub.allVerts().size() + " §r§7vertices, §r§b§3";
+
+                final TransferPathManager paths = sub.getPathManager();
+                final int declaringCount = paths.getDeclaratorCount();
+                final int expected = declaringCount * (declaringCount - 1);
+                final int actual = paths.getActualPathCount();
+                final String pathFilled = (expected == actual ? ("§r§a§l" + expected + "§r§a/§r§a§l" + expected) : ("§r§c§l"+ actual + "§r§c/§r§c§l" + expected));
+
+                message += "§r§7\n     -   Paths: §r§b§3" + paths.getUniquePathCount() + " §r§7unique, §r§b§3" + declaringCount + " §r§7declarators, " + pathFilled + " §r§7total";
                 message += "§r§7\n     -   Owner: '§r§b§3" + sub.getParent().getDimensionName() + "§r§7'";
                 message += "§r§7\n     -   §r§b§9Unordered Vertex Info: §r§7" + sub.toFormattedString(context.getClickedPos());
             }

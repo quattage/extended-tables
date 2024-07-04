@@ -1,22 +1,20 @@
-package com.quattage.mechano.foundation.electricity.grid.sync;
+package com.quattage.mechano.foundation.electricity.grid.network;
 
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.quattage.mechano.foundation.network.Packetable;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
 public class GridPathUpdateSyncS2CPacket implements Packetable {
-    
-    private final WattUnit rate;
+
+    private final float lowestWatts;
     private final int pathSize;
     private final GridSyncPacketType type;
     @Nullable private final GID[] path;
@@ -24,25 +22,24 @@ public class GridPathUpdateSyncS2CPacket implements Packetable {
 
     public GridPathUpdateSyncS2CPacket(@Nullable GridPath gPath, GridSyncPacketType type) {
         if(gPath == null) {
-            this.rate = WattUnit.EMPTY;
+            this.lowestWatts = 0;
             this.pathSize = -1;
             this.type = type;
             this.path = null;
         } else {
-            this.rate = gPath.getTransferStats();
-            this.pathSize = gPath.size();
+            this.lowestWatts = gPath.getMaxTransferRate();
+            this.pathSize = gPath.size() + 1;
             this.type = type;
             this.path = new GID[pathSize];
-            int x = 0;
-            for(GridVertex vert : gPath.members()) {
-                this.path[x] = vert.getID();
-                x++;
-            }
+
+            gPath.forEachVertex(vert -> {
+                path[vert.getFirst()] = vert.getSecond().getID();
+            });
         }
     }
 
     public GridPathUpdateSyncS2CPacket(FriendlyByteBuf buf) {
-        this.rate = WattUnit.ofBytes(buf);
+        this.lowestWatts = buf.readFloat();
         this.pathSize = buf.readInt();
         this.type = GridSyncPacketType.get(buf.readInt());
         if(pathSize < 0) this.path = null;
@@ -55,7 +52,7 @@ public class GridPathUpdateSyncS2CPacket implements Packetable {
 
     @Override
     public void toBytes(FriendlyByteBuf buf) {
-        rate.toBytes(buf);
+        buf.writeFloat(lowestWatts);
         buf.writeInt(pathSize);
         buf.writeInt(type.ordinal());
         if(path == null) return;
@@ -71,11 +68,9 @@ public class GridPathUpdateSyncS2CPacket implements Packetable {
         context.enqueueWork(() -> {
             switch(type) {
                 case ADD_NEW:
-                    if(path == null) throw new NullPointerException("Error handling GridPathUpdateS2CPacket - Type 'ADD_NEW' does not support a null path!");
                     GridClientCache.ofInstance().markValidPath(path);
                     break;
                 case REMOVE:
-                if(path == null) throw new NullPointerException("Error handling GridPathUpdateS2CPacket - Type 'REMOVE' does not support a null path!");
                     GridClientCache.ofInstance().unmarkPath(path);
                     break;
                 case CLEAR:
@@ -86,5 +81,13 @@ public class GridPathUpdateSyncS2CPacket implements Packetable {
             }
         });
         return true;
+    }
+
+    public String toString() {
+        String out = "";
+        for(GID id : path) {
+            out += "\n" + id;
+        }
+        return out;
     }
 }

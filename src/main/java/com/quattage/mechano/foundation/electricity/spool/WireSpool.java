@@ -8,7 +8,7 @@ import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.core.anchor.interaction.AnchorInteractType;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.rendering.WireAnchorBlockRenderer;
@@ -37,12 +37,17 @@ import net.minecraft.world.level.Level;
  */
 public abstract class WireSpool extends Item {
 
+
+    // TODO factor this out into a generic class structure for wire types instead of loading it all in the item class
     private static final String PREFIX = "wire_";
     private static final ArrayList<WireSpool> SPOOL_TYPES = new ArrayList<>();
 
     private final String spoolName;
     private final int spoolID;
-    private final WattUnit rating;
+
+    private final float maxWatts;
+    private final Voltage optimalVolts; // TODO make this a wrapper object to store optimal voltage
+
     private final ItemStack emptyDrop;
     private final ItemStack rawDrop;
 
@@ -55,7 +60,8 @@ public abstract class WireSpool extends Item {
         this.spoolName = setSpoolName();
         this.spoolID = SPOOL_TYPES.size();
         WireSpool.SPOOL_TYPES.add(this);
-        this.rating = setRating();
+        this.maxWatts = setMaxWatts();
+        this.optimalVolts = setOptimalVoltage();
         this.emptyDrop = new ItemStack(setEmptySpoolDrop());
         this.rawDrop = new ItemStack(setRawDrop());
     }
@@ -90,10 +96,15 @@ public abstract class WireSpool extends Item {
     protected abstract String setSpoolName();
 
     /***
-     * Define the energy transfer rate of this WireSpool's associated wire type.
-     * @return WattUnit representing voltage and current limitations.
+     * Define the maximum watt transfer rate of this WireSpool's associated wire type.
      */
-    protected abstract WattUnit setRating();
+    protected abstract float setMaxWatts();
+
+    /***
+     * Define the optimal voltage potential across this WireSpool's associated wire type;
+     */
+    protected abstract Voltage setOptimalVoltage(); 
+    // TODO ^^ make this a wrapper object to store a bell curve function ^^
 
     /***
      * The Raw item that cooresponds to this WireSpool. This is usually just a basic wire item, which is
@@ -133,8 +144,12 @@ public abstract class WireSpool extends Item {
         return rawDrop;
     }
 
-    public final WattUnit getRating() {
-        return rating;
+    public Voltage getOptimalVoltage() {
+        return optimalVolts;
+    }
+
+    public float getMaxWatts() {
+        return maxWatts;
     }
 
     public static ItemStack getHeldSpool(Player player) {

@@ -1,8 +1,9 @@
 package com.quattage.mechano.foundation.electricity.core.anchor;
 
+import java.util.Set;
+
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
@@ -33,7 +34,7 @@ public class AnchorPoint {
     private final int maxConnections;
 
     private float anchorSize;
-    private AABB hitbox = null;
+    private AABB hitbox;
 
     @Nullable
     private GridVertex participant = null;
@@ -97,6 +98,7 @@ public class AnchorPoint {
      * @return an AABB representing the bounds of this AnchorPoint at its current location
      */
     public AABB getHitbox() {
+        if(hitbox == null) refreshHitbox();
         return hitbox.inflate(anchorSize * 0.005f);
     }
 
@@ -188,7 +190,6 @@ public class AnchorPoint {
      * that this AnchorPoint repersents in the grid.
      */
     public void nullifyParticipant() {
-        Mechano.log("part nullified");
         this.participant = null;
     }
 
@@ -198,12 +199,12 @@ public class AnchorPoint {
      * @throws IllegalArgumentException The provided GridVertex <strong>must</strong> have the same GID as this AnchorPoint.
      */
     public void setParticipant(GridVertex participant) {
-        Mechano.log("part set");
         if(!participant.isAt(this.systemLocation))
             throw new IllegalArgumentException("Error setting participant - AnchorPoint at " + systemLocation + " does not coorespond to the supplied GridVertex at " + participant.getID() + "! (Block positions and indices must be equal!)");
         this.participant = participant;
     }
 
+    @Nullable
     public GridVertex getParticipant() {
         return participant;
     }

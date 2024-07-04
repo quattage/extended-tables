@@ -272,6 +272,7 @@ public class VectorHelper {
      */
     @SuppressWarnings("deprecation")
     public static Vector3f normalizeToLength(Vector3f vec, float magnitude) {
+                        // TODO why is this deprecated
         float scalar = (float)(Mth.fastInvSqrt(Math.fma(vec.x(), vec.x(), Math.fma(vec.y(), vec.y(), vec.z() * vec.z()))) * magnitude);
         return new Vector3f(
             vec.x() * scalar,
@@ -281,17 +282,8 @@ public class VectorHelper {
     }
 
     /***
-     * A sloppy distance calculator that just converts Vector3fs
-     * to Vec3s before calculating distance. Don't use this.
-     */
-    public static float distanceBetween(Vector3f vec1, Vector3f vec2) {
-        return (float)new Vec3(vec1).distanceTo(new Vec3(vec2));
-        // TODO don't be lazy
-    }
-
-    /***
      * Gets the HitResult for the given player.
-     * @param player 
+     * @param player Player to use
      * @return HitResult describing the player's absolute look position.
      */
     public static HitResult getLookingRay(Player player) {
@@ -300,8 +292,8 @@ public class VectorHelper {
 
     /***
      * Gets the HitResult for the given player.
-     * @param player 
-     * @param dist
+     * @param player Player to use
+     * @param dist How far the ray should go before terminating
      * @return HitResult describing the player's absolute look position.
      */
     public static HitResult getLookingRay(Player player, float dist) {
@@ -315,34 +307,35 @@ public class VectorHelper {
         );
     }
 
-    // you cannot stop me
+    // this is basically a 3d transformation matrix but in the worst way possible.
+    // i cannot be bothered to refactor this.
     public static Vector3f rotate(Vector3f vec, CombinedOrientation dir) {
         switch(dir) {
             case DOWN_EAST:
                 return new Vector3f(
-                    iv(vec.z),
-                    iv(vec.y),
-                    iv(vec.x)
+                    inv(vec.z),
+                    inv(vec.y),
+                    inv(vec.x)
                 ); 
 
             case DOWN_NORTH:
                 return new Vector3f(
-                    iv(vec.z),
-                    iv(vec.y),
+                    inv(vec.z),
+                    inv(vec.y),
                     vec.x
                 ); 
 
             case DOWN_SOUTH:
                 return new Vector3f(
                     vec.x,
-                    iv(vec.y),
-                    iv(vec.z)
+                    inv(vec.y),
+                    inv(vec.z)
                 ); 
 
             case DOWN_WEST:
                 return new Vector3f(
                     vec.z,
-                    iv(vec.y),
+                    inv(vec.y),
                     vec.x
                 ); 
 
@@ -356,7 +349,7 @@ public class VectorHelper {
             case EAST_NORTH:
                 return new Vector3f(
                     vec.y,
-                    iv(vec.x),
+                    inv(vec.x),
                     vec.z
                 ); 
                 
@@ -364,62 +357,62 @@ public class VectorHelper {
                 return new Vector3f(
                     vec.y,
                     vec.x,
-                    iv(vec.z)
+                    inv(vec.z)
                 ); 
                 
             case EAST_UP:
                 return new Vector3f(
                     vec.y,
-                    iv(vec.z),
-                    iv(vec.x)
+                    inv(vec.z),
+                    inv(vec.x)
                 ); 
 
             case NORTH_DOWN:
                 return new Vector3f(
                     vec.x,
                     vec.z,
-                    iv(vec.y)
+                    inv(vec.y)
                 ); 
 
             case NORTH_EAST:
                 return new Vector3f(
-                    iv(vec.z),
+                    inv(vec.z),
                     vec.x,
-                    iv(vec.y)
+                    inv(vec.y)
                 ); 
 
             case NORTH_UP:
                 return new Vector3f(
-                    iv(vec.x),
-                    iv(vec.z),
-                    iv(vec.y)
+                    inv(vec.x),
+                    inv(vec.z),
+                    inv(vec.y)
                 ); 
 
             case NORTH_WEST:
                 return new Vector3f(
                     vec.z,
-                    iv(vec.x),
-                    iv(vec.y)
+                    inv(vec.x),
+                    inv(vec.y)
                 ); 
 
             case SOUTH_DOWN:
                 return new Vector3f(
-                    iv(vec.x),
+                    inv(vec.x),
                     vec.z,
                     vec.y
                 ); 
 
             case SOUTH_EAST:
                 return new Vector3f(
-                    iv(vec.z),
-                    iv(vec.x),
+                    inv(vec.z),
+                    inv(vec.x),
                     vec.y
                 ); 
 
             case SOUTH_UP:
                 return new Vector3f(
                     vec.x,
-                    iv(vec.z),
+                    inv(vec.z),
                     vec.y
                 ); 
 
@@ -432,7 +425,7 @@ public class VectorHelper {
 
             case UP_EAST:
                 return new Vector3f(
-                    iv(vec.z),
+                    inv(vec.z),
                     vec.y,
                     vec.x
                 ); 
@@ -443,43 +436,43 @@ public class VectorHelper {
 
             case UP_SOUTH:
                 return new Vector3f(
-                    iv(vec.x),
+                    inv(vec.x),
                     vec.y,
-                    iv(vec.z)
+                    inv(vec.z)
                 ); 
 
             case UP_WEST:
                 return new Vector3f(
                     vec.z,
                     vec.y,
-                    iv(vec.x)
+                    inv(vec.x)
                 ); 
 
             case WEST_DOWN:
                 return new Vector3f(
-                    iv(vec.y),
+                    inv(vec.y),
                     vec.z,
-                    iv(vec.x)
+                    inv(vec.x)
                 ); 
 
             case WEST_NORTH:
                 return new Vector3f(
-                    iv(vec.y),
+                    inv(vec.y),
                     vec.x,
                     vec.z
                 ); 
 
             case WEST_SOUTH:
                 return new Vector3f(
-                    iv(vec.y),
-                    iv(vec.x),
-                    iv(vec.z)
+                    inv(vec.y),
+                    inv(vec.x),
+                    inv(vec.z)
                 ); 
 
             case WEST_UP:
                 return new Vector3f(
-                    iv(vec.y),
-                    iv(vec.z),
+                    inv(vec.y),
+                    inv(vec.z),
                     vec.x
                 ); 
         }
@@ -490,29 +483,29 @@ public class VectorHelper {
         switch(dir) {
             case DOWN_EAST:
                 return new Vec3(
-                    iv(vec.z),
-                    iv(vec.y),
-                    iv(vec.x)
+                    inv(vec.z),
+                    inv(vec.y),
+                    inv(vec.x)
                 ); 
 
             case DOWN_NORTH:
                 return new Vec3(
-                    iv(vec.z),
-                    iv(vec.y),
+                    inv(vec.z),
+                    inv(vec.y),
                     vec.x
                 ); 
 
             case DOWN_SOUTH:
                 return new Vec3(
                     vec.x,
-                    iv(vec.y),
-                    iv(vec.z)
+                    inv(vec.y),
+                    inv(vec.z)
                 ); 
 
             case DOWN_WEST:
                 return new Vec3(
                     vec.z,
-                    iv(vec.y),
+                    inv(vec.y),
                     vec.x
                 ); 
 
@@ -526,7 +519,7 @@ public class VectorHelper {
             case EAST_NORTH:
                 return new Vec3(
                     vec.y,
-                    iv(vec.x),
+                    inv(vec.x),
                     vec.z
                 ); 
                 
@@ -534,62 +527,62 @@ public class VectorHelper {
                 return new Vec3(
                     vec.y,
                     vec.x,
-                    iv(vec.z)
+                    inv(vec.z)
                 ); 
                 
             case EAST_UP:
                 return new Vec3(
                     vec.y,
-                    iv(vec.z),
-                    iv(vec.x)
+                    inv(vec.z),
+                    inv(vec.x)
                 ); 
 
             case NORTH_DOWN:
                 return new Vec3(
                     vec.x,
                     vec.z,
-                    iv(vec.y)
+                    inv(vec.y)
                 ); 
 
             case NORTH_EAST:
                 return new Vec3(
-                    iv(vec.z),
+                    inv(vec.z),
                     vec.x,
-                    iv(vec.y)
+                    inv(vec.y)
                 ); 
 
             case NORTH_UP:
                 return new Vec3(
-                    iv(vec.x),
-                    iv(vec.z),
-                    iv(vec.y)
+                    inv(vec.x),
+                    inv(vec.z),
+                    inv(vec.y)
                 ); 
 
             case NORTH_WEST:
                 return new Vec3(
                     vec.z,
-                    iv(vec.x),
-                    iv(vec.y)
+                    inv(vec.x),
+                    inv(vec.y)
                 ); 
 
             case SOUTH_DOWN:
                 return new Vec3(
-                    iv(vec.x),
+                    inv(vec.x),
                     vec.z,
                     vec.y
                 ); 
 
             case SOUTH_EAST:
                 return new Vec3(
-                    iv(vec.z),
-                    iv(vec.x),
+                    inv(vec.z),
+                    inv(vec.x),
                     vec.y
                 ); 
 
             case SOUTH_UP:
                 return new Vec3(
                     vec.x,
-                    iv(vec.z),
+                    inv(vec.z),
                     vec.y
                 ); 
 
@@ -602,7 +595,7 @@ public class VectorHelper {
 
             case UP_EAST:
                 return new Vec3(
-                    iv(vec.z),
+                    inv(vec.z),
                     vec.y,
                     vec.x
                 ); 
@@ -613,54 +606,54 @@ public class VectorHelper {
 
             case UP_SOUTH:
                 return new Vec3(
-                    iv(vec.x),
+                    inv(vec.x),
                     vec.y,
-                    iv(vec.z)
+                    inv(vec.z)
                 ); 
 
             case UP_WEST:
                 return new Vec3(
                     vec.z,
                     vec.y,
-                    iv(vec.x)
+                    inv(vec.x)
                 ); 
 
             case WEST_DOWN:
                 return new Vec3(
-                    iv(vec.y),
+                    inv(vec.y),
                     vec.z,
-                    iv(vec.x)
+                    inv(vec.x)
                 ); 
 
             case WEST_NORTH:
                 return new Vec3(
-                    iv(vec.y),
+                    inv(vec.y),
                     vec.x,
                     vec.z
                 ); 
 
             case WEST_SOUTH:
                 return new Vec3(
-                    iv(vec.y),
-                    iv(vec.x),
-                    iv(vec.z)
+                    inv(vec.y),
+                    inv(vec.x),
+                    inv(vec.z)
                 ); 
 
             case WEST_UP:
                 return new Vec3(
-                    iv(vec.y),
-                    iv(vec.z),
+                    inv(vec.y),
+                    inv(vec.z),
                     vec.x
                 ); 
         }
         return vec;
     }
 
-    private static double iv(double in) {
+    private static double inv(double in) {
         return in + ((0.5d - in) * 2.0d);
     }
 
-    private static float iv(float in) {
+    private static float inv(float in) {
         return in + ((0.5f - in) * 2.0f);
     }
 

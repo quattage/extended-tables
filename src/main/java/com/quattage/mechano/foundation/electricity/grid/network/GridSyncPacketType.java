@@ -1,4 +1,4 @@
-package com.quattage.mechano.foundation.electricity.grid.sync;
+package com.quattage.mechano.foundation.electricity.grid.network;
 
 public enum GridSyncPacketType {
     ADD_NEW,

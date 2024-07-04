@@ -25,24 +25,24 @@ public class GridClientEdge {
 
     private final GID sideA;
     private final GID sideB;
-    private final int wireType;
+    private final int typeID;
 
     private final int initialAge;
     
     private float age = (float)MechanoSettings.WIRE_ANIM_LENGTH;
 
-    public GridClientEdge(GridEdge edge, int wireType) {
-        this.sideA = edge.getSideA();
-        this.sideB = edge.getSideB();
-        this.wireType = wireType;
+    public GridClientEdge(GridEdge edge, int typeID) {
+        this.sideA = edge.getOriginVertex().getID();
+        this.sideB = edge.getDestinationVertex().getID();
+        this.typeID = typeID;
         this.age = age * (int)((float)Mth.clamp(cheb(), 3, 90) * 0.4f);
         this.initialAge = 0;
     }
 
-    public GridClientEdge(GIDPair edge, int wireType) {
-        this.sideA = edge.getSideA();
-        this.sideB = edge.getSideB();
-        this.wireType = wireType;
+    public GridClientEdge(GID sideA, GID sideB, int typeID) {
+        this.sideA = sideA;
+        this.sideB = sideB;
+        this.typeID = typeID;
         this.age = age * (int)((float)Mth.clamp(cheb(), 3, 90) * 0.4f);
         this.initialAge = 0;
     }
@@ -50,7 +50,7 @@ public class GridClientEdge {
     public GridClientEdge(FriendlyByteBuf buf) {
         this.sideA = new GID(buf.readBlockPos(), buf.readInt());
         this.sideB = new GID(buf.readBlockPos(), buf.readInt());
-        this.wireType = buf.readInt();
+        this.typeID = buf.readInt();
         this.age = age * (int)((float)Mth.clamp(cheb(), 3, 90) * 0.4f);
         this.initialAge = (int)age;
     }
@@ -60,7 +60,7 @@ public class GridClientEdge {
         buf.writeInt(sideA.getSubIndex());
         buf.writeBlockPos(sideB.getBlockPos());
         buf.writeInt(sideB.getSubIndex());
-        buf.writeInt(wireType);
+        buf.writeInt(typeID);
     }
 
     public int cheb() {
@@ -147,6 +147,6 @@ public class GridClientEdge {
     }
 
     public int getTypeID() {
-        return wireType;
+        return typeID;
     }
 }

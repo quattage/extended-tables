@@ -1,5 +1,7 @@
+
 package com.quattage.mechano.foundation.electricity.core.watt.unit;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoSettings;
 
 import net.minecraft.nbt.CompoundTag;
@@ -46,6 +48,7 @@ public class WattUnit implements Comparable<WattUnit> {
      * @return a new WattUnit object
      */
     public static WattUnit of(Voltage volts, float watts) {
+        if(WattUnit.hasNoPotential(watts)) return WattUnit.EMPTY;
         return new WattUnit(volts, watts / (float)volts.get());
     }
 
@@ -56,7 +59,8 @@ public class WattUnit implements Comparable<WattUnit> {
      * @return a new WattUnit object
      */
     public static WattUnit of(int volts, float watts) {
-        return new WattUnit(volts, watts / (float)volts);
+        WattUnit out = new WattUnit(volts, watts / (float)volts);
+        return out;
     }
 
     /**
@@ -111,6 +115,9 @@ public class WattUnit implements Comparable<WattUnit> {
      */
     public WattUnit adjustVoltage(int newVoltage) {
 
+        if(this.equals(WattUnit.INFINITY)) 
+            return setVoltageLossy(newVoltage);
+
         if(getCurrent() == 0)  return this;
         if(newVoltage < 1) {
             setZero();
@@ -129,7 +136,7 @@ public class WattUnit implements Comparable<WattUnit> {
      * Does not adjust current to ensure the total power output remains the same.
      * For that, use {@link WattUnit#adjustVoltage(int) <code>adjustVoltage</code>}
      * @param newVoltage
-     * @return
+     * @return This WattUnit after modification
      */
     public WattUnit setVoltageLossy(int newVoltage) {
         volts.setTo(newVoltage);
@@ -270,6 +277,31 @@ public class WattUnit implements Comparable<WattUnit> {
         if(this.getWatts() > o.getWatts()) return 1;
         if(this.getWatts() < o.getWatts()) return -1;
         return 0;
+    }
+
+    /**
+     * Adds this WattUnit with <code>other</code>. Adding WattUnits
+     * is as simple as combining current values and taking the larger 
+     * voltage value between the two
+     * @param other WattUnit to add
+     * @return This WattUnit, modified as a result of this call.
+     */
+    public WattUnit add(WattUnit other) {
+        this.amps += other.amps;
+        volts.setTo(volts.getGreater(other.getVoltage()));
+        return this;
+    }
+
+    /**
+     * Adds this WattUnit with <code>other</code>. Adding WattUnits
+     * is as simple as combining current values and taking the larger 
+     * voltage value between the two
+     * @param other WattUnit to add
+     * @return This WattUnit, modified as a result of this call.
+     */
+    public WattUnit clampToMax(float watts) {
+        this.amps = Math.min(getCurrent(), watts / (float)volts.get());
+        return this;
     }
 
     /**

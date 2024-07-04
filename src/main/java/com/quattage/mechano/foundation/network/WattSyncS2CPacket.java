@@ -47,7 +47,7 @@ public class WattSyncS2CPacket implements Packetable {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
             if(Minecraft.getInstance().level.getBlockEntity(target) instanceof ElectricBlockEntity ebe)
-                ebe.battery.getBattery().setStoredWatts(watts, false);
+                ebe.battery.getEnergyHolder().setStoredWatts(watts, false);
         });
         return true;
     }

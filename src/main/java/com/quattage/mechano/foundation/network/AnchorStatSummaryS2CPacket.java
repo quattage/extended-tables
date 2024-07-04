@@ -11,7 +11,9 @@ import net.minecraftforge.network.NetworkEvent;
 
 public class AnchorStatSummaryS2CPacket implements Packetable {
 
-    private static AnchorStatSummaryS2CPacket AWAITING;
+    private static AnchorStatSummaryS2CPacket AWAITING; 
+
+    // TODO I AM VERY STUPID AND FORGOT THAT MULTIPLE PEOPLE CAN LOOK AT VERTICES SIMULTANEIOUSLY SO THIS WONT WORK ON SERVERS
 
     private final BlockPos pos;
     private final GridClientVertex[] vertSummary;

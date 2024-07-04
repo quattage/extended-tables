@@ -17,6 +17,8 @@ public class MechanoSettings {
     public static int ANCHOR_NORMAL_SIZE = 20;
     public static float ANCHOR_OBSERVE_RATE = 0.4f;
 
+    public static int GRID_WORKER_THREADS = 6;
+
     protected static void init(IEventBus modBus) {
         
     }

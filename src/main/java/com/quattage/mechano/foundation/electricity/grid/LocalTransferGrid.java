@@ -14,14 +14,12 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import com.quattage.mechano.Mechano;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
-import com.quattage.mechano.foundation.electricity.grid.sync.GridSyncHelper;
-import com.quattage.mechano.foundation.electricity.grid.sync.GridSyncPacketType;
+import com.quattage.mechano.foundation.electricity.grid.network.GridSyncHelper;
+import com.quattage.mechano.foundation.electricity.grid.network.GridSyncPacketType;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.simibubi.create.foundation.utility.Color;
 
@@ -32,7 +30,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 
-/***
+/**
  * The LocalTransferGrid provides the framework for managing, caching, finding, and updating GridVertices, GridPaths, and GridEdges.
  * <p>
  * For clarification: 
@@ -40,29 +38,32 @@ import net.minecraft.world.level.Level;
  *    - GridEdge -> The wire itself
  *    - GridPath -> A chain of wires connecting a power source to a power consumer
  * <p>
- * This object stores GridVertex objects in a Map, forming an undirected graph / adjacency list.
- * More info on graph theory: https://en.wikipedia.org/wiki/Adjacency_list
+ * This object stores GridVertex objects in a Map. This structure defines a 
+ * (sort of) simple implementation of an undirected graph defined by a hashed adjacency list.
+ * More info on graph theory: 
+ * https://en.wikipedia.org/wiki/Graph_theory
+ * https://en.wikipedia.org/wiki/Adjacency_list
  * and also: https://en.wikipedia.org/wiki/A*_search_algorithm
  */
 public class LocalTransferGrid {
 
-    private Map<GID, GridVertex> vertMatrix = new Object2ObjectOpenHashMap<>();
-    private Map<GIDPair, GridEdge> edges = new Object2ObjectOpenHashMap<>();
-    private Map<GIDPair, GridPath> paths = new Object2ObjectOpenHashMap<>();
+    private final Map<GID, GridVertex> vertMatrix = new Object2ObjectOpenHashMap<>();
+    private final TransferPathManager pathManager = new TransferPathManager();
 
     private final GlobalTransferGrid parent;
 
-    /***
+    /**
      * Instantiates a blank LocalTransferGrid
      */
     public LocalTransferGrid(GlobalTransferGrid parent) {
         this.parent = parent;
     }
 
-    /***
+    /**
      * Creates a new shallow-copied LocalTransferGrid which contains the contents of both provided LocalTransferGrids. <p>
-     * <strong>Important note:</strong> The resulting grid will contain discontinuities, as there are no inferred connections
-     * between the two provided grids. Discontinuities <strong>must</strong> be dealt with by ASAP creating at least one 
+     * <strong>Important note:</strong> The resulting grid will contain discontinuities, as there there is no guarantee that
+     * there are any connections, inferered or otherwise, between both provided grids.
+     * Discontinuities <strong>must</strong> be dealt with by ASAP creating at least one 
      * connection between the disconnected clusters within the resulting LocalTransferGrid object.
      * @param parent The GlobalTransferGrid parent (usually the object that is initiating this merge)
      * @param sync If <code>TRUE</code>, all GridVertices will be synced to their host BlockEntities before being added to the resulting LocalTransferGrid. This is rather expensive, and shouldn't be used very often.
@@ -78,13 +79,30 @@ public class LocalTransferGrid {
                 if(sync) vert.doFullSync(false);
                 out.addVert(vert);
             }
-            for(GridEdge edge : grid.allEdges())
-                out.edges.put(edge.getHashable(), edge);
-            for(GridPath path : grid.allPaths())
-                out.addPath(path);
+            collectPaths(grid, out);
         }
 
         return out;
+    }
+
+    /**
+     * Copies all paths from <code>source</code> to <code>destination</code> conditionally.
+     * A path is said to "belong" to a LocalTransferGrid if its starting and ending vertices 
+     * actually exist in said LocalTransferGrid. The destination LocalTransferGrid must contain
+     * these vertices in order for the associated path to be added. If this is not the case, the path is 
+     * simply skipped.
+     * @param source LocalTransferGrid to copy from. This LocalTransferGrid's paths are not affected.
+     * @param destination LocalTransferGrid to copy to. This LocalTransferGrid's paths will be added to.
+     */
+    public static void collectPaths(LocalTransferGrid source, LocalTransferGrid destination) {
+        TransferPathManager pathsToCollect = source.pathManager;
+        TransferPathManager pathsToPut = destination.pathManager;
+        for(Set<GridPath> pathSet : pathsToCollect.getAll().values()) {
+            for(GridPath path : pathSet) {
+                if(destination.hasVertAt(path.getStart().getID()) && destination.hasVertAt(path.getEnd().getID()))
+                    pathsToPut.skipUpdates().putPath(path);
+            }
+        }
     }
 
     /***
@@ -92,13 +110,12 @@ public class LocalTransferGrid {
      * No pathfinding is performed as a result of this call, that must be done seperately
      * @param cluster ArrayList of GridVertexs to add to this LocalTransferGrid upon creation
      */
-    public LocalTransferGrid(GlobalTransferGrid parent, ArrayList<GridVertex> cluster, Map<GIDPair, GridEdge> edgeMatrix) {
+    public LocalTransferGrid(GlobalTransferGrid parent, ArrayList<GridVertex> cluster) {
         this.parent = parent;
         for(GridVertex vert : cluster) {
             vert.replaceParent(this);
             vertMatrix.put(vert.getID(), vert);
         }
-        this.edges = ((Object2ObjectOpenHashMap<GIDPair, GridEdge>)edgeMatrix).clone();
     }
 
     public LocalTransferGrid(GlobalTransferGrid parent, CompoundTag in, Level world) {
@@ -106,35 +123,24 @@ public class LocalTransferGrid {
         ListTag net = in.getList("nt", Tag.TAG_COMPOUND);
         for(int x = 0; x < net.size(); x++) {
 
-            CompoundTag vertC = net.getCompound(x);
-            GridVertex vertToAdd = getVertAt(GID.of(vertC));
+            CompoundTag vertTag = net.getCompound(x);
 
-            // if the vertex has already been added to this grid (by the next step) then make sure its links are up to date
-            if(vertToAdd != null) {
-                vertToAdd.setMemberStatus(vertC.getBoolean("m"));
-                vertToAdd.readLinks(vertC.getList("l", Tag.TAG_COMPOUND), world);
-                continue;
-            }
-
-            // if the vertex isn't in this grid, new it and add it. The GridVertex constructor also adds new GridVertices
-            // to describe its links, which is what the previous step will take care of.
-            vertToAdd = new GridVertex(world, this, vertC);
+            // Whenever we add a new GridVertex we first check if it already exists, 
+            // since it could've been created by a previous iteration.
+            GridVertex vert = getVertAt(GID.of(vertTag));
+            if(vert == null) 
+                vert = new GridVertex(world, this, vertTag);
+            else 
+                vert.readRetroactive(world, vertTag);
 
             // if this GridVertex has bad data, don't add it
-            if(vertToAdd.hasNoHost()) {
-                Mechano.LOGGER.warn("LocalTransferGrid skipping registration of GridVertex at " + vertToAdd.getID());
+            if(vert.hasNoHost()) {
+                Mechano.LOGGER.warn("LocalTransferGrid skipping registration of GridVertex at " + vert.getID());
                 continue;
             }
 
-            vertToAdd.doSimplifiedSync();
-            vertMatrix.put(vertToAdd.getID(), vertToAdd);
-        }
-
-        // TODO this step can be skipped if the previous code is reworked a lil bit
-        ListTag edgeList = in.getList("ed", Tag.TAG_COMPOUND);
-        for(int x = 0; x < edgeList.size(); x++) {
-            GridEdge edge = new GridEdge(this.parent, edgeList.getCompound(x));
-            edges.put(edge.getHashable(), edge);
+            vert.doSimplifiedSync();
+            vertMatrix.put(vert.getID(), vert);
         }
 
         findAllPaths(false);
@@ -142,25 +148,20 @@ public class LocalTransferGrid {
 
     //  Write this LocalTransferGrid to NBT.  //
     protected CompoundTag writeTo(CompoundTag in) {
-        in.put("nt", writeMatrix());
-        in.put("ed", writeEdges());
-        return in;
-    }
-
-    private ListTag writeMatrix() {
         ListTag out = new ListTag();
         for(GridVertex v : vertMatrix.values())
             out.add(v.writeTo(new CompoundTag()));
-        return out;
+        in.put("nt", out);
+        return in;
     }
 
-    private ListTag writeEdges() {
-        ListTag out = new ListTag();
-        for(GridEdge edge : edges.values())
-            out.add(edge.writeTo(new CompoundTag()));
-        return out;
+    /**
+     * @return <code>TRUE</code> if this LocalTranferGrid contains a GridVertex 
+     * mapped to the given GID.
+     */
+    protected boolean hasVertAt(GID id) {
+        return vertMatrix.containsKey(id);
     }
-    ////////////////////////////////////////////////
 
     /**
      * Adds the provided vertex to this LocalTransferGrid's vertex matrix
@@ -170,35 +171,47 @@ public class LocalTransferGrid {
      */
     protected boolean addVert(GridVertex vertex) {
         if(vertex == null) 
-        throw new NullPointerException("Failed to add vertex to LocalTransferGrid - Cannot store a null vertex!");
-        return vertMatrix.put(vertex.getID(), vertex) != null;
+            throw new NullPointerException("Error adding vertex to LocalTransferGrid - Cannot store a null vertex!");
+        return vertMatrix.put(vertex.getID(), vertex) == null;
     }
 
     /**
      * Removes the vertex at the provided GID from this LocalTransferGrid's vertex matrix
      * and performs additional operations to remove outdated edge and path data. 
      * @param id ID to remove
-     * @return <code>TRUE</code> if this LocalTransferGrid was modified as a result of this call
+     * @return The GridVertex that was removed, or null if none could be found.
      */
-    protected boolean removeVert(GID id) {
+    protected GridVertex popVert(GID id) {
         if(id == null) throw new NullPointerException("Error removing GridVertex - The provided GID is null!");
+        
+        // pop the vertex and return if none could be found
         GridVertex poppedVert = vertMatrix.remove(id);
-        if(poppedVert == null) return false;
-        if(!poppedVert.isEmpty()) removePathsInvolving(poppedVert);
-        poppedVert.markRemoved();
+        if(poppedVert == null) return null;
 
-        for(GridVertex linked : poppedVert.links) {
-            if(linked.unlinkFrom(poppedVert)) {
-                if(linked.isEmpty())
-                    removeVert(linked.getID());
-                GridEdge found = edges.remove(new GIDPair(linked.getID(), id));
-                if(found == null) continue;
-                GridSyncHelper.informPlayerEdgeUpdate(GridSyncPacketType.REMOVE, found.toLightweight());
+        // if the vertex is empty, just mark it and send packets
+        if(poppedVert.isEmpty()) {
+            poppedVert.markRemoved();
+            GridSyncHelper.informPlayerVertexUpdate(GridSyncPacketType.REMOVE, id);
+            return poppedVert;
+        }
+
+        // remove all paths that interact with this vertex
+        pathManager.withUpdates().removeAllPathsInvolving(poppedVert.getID());
+
+        // tell neighboring vertices to "forget" this vertex
+        for(GridEdge linkedEdge : poppedVert.links) {
+            GridVertex neighbor = linkedEdge.getDestinationVertex();
+            GridEdge poppedEdge = neighbor.popLink(id);
+            if(poppedEdge != null) {
+                GridSyncHelper.informPlayerEdgeUpdate(GridSyncPacketType.REMOVE, poppedEdge.toLightweight());
+                if(neighbor.isEmpty()) popVert(neighbor.getID());
             }
         }
 
+        // mark the vertex and send packets
+        poppedVert.markRemoved(); 
         GridSyncHelper.informPlayerVertexUpdate(GridSyncPacketType.REMOVE, id);
-        return true;
+        return poppedVert;
     }
 
     /***
@@ -207,15 +220,15 @@ public class LocalTransferGrid {
      * does not exist within this LocalTransferGrid.
      * @param first GridVertex to link
      * @param second GridVertex to link
+     * @param edgeType The type of edge to create - Inidcates wire transfer characteristics
      * @param shouldPath if <code>TRUE</code> paths will be re-addressed after this link is added.
      * @return True if the GridVertices were modified as a result of this call,
      */
-    protected boolean linkVerts(GridVertex first, GridVertex second, int wireType, boolean shouldPath) {
+    protected boolean linkVerts(GridVertex first, GridVertex second, int edgeType, boolean shouldPath) {
         requireValidVertex("Failed to link GridVertices", first, second);
-        if(first.linkTo(second) && second.linkTo(first)) {
+        if(first.addLink(second, edgeType) && second.addLink(first, edgeType)) {
             first.doFullSync(false);
             second.doFullSync(false);
-            addEdge(first.getID(), second.getID(), wireType);
             if(shouldPath) findAllPaths(true);
             return true;
         }
@@ -228,11 +241,12 @@ public class LocalTransferGrid {
      * indicate the location of a GridVertex in this LocalTransferGrid.
      * @param first GID to locate and link
      * @param second GID object to locate and link
+     * @param edgeType The type of edge to create - Inidcates wire transfer characteristics
      * @param shouldPath if <code>TRUE</code> paths will be re-addressed after this link is added.
      * @return True if the GridVertices were modified as a result of this call,
      */
-    protected boolean linkVerts(GridVertex first, GridVertex second, int wireType) {
-        return linkVerts(first, second, wireType, true);
+    protected boolean linkVerts(GridVertex first, GridVertex second, int edgeType) {
+        return linkVerts(first, second, edgeType, true);
     }
 
     /***
@@ -241,17 +255,17 @@ public class LocalTransferGrid {
      * indicate the location of a GridVertex in this LocalTransferGrid.
      * @param first GID to locate and link
      * @param second GID object to locate and link
+     * @param edgeType The type of edge to create - Inidcates wire transfer characteristics
      * @param shouldPath if <code>TRUE</code> paths will be re-addressed after this link is added.
      * @return True if the GridVertices were modified as a result of this call,
      */
-    protected boolean linkVerts(GID first, GID second, int wireType, boolean shouldPath) {
+    protected boolean linkVerts(GID first, GID second, int edgeType, boolean shouldPath) {
         requireValidID("Failed to link GridVertices", first, second);
         GridVertex vertF = getVertAt(first);
         GridVertex vertT = getVertAt(second);
-        if(vertF.linkTo(vertT) && vertT.linkTo(vertF)) {
+        if(vertF.addLink(vertT, edgeType) && vertT.addLink(vertF, edgeType)) {
             vertF.doFullSync(false);
             vertT.doFullSync(false);
-            addEdge(first, second, wireType);
             if(shouldPath) findAllPaths(true);
             return true;
         }
@@ -289,24 +303,12 @@ public class LocalTransferGrid {
             ArrayList<GridVertex> clusterVerts = new ArrayList<>();
             depthFirstPopulate(identifier, visited, clusterVerts);
             if(clusterVerts.size() > 1) {
-                LocalTransferGrid clusterResult = new LocalTransferGrid(parent, clusterVerts, edges);
-                clusterResult.cleanEdges();
-                clusterResult.collectPaths(paths);
+                LocalTransferGrid clusterResult = new LocalTransferGrid(parent, clusterVerts);
+                LocalTransferGrid.collectPaths(this, clusterResult);
                 clusters.add(clusterResult);
             }
         }
         return clusters;
-    }
-
-    /**
-     * Grabs GridPath objects that coorespond to GridVertices in this LocalTransferGrid.
-     * @param pathsToCollect
-     */
-    private void collectPaths(Map<GIDPair, GridPath> pathsToCollect) {
-        for(Map.Entry<GIDPair, GridPath> path : pathsToCollect.entrySet()) {
-            if(path.getKey().isIn(vertMatrix.keySet()))
-                paths.put(path.getKey(), path.getValue());
-        }
     }
 
     /**
@@ -320,8 +322,8 @@ public class LocalTransferGrid {
         vertices.add(thisIteration);
 
         if(thisIteration.isEmpty()) return;
-        for(GridVertex neighbor : thisIteration.links) {
-            GID currentID = neighbor.getID();
+        for(GridEdge link : thisIteration.links) {
+            GID currentID = link.getDestinationVertex().getID();
             if(!visited.contains(currentID))
                 depthFirstPopulate(currentID, visited, vertices);
         }
@@ -337,25 +339,6 @@ public class LocalTransferGrid {
     }
 
     /***
-     * Examines the edge map and the vertex map to find weirdness.
-     * If there are any edges that point to vertices that aren't in this LocalTransferGrid,
-     * this call will remove them.
-     * @return True if this LocalTransferGrid was modified as a result of this call.
-     */
-    protected boolean cleanEdges() {
-        Iterator<Map.Entry<GIDPair, GridEdge>> matrixIterator = edges.entrySet().iterator();
-        boolean changed = false;
-        while(matrixIterator.hasNext()) {
-            GridEdge currentEdge = matrixIterator.next().getValue();
-            if((!vertMatrix.containsKey(currentEdge.getSideA()) && (!vertMatrix.containsKey(currentEdge.getSideB())))) {
-                changed = true;
-                matrixIterator.remove();
-            }
-        }
-        return changed;
-    }
-
-    /***
      * Finds the optimal path between the given GridVertex and all other GridVertices marked 
      * as members and stores those GridPath objects in this LocalTransferGrid.
      * @param origin GridVertex to find paths from/to. All resulting paths start or end with this GridVertex.
@@ -364,7 +347,7 @@ public class LocalTransferGrid {
      * in some scenarios.
      * @return <code>TRUE</code> if this LocalTransferGrid was modified as a result of this call. (if any paths were found)
      */
-    public boolean pathfindFrom(GridVertex origin, boolean shouldUpdate, boolean forceOpportunities) {
+    public boolean pathfindFrom(GridVertex origin, boolean shouldSendPackets, boolean forceOpportunities) {
         boolean exists = false;
         if(forceOpportunities) origin.doFullSync(false);
         for(GridVertex vert : vertMatrix.values()) {
@@ -372,14 +355,10 @@ public class LocalTransferGrid {
             if(forceOpportunities) vert.doFullSync(false);
             if(!vert.canFormPathTo(origin)) continue;
 
-            if(paths.containsKey(new GIDPair(origin.getID(), vert.getID()))) 
-                continue;
-
             GridPath path = astar(origin, vert);
             if(path != null) {
                 exists = true;
-                addPath(path);
-                if(shouldUpdate) onPathsUpdated(path, true);
+                pathManager.shouldUpdate(shouldSendPackets).putPath(path);
             }
         }
 
@@ -387,48 +366,38 @@ public class LocalTransferGrid {
     }
 
     /***
-     * Finds the optimal path between the given GridVertex and all other GridVertices marked 
-     * as members and stores those GridPath objects in this LocalTransferGrid.
-     * @param origin GridVertex to find paths from/to. All resulting paths start or end with this GridVertex.
-     * @param shouldUpdate If <code>TRUE</code>, each new path that is found will call {@link LocalTransferGrid#onPathsUpdated(GridPath, boolean) <code>onPathsUpdated()</code>}
-     * @param forceOpportunities If <code>TRUE</code> the member status of each involved GridVertex will be manually re-addressed. This process is more expensive but is required
-     * in some scenarios.
-     * @return <code>TRUE</code> if this LocalTransferGrid was modified as a result of this call. (if any paths were found)
-     */
-    public boolean pathfindFrom(GridVertex origin, boolean forceOpportunities) {
-        return pathfindFrom(origin, true, forceOpportunities);
-    }
-
-    /***
      * Finds optimal paths between every relevent GridVertex in this grid.
-     * @param shouldUpdate If <code>TRUE</code>, each new path that is found will call {@link LocalTransferGrid#onPathsUpdated(GridPath, boolean) <code>onPathsUpdated()</code>}
+     * @param shouldUpdate If <code>TRUE</code>, each new path that is found will send packets to sync.
      * @return <code>TRUE</code> if the LocalTransferGrid was modified as a result of this call.
      */
-    public boolean findAllPaths(boolean shouldUpdate) {        
+    public boolean findAllPaths(boolean shouldSendPackets) {        
         boolean exists = false;
         for(GridVertex vert : vertMatrix.values()) {
             if(!vert.isMember()) continue;
-            if(pathfindFrom(vert, shouldUpdate, false)) exists = true;
+            if(pathfindFrom(vert, shouldSendPackets, false)) exists = true;
         }
 
         return exists;
     }
 
     /***
-     * may god have mercy on my soul
+     * Forms a path between <code>start</code> and <code>goal</code>
+     * by leaping between connected vertices to the destination.
+     * @param start GridVertex to start from
+     * @param end GridVertex the algorithm is looking for
      * @return GridPath object representing the optimal path between 
      * the two vertices, or null if no path could be fouund.
      */
     @Nullable
     private GridPath astar(GridVertex start, GridVertex goal) {
         final Queue<GridVertex> openVerts = new PriorityQueue<>(11, GridVertex.GUIDANCE_COMPARATOR);
-        final Map<GridVertex, GridVertex> path = new HashMap<GridVertex, GridVertex>();
+        final Map<GridVertex, GridVertex> path = new HashMap<>();
 
         // All vertices that are addressed in the A* operation are contained here.
         // Their A* guidance variables must be reset in order to function properly in subsequent calls to this method.
         final Set<GridVertex> outdatedVertices = new HashSet<>();
 
-        WattUnit slowestRate = WattUnit.INFINITY;
+        float resultingTransferRate = Float.MAX_VALUE;
 
         start.setCumulative(0);
         start.getAndStoreHeuristic(goal);
@@ -440,34 +409,34 @@ public class LocalTransferGrid {
             // loop terminates here if successful
             if(local.equals(goal)) {
                 resetPathData(outdatedVertices);
-                return GridPath.ofUnwound(path, goal, slowestRate);
+                return GridPath.ofUnwound(path, goal, resultingTransferRate);
             }
 
             // mark this edge as visited
             local.markVisited();
 
-            for(GridVertex neighbor : local.links) {
+            for(GridEdge potentialTraverse : local.links) {
+
+                if(!potentialTraverse.canTransfer()) continue;
+
+                GridVertex neighbor = potentialTraverse.getDestinationVertex();
 
                 // if we've already addressed this vertex the iteration can be skipped
                 if(neighbor.hasBeenVisited()) continue;
-                
-                // get the cooresponding edge from local to neighbor
-                GridEdge edge = lookupEdge(local, neighbor);
-                if(edge == null) throw new NullPointerException("Error initiating A* - edge from " + local + " to " + neighbor + " could not be found.");
-                if(!edge.canTransfer()) continue;
 
-                // get the slowest volts & amps between the current rate and the current edge's rate
-                slowestRate = slowestRate.getLowerStats(edge.getTransferStats());
+                // As the path is traversed, calculate the lowest transfer rate of every adge addressed.
+                resultingTransferRate = Math.min(resultingTransferRate, potentialTraverse.getMaximumWatts());
 
                 // calculate the tentative A* value and store the heuristic in the current edge
-                float tentative = local.getAndStoreHeuristic(neighbor) + local.getCumulative();
+                float tentative = local.getAndStoreFastHeuristic(potentialTraverse) + local.getCumulative();
                 outdatedVertices.add(local);
 
                 // if the tentative is less than the cumulative (that is, if we have points to spend here) address this path
+                // TODO take transfer rate into accout when calculating heuristic to prioritize quicker edges
                 if(tentative < neighbor.getCumulative()) {
 
                     neighbor.setCumulative(tentative);
-                    neighbor.getAndStoreHeuristic(local);
+                    neighbor.getAndStoreFastHeuristic(potentialTraverse);
                     outdatedVertices.add(neighbor);
                     
                     // add this vertex to the resulting path and open its neighbor
@@ -481,50 +450,10 @@ public class LocalTransferGrid {
         return null;
     }
 
+    // resets A* guidance (see above for context)
     private void resetPathData(Set<GridVertex> verts) {
         for(GridVertex vert : verts)
             vert.resetHeuristics();
-    }
-
-    /***
-     * Removes all valid paths that involve the given GridVertex
-     * @param vert GridVertex to compare
-     */
-    public void removePathsInvolving(GridVertex vert) { 
-        Iterator<GridPath> pathIter = paths.values().iterator();
-        while(pathIter.hasNext()) {
-            GridPath path = pathIter.next();
-            if(path.containsVertex(vert)) {
-                pathIter.remove();
-                onPathsUpdated(path, false);
-            }
-        }
-    }
-
-    /***
-     * Removes paths whose ends (at index <code>0</code> or <code>length - 1</code>)
-     * are equal to the given vertex
-     * @param vert GridVertex to compare
-     */
-    public void removePathsEndingIn(GridVertex vert) {
-        Iterator<GridPath> pathIter = paths.values().iterator();
-        while(pathIter.hasNext()) {
-            GridPath path = pathIter.next();
-            if(path.getEnd().equals(vert) || path.getStart().equals(vert)) {
-                pathIter.remove();
-                onPathsUpdated(path, false);
-            }
-        }
-    }
-
-    /**
-     * Removes a path by direct GIDPair access
-     * @param id GIDPair id to remove
-     */
-    protected void removePath(GIDPair id) {
-        GridPath path = paths.remove(id);
-        if(path != null)
-            onPathsUpdated(path, false);
     }
 
     /***
@@ -544,33 +473,6 @@ public class LocalTransferGrid {
         target = new GridVertex(world, this, id);
         addVert(target);
         return target;
-    }
-
-    /**
-     * Adds a GridPath to this LocalTransferGrid
-     * @param path GridPath to add
-     * @return <code>TRUE</code> if this LocalTransferGrid was modified as a result of this call (if the path didn't already exist)
-    */
-    private boolean addPath(GridPath path) {
-        if(path == null) throw new NullPointerException("Error adding path to LocalTransferGrid - Path cannot be null!");
-        return paths.put(path.getHashable(), path) == null;
-    }
-
-    /**
-     * Gets the GridEdge between the given vertices if one exists.
-     * @param a Gridvertex A - direction agnostic
-     * @param b GridVertex B - direction agnostic
-     * @return GridEdge stored in this LocalTransferGrid, or null of one does not exist.
-     */
-    @Nullable
-    protected GridEdge lookupEdge(GridVertex a, GridVertex b) {
-        return edges.get(new GIDPair(a.getID(), b.getID()));
-    }
-
-    private void addEdge(GID idA, GID idB, int wireType) {
-        requireValidID("Failed to add new GridEdge", idA, idB);
-        GIDPair hashed = new GIDPair(idA, idB);
-        edges.put(hashed, new GridEdge(parent, new GIDPair(idA, idB), wireType));
     }
 
     public Color getDebugColor() {
@@ -599,41 +501,18 @@ public class LocalTransferGrid {
         return vertMatrix.values();
     }
 
-    public Collection<GridEdge> allEdges() {
-        return edges.values();
-    }
-
-    /**
-     * @param id GIDPair to look for
-     * @return <code>TRUE</code> if this LocalTransferGrid contains an edge mapped to the given key.
-     */
-    protected boolean containsEdge(GIDPair id) {
-        return edges.containsKey(id);
-    }
-
-    public Collection<GridPath> allPaths() {
-        return paths.values();
-    }
-
     public String toString() {
         
-        String output = "\n";
+        String output = "\nAll grid data:\n";
         
         int x = 1;
         for(GridVertex vert : vertMatrix.values()) {
-            output += ("Vertex " + x + ": ") + vert + "\n";
-            x++;
-        }
-        
-        x = 1;
-        for(GridPath path : paths.values()) {
-            output += ("Path " + x + ": ") + path + "\n";
-            x++;
-        }
+            String vertDescriptor = "\tVertex " + x + ": " + vert + "\n";
 
-        x = 1;
-        for(GridEdge edge : edges.values()) {
-            output += ("Edge " + x + ": ") + edge + "\n";
+            for(GridEdge edge : vert.links)
+                vertDescriptor += "\t\t> " + edge.getDestinationVertex() + "\n";
+
+            output += vertDescriptor + "\n";
             x++;
         }
 
@@ -662,16 +541,9 @@ public class LocalTransferGrid {
         return output;
     }
 
-    /***
-     * Called internally whenever a GridPath is added or removed
-     * @param path The path in question
-     * @param add True if this path was added, false if this path was removed
-     */
-    private void onPathsUpdated(GridPath path, boolean add) {
-        if(add) GridSyncHelper.informPlayerPathUpdate(GridSyncPacketType.ADD_NEW, path);
-        else GridSyncHelper.informPlayerPathUpdate(GridSyncPacketType.REMOVE, path);
+    public TransferPathManager getPathManager() {
+        return pathManager;
     }
-
 
     /////////////////////// sanity check helpers ///////////////////////////////////////////////////////
     private void requireValidID(String failMessage, GID... idSet) {

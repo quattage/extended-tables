@@ -22,7 +22,7 @@ public interface WattStorable {
     * @param simulate If TRUE, the insertion will only be simulated.
     * @return Amount of watt-ticks that were (or would have been, if simulated) accepted by the storage.
     */
-    WattUnit receiveWatts(WattUnit maxWattsToRecieve, boolean simulate);
+    WattUnit receiveWatts(final WattUnit maxWattsToRecieve, boolean simulate);
 
     /**
     * Removes watt-ticks from the energy store and returns a WattUnit representing the energy removed.
@@ -30,7 +30,7 @@ public interface WattStorable {
     * @param simulate If TRUE, the extraction will only be simulated.
     * @return Amount of watt-ticks that were (or would have been, if simulated) extracted from the storage.
     */
-    WattUnit extractWatts(WattUnit maxWattsToExtract, boolean simulate);
+    WattUnit extractWatts(final WattUnit maxWattsToExtract, boolean simulate);
 
     /**
      * Replaces the current amount of energy in the energy store with the WattUnit provided.
@@ -131,5 +131,33 @@ public interface WattStorable {
         TRANSFORM_LOSSLESS,
     }
 
-    void onOvervolt(int excessVolts);
+    /**
+     * Called whenever an energy store receives energy at a voltage greater than it is capable of handling.
+     * Should be invoked <strong>after</strong> the energy is added to the store.
+     * @param maxVolts maximum number of volts the energy store can handle
+     * @param receivedVolts actual number of volts the store receieved (always greater than <code>maxVolts</code>)
+     */
+    void onOvervolt(OvervoltEvent event);
+
+    public class OvervoltEvent {
+        final int maxVolts;
+        final int voltsReceieved;
+
+        public OvervoltEvent(int maxVolts, int voltsReceieved) {
+            this.maxVolts = maxVolts;
+            this.voltsReceieved = voltsReceieved;
+        }
+
+        public int getMaxBatteryVolts() {
+            return maxVolts;
+        }
+
+        public int getVoltsReceieved() {
+            return voltsReceieved;
+        }
+
+        public float getPercent() {
+            return (float)maxVolts / (float)voltsReceieved;
+        }
+    }
 }

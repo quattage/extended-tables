@@ -270,7 +270,7 @@ public class WireModelRenderer {
         vertB2.set(vertA1);
         vertB2.add(normal);
 
-        realLength = VectorHelper.distanceBetween(point0, point1);
+        realLength = point0.distance(point1);
     
         boolean lastIter = false;
         for (int segment = 0; segment < LOD_LIMIT; segment++) {
@@ -312,7 +312,7 @@ public class WireModelRenderer {
             y = (float) VectorHelper.drip2(animatedSag, x * wrongDistanceFactor, distance, vec.y());
 
             point1.set(x, y, 0);
-            realLength = VectorHelper.distanceBetween(point0, point1);
+            realLength = point0.distance(point1);
         }
     }
 

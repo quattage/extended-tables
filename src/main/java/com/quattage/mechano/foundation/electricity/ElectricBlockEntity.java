@@ -34,7 +34,7 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Wa
     }
 
     @Override
-    public WattBatteryHandler<?> getWattBatteryHandler() {
+    public WattBatteryHandler<? extends WattBatteryHandlable> getWattBatteryHandler() {
         return battery;
     }
 
@@ -46,12 +46,13 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Wa
     @Override
     public void tick() {
         super.tick();
+        if(getLevel().isClientSide()) return;
         battery.tickWatts();
     }
-    
+
     @Override
     public void onLoad() {
-        battery.loadAndUpdate(getBlockState());
+        battery.loadAndUpdate(getBlockState(), !(getUpdateTag().contains("m")));
         super.onLoad();
     }
 
@@ -86,8 +87,6 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Wa
         battery.readFrom(tag);
         super.read(tag, clientPacket);
     }
-
-    
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {

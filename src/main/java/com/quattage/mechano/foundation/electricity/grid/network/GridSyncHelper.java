@@ -1,6 +1,10 @@
-package com.quattage.mechano.foundation.electricity.grid.sync;
+package com.quattage.mechano.foundation.electricity.grid.network;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+
+import javax.annotation.Nullable;
 
 import com.google.common.collect.HashMultimap;
 import com.quattage.mechano.Mechano;
@@ -10,6 +14,7 @@ import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -47,7 +52,7 @@ public class GridSyncHelper {
         MechanoPackets.sendToAllClients(new GridVertUpdateSyncS2CPacket(type, edge.getBlockPos()));
     }
 
-    public static void informPlayerPathUpdate(GridSyncPacketType type, GridPath path) {
+    public static void informPlayerPathUpdate(GridSyncPacketType type, @Nullable GridPath path) {
         MechanoPackets.sendToAllClients(new GridPathUpdateSyncS2CPacket(path, type));
     }
 
@@ -58,15 +63,25 @@ public class GridSyncHelper {
     }
 
     private static void syncGridChunkWithPlayer(Level world, ChunkPos chunkPos, Player player, GridSyncPacketType type) {
+
         GlobalTransferGrid grid = GlobalTransferGrid.of(world);
+        final Set<GridClientEdge> edgesToSend = new HashSet<>();
+
+        // TODO this is slow as balls
         if(!(player instanceof ServerPlayer sPlayer)) return;
         for(LocalTransferGrid sys : grid.getSubgrids()) {
-            for(GridEdge edge : sys.allEdges()) {
-                if(chunkPos.equals(new ChunkPos(edge.getSideA().getBlockPos()))) 
-                    MechanoPackets.sendToClient(new GridEdgeUpdateSyncS2CPacket(type, edge.toLightweight()), sPlayer);
+            for(GridVertex vert : sys.allVerts()) {
+                if(chunkPos.equals(new ChunkPos(vert.getID().getBlockPos()))) {
+                    for(GridEdge edge : vert.links)
+                        edgesToSend.add(edge.toLightweight());
+                }
             }
         }
+
+        for(GridClientEdge edge : edgesToSend) 
+            MechanoPackets.sendToClient(new GridEdgeUpdateSyncS2CPacket(type, edge), sPlayer);
     }
+    
 
     @SubscribeEvent
     public static void onChunkEnterPlayerView(ChunkWatchEvent.Watch event) {
@@ -89,8 +104,12 @@ public class GridSyncHelper {
 
         GlobalTransferGrid allGrids = GlobalTransferGrid.of(world);
         for(LocalTransferGrid grid : allGrids.getSubgrids()) {
-            for(GridPath path : grid.allPaths())
-                MechanoPackets.sendToClient(new GridPathUpdateSyncS2CPacket(path, GridSyncPacketType.ADD_NEW), player);
+            grid.getPathManager().forEachPath(
+                path -> {
+                    MechanoPackets.sendToClient(new GridPathUpdateSyncS2CPacket(
+                        path, GridSyncPacketType.ADD_NEW), player);
+                }
+            );
         }
     }
 }

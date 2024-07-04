@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable.OvervoltBehavior;
+import com.quattage.mechano.foundation.electricity.core.watt.WattStorable.OvervoltEvent;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
 
 /**
@@ -155,7 +156,7 @@ public class WattBatteryBuilder {
          * voltage greater than its voltage tolerance. This consumer can do whatever you want on the BE side of things.
          * @return
          */
-        public WattBatteryUnbuilt withOvervoltEvent(Consumer<Integer> event) {
+        public WattBatteryUnbuilt withOvervoltEvent(Consumer<OvervoltEvent> event) {
             return new WattBatteryUnbuilt(voltsEMF, voltsIn, maxStored, behavior, maxCharge, maxDischarge, event);
         }
     }
@@ -167,9 +168,9 @@ public class WattBatteryBuilder {
         private final int maxCharge;
         private final int maxDischarge;
         private final OvervoltBehavior behavior;
-        private final Consumer<Integer> ove;
+        private final Consumer<OvervoltEvent> ove;
 
-        private WattBatteryUnbuilt(Voltage voltsOut, Voltage voltsIn, int cap, OvervoltBehavior behavior, int maxCharge, int maxDischarge, Consumer<Integer> ove) {
+        private WattBatteryUnbuilt(Voltage voltsOut, Voltage voltsIn, int cap, OvervoltBehavior behavior, int maxCharge, int maxDischarge, Consumer<OvervoltEvent> ove) {
             this.voltsEMF = voltsOut;
             this.voltsIn = voltsIn;
             this.maxStored = cap;

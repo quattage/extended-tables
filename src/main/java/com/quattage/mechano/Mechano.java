@@ -2,6 +2,7 @@ package com.quattage.mechano;
 
 import com.mojang.logging.LogUtils;
 import com.quattage.mechano.foundation.block.upgradable.UpgradeCache;
+import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridDispatcher;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.utility.LangBuilder;
 import com.tterrag.registrate.providers.DataGenContext;
@@ -16,6 +17,13 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+
+import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.slf4j.Logger;
 
 @Mod(Mechano.MOD_ID)
@@ -45,6 +53,7 @@ public class Mechano {
         MechanoSounds.register(modBus);
         MechanoGroups.register(modBus);
         MechanoMenus.register(modBus);
+        GlobalTransferGridDispatcher.initTasks();
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MechanoClient.init(modBus, forgeBus));
 
@@ -62,7 +71,8 @@ public class Mechano {
     public static void log(String message) {      
         String side = ESC + "[1;34m" + Thread.currentThread().getName() + ESC + "[1;35m";
 
-        String prefix = ESC + "[1;35m[quattage/" + MOD_ID + "] {" + side + "} >> " + ESC + "[1;36m";
+        String time = LocalTime.now(ZoneId.of("America/Montreal")).truncatedTo(ChronoUnit.MILLIS).toString();
+        String prefix = ESC + "[1;35m[{" + side + "} " + time + "] >> " + ESC + "[1;36m";
         String suffix = ESC + "[1;35m -" + ESC;
         System.out.println(prefix + message + suffix);
     }

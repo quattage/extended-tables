@@ -20,7 +20,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.content.item.DebugButter;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;

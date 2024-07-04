@@ -1,11 +1,14 @@
 package com.quattage.mechano.foundation.electricity;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
 import com.quattage.mechano.foundation.electricity.core.InteractionJunction;
+import com.quattage.mechano.foundation.electricity.core.InteractionJunction.ExternalInteractStatus;
 import com.quattage.mechano.foundation.electricity.core.watt.WattBatteryBuilder.WattBatteryUnbuilt;
+import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnitConversions;
@@ -23,8 +26,8 @@ import net.minecraftforge.energy.IEnergyStorage;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -39,9 +42,9 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
     private ExternalInteractMode mode = ExternalInteractMode.BOTH;
     private final InteractionJunction[] interactions;
 
-    public final WattStorable battery;
+    private final WattStorable battery;
     private final T target;
-    public LazyOptional<WattStorable> energyHandler = LazyOptional.empty();
+    private LazyOptional<WattStorable> energyHandler = LazyOptional.empty();
 
     public WattBatteryHandler(T target, InteractionJunction[] interactions, WattBatteryUnbuilt unbuilt) {
         this.target = target;
@@ -73,10 +76,23 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
     }
 
     /**
-     * @return True if this WattBatteryHandler is at max energy
+     * If <code>TRUE</code>, this WattBatteryHandler can receive watts. Offers more specificity than {@link WattStorable#canReceive()},
+     * as this method will return false if this WattBatteryHandler's {@link ExternalInteractMode} disables energy insertion.
+     * @return <code>TRUE</code> if this WattBatteryHandler is in the position to receive watts from external sources
      */
-    public boolean isFull() {
-        return battery.getCapacity() <= battery.getStoredWatts();
+    public boolean shouldReceiveExternally() {
+        if(!isInReceiveMode()) return false;
+        return battery.canReceive();
+    }
+
+    /**
+     * If <code>TRUE</code>, this WattBatteryHandler can have watts extracted. Offers more specificity than {@link WattStorable#canReceive()},
+     * as this method will return false if this WattBatteryHandler's {@link ExternalInteractMode} disables energy extraction.
+     * @return <code>TRUE</code> if this WattBatteryHandler is in the position to have watts extracted by external sourrces
+     */
+    public boolean shouldExtractExternally() {
+        if(!isInExtractMode()) return false;
+        return battery.canExtract();
     }
 
     /**
@@ -84,27 +100,28 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
      */
     public void tickWatts() {
 
-        if(!battery.canExtract()) return;
+        if(!shouldExtractExternally()) return;
 
-        final Set<OptionalWattOrFE> adjacents = new HashSet<>();
-
+        final List<OptionalWattOrFE> adjacents = new ArrayList<>();
         for(InteractionJunction inter : interactions) {
             OptionalWattOrFE opt = DirectionalWattProvidable.getFEOrWattsAt(target, inter.getDirection());
             if(opt.isPresent()) adjacents.add(opt);
         }
 
-        distributeEnergy(adjacents);
+        distributeEnergyTo(adjacents);
     }
     
     /**
-     * Emits energy the destination handlers contained within an nput set.
-     * Prioritizes even distribution of energy to all destinations whenever possible
-     * @param batteries Set of <code>OptionalWattOrFe</code> objects to distribute to.
+     * Emits energy to the destination handlers contained within an input set.
+     * Prioritizes even distribution of energy to all destinations whenever possible.
+     * @param batteries Set of <code>OptionalWattOrFe</code> objects to distribute between
      */
-    public void distributeEnergy(Set<OptionalWattOrFE> batteries) {
+    public void distributeEnergyTo(final List<OptionalWattOrFE> batteries) {
+
+        if(batteries.isEmpty()) return;
 
         float totalDemand = 0;
-        float[] demands = new float[batteries.size()];
+        final float[] demands = new float[batteries.size()];
 
         int x = 0;
         for(OptionalWattOrFE acceptorOpt : batteries) {
@@ -118,8 +135,8 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
         }
 
         if(totalDemand == 0) return;
-        // Gets the total power to distribute by sort of pretending that all batteries are one big battery 
-        float wattsToDistribute = Math.min(Math.min(battery.getMaxDischarge(), battery.getStoredWatts()), totalDemand);
+        // Gets the total power to distribute by pretending that all batteries are one big battery 
+        final float wattsToDistribute = Math.min(Math.min(battery.getMaxDischarge(), battery.getStoredWatts()), totalDemand);
 
         x = 0;
         for(OptionalWattOrFE acceptorOpt : batteries) {
@@ -140,13 +157,63 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
         }
     }
 
+    /**
+     * Emits energy (specifically in this case, only Watts) to the destination handlers contained within a list
+     * of {@link WattSendSummary} objects. Used to send energy across traversed paths.
+     * Prioritizes even distribution of energy to all destinations evenly whenever possible
+     * @param sends List of <code>WattSendSummary</code> objects containing paths to send across.
+     */
+    public synchronized void distributeWattsTo(final List<WattSendSummary> sends) {
+
+        float totalDemand = 0;
+        final float[] demands = new float[sends.size()];
+
+        int x = 0;
+        for(WattSendSummary acceptor : sends) {
+            float maxPathRate = acceptor.getAddressedPath().getMaxTransferRate();
+            if(WattUnit.hasNoPotential(maxPathRate)) 
+                demands[x] = 0;
+            else {
+                demands[x] = acceptor.getDestination().getEnergyHolder().receiveWatts(WattUnit.of(battery.getFlux(), maxPathRate), true).getWatts();
+                totalDemand += demands[x];
+            }
+            x++;
+        }
+
+        if(totalDemand == 0) return;
+        // Gets the total power to distribute by pretending that all batteries are one big battery 
+        final float wattsToDistribute = Math.min(Math.min(battery.getMaxDischarge(), battery.getStoredWatts()), totalDemand);
+
+        x = 0;
+        for(WattSendSummary acceptor : sends) {
+            if(WattUnit.hasNoPotential(demands[x])) continue;
+        
+            // Watts added to this iteration's energy store are multiplied by the distribution ratio for even splitting
+            float wattsToAccept = Math.min(wattsToDistribute * (demands[x] / totalDemand), demands[x]);
+
+            WattUnit receieved = acceptor.getDestination().getEnergyHolder().receiveWatts(
+                battery.extractWatts(
+                        WattUnit.of(battery.getFlux(), acceptor.getAddressedPath().getMaxTransferRate())
+                            .getLowerStats(
+                                WattUnit.of(battery.getFlux().copy(), wattsToAccept)), 
+                    false
+                ), false
+            );
+
+            acceptor.getAddressedPath().addLoad(receieved.copy());
+            if(battery.getStoredWatts() <= 0) break;
+            x++;
+        }
+    }
+
     /***
      * Called every time energy is added or removed from this WattBatteryHandler.
      */
     @Override
     public void onWattsUpdated(float oldStoredWatts, float newStoredWatts) {
-        target.setChanged();
         target.onWattsUpdated();
+        target.setChanged();
+        Mechano.log("WATTS UPDATED AT " + target.getBlockPos() + " FROM " + oldStoredWatts + " TO " + newStoredWatts);
         MechanoPackets.sendToAllClients(WattSyncS2CPacket.ofSource(battery, target.getBlockPos()));
     }
 
@@ -163,9 +230,10 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
      * Initializes the energy capabilities of this WattBatteryHandler and 
      * reflects a state change if needed
      */
-    public void loadAndUpdate(BlockState state) {
+    public void loadAndUpdate(BlockState state, boolean updateMode) {
         reflectStateChange(state);
         energyHandler = LazyOptional.of(() -> battery);
+        if(updateMode) this.mode = getInteractionStatus().toCoorespondingMode();
     }
 
     /***
@@ -218,15 +286,20 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
      * capabilites.
      * @return <code>TRUE</code> if this WattBatteryHandler is interacting with a WattStorable or IEnergyStorage capability
      */
-    public boolean isInteractingExternally() {
-        if(!canInteractDirectly()) return false;
-        for(InteractionJunction pol : interactions) 
-            if(pol.canSendOrReceive(target)) return true;
-        return false;
+    public ExternalInteractStatus getInteractionStatus() {
+        if(!canInteractDirectly()) return ExternalInteractStatus.NONE;
+        for(InteractionJunction pol : interactions) {
+            ExternalInteractStatus status = pol.getInteractionStatusTowards(target);
+            if(status.isInteracting()) return status;
+        }
+        return ExternalInteractStatus.NONE;
     }
 
+    /**
+     * Gets the raw WattStorable capability backing this WattBatteryHandler
+     */
     @Override
-    public WattStorable getBattery() {
+    public WattStorable getEnergyHolder() {
         return this.battery;
     }
 

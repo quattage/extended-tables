@@ -3,14 +3,14 @@ package com.quattage.mechano.foundation.electricity.core;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.relative.Relative;
 import com.quattage.mechano.foundation.block.orientation.relative.RelativeDirection;
+import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.ExternalInteractMode;
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.OptionalWattOrFE;
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.energy.IEnergyStorage;
 
 /***
  * An InteractionJunction is a "rule" describing
@@ -120,13 +120,18 @@ public class InteractionJunction {
      * @return True if this InteractionJunction is facing toward
      * a block which provides ForgeEnergy or Watt capabilities in the opposing direction
      */
-    public boolean canSendOrReceive(BlockEntity parent) {
+    public ExternalInteractStatus getInteractionStatusTowards(BlockEntity parent) {
 
         if((!isInput && !isOutput) || parent.getLevel() == null) 
-            return false;
+            return ExternalInteractStatus.NONE;
         OptionalWattOrFE battery = getConnectedCapability(parent);
 
-        return battery.isPresent();
+        if(battery.getFECap() instanceof IEnergyStorage feBatt)
+            return feBatt.getEnergyStored() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;
+        if(battery.getFECap() instanceof WattStorable wattBatt)
+            return wattBatt.getStoredWatts() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;;
+
+        return ExternalInteractStatus.NONE;
     }
 
     /**
@@ -181,5 +186,25 @@ public class InteractionJunction {
 
     public int hashCode() {
         return dir.getRaw().ordinal() + (isInput ? 10 : 11) + (isOutput ? 10 : 11) * 31;
+    }
+
+    public enum ExternalInteractStatus {
+        NONE(ExternalInteractMode.NONE),
+        HAS_EMPTY(ExternalInteractMode.PUSH_OUT),
+        HAS_POWER(ExternalInteractMode.PULL_IN);
+
+        private final ExternalInteractMode cooresponding;
+
+        private ExternalInteractStatus(ExternalInteractMode cooresponding) {
+            this.cooresponding = cooresponding;
+        }
+
+        public boolean isInteracting() {
+            return this != NONE;
+        }
+
+        public ExternalInteractMode toCoorespondingMode() {
+            return cooresponding;
+        }
     }
 }

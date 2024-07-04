@@ -27,12 +27,38 @@ public class Voltage {
         this.volts = volts;
     }
 
+    private Voltage(Voltage v) {
+        this.volts = v.getRaw();
+    }
+
+    public Voltage copy() {
+        return new Voltage(this);
+    }
+
+    /**
+     * @param other Voltage to compare
+     * @return The greater voltage between <code>this</code> and <code>other</code>. 
+     * If both voltages are equal, <code>other</code> is returned by default.
+     */
+    public Voltage getGreater(Voltage other) {
+        if(this.isGreaterThan(other)) return this;
+        return other;
+    }
+
+    public boolean isGreaterThan(Voltage that) {
+        return this.getRaw() > that.getRaw();
+    }
+
     public int get() {
         return WattUnitConversions.toRealVolts(volts);
     }
 
     public void setTo(int volts) {
         this.volts = WattUnitConversions.toStoredVolts(volts);
+    }
+
+    public void setTo(Voltage volts) {
+        this.volts = volts.getRaw();
     }
 
     public boolean equals(Object other) {
@@ -42,6 +68,10 @@ public class Voltage {
 
     public int hashCode() {
         return (int)volts;
+    }
+
+    public String toString() {
+        return "" + get();
     }
 
     public short getRaw() {

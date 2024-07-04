@@ -43,7 +43,7 @@ public abstract class ElectroKineticBlockEntity extends KineticBlockEntity imple
 
     @Override
     public void onLoad() {
-        battery.loadAndUpdate(this.getBlockState());
+        battery.loadAndUpdate(this.getBlockState(), !(getUpdateTag().contains("m")));
         super.onLoad();
     }
 
