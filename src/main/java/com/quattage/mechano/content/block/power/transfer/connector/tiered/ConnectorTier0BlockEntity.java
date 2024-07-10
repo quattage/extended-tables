@@ -36,7 +36,8 @@ public class ConnectorTier0BlockEntity extends WireAnchorBlockEntity {
 				.withMaxDischarge(2048)
 				.withCapacity(2048)
 				.withIncomingPolicy(OvervoltBehavior.LIMIT_LOSSY)
-				.withNoEvent())
+				.withNoEvent()
+			)
 			.newInteraction(Relative.BOTTOM)
 				.buildInteraction()
 			.build();

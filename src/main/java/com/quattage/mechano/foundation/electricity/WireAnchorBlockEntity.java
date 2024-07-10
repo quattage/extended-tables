@@ -6,7 +6,6 @@ import java.util.Set;
 
 import static com.quattage.mechano.Mechano.lang;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
@@ -16,8 +15,7 @@ import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
-import com.quattage.mechano.foundation.network.AnchorStatRequestC2SPacket;
-import com.quattage.mechano.foundation.network.AnchorStatSummaryS2CPacket;
+import com.quattage.mechano.foundation.helper.TimeTracker;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
 import net.minecraft.ChatFormatting;
@@ -35,9 +33,9 @@ import net.minecraft.world.phys.AABB;
 public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
 
     private final AnchorPointBank<WireAnchorBlockEntity> anchors;
-    
-    private long oldTime = 0;
-    private static double time = 0;
+
+    private final TimeTracker wireTickTracker = new TimeTracker();
+    private final TimeTracker anchorTickTracker = new TimeTracker();
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {}
@@ -96,13 +94,6 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
         super.invalidate();
     }
 
-    public double getDelta(long time) {
-        if(oldTime == 0) oldTime = System.nanoTime();
-        double out = (time - oldTime) * 0.000001f;
-        oldTime = time;
-        return out;
-    }
-
     public void stepMode() {
         setMode(getWattBatteryHandler().getMode().next());
     }
@@ -117,43 +108,29 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
         return false;
     }
 
-    @Override
+    public double getTimeSinceLastTick() {
+        if(getLevel().isClientSide()) return anchorTickTracker.getDeltaTime();
+        return 0;
+    }
 
+    public double getTimeSinceLastRender() {
+        if(getLevel().isClientSide()) return wireTickTracker.getDeltaTime();
+        return 0;
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
         if(anchors.isAwaitingConnection || GridClientCache.hasNewEdge(this)) 
             return AABB.ofSize(getBlockPos().getCenter(), Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         return super.getRenderBoundingBox();
     }
 
-    protected void requestClientUpdate(boolean immediate) {
-        if((time < MechanoSettings.ANCHOR_OBSERVE_RATE * 50) && (!immediate))
-            time += getDelta(System.nanoTime());
-        else {
-            MechanoPackets.sendToServer(new AnchorStatRequestC2SPacket(getBlockPos()));
-            time = 0;
-        }
-    }
-
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
 
         lang().text(getWattBatteryHandler().getEnergyHolder().getStoredWatts() + " watts").forGoggles(tooltip);
-
-        AnchorStatSummaryS2CPacket summary = AnchorStatSummaryS2CPacket.getAwaiting();
-        if(summary == null || (!summary.getBlockPos().equals(this.getBlockPos()))) {
-            requestClientUpdate(true);
-            lang().text("...").style(ChatFormatting.GRAY).forGoggles(tooltip);
-            return true;
-        }
-
-        requestClientUpdate(false);
-
         lang().text("Mode - " + battery.getMode()).style(ChatFormatting.GRAY).forGoggles(tooltip);
 
-        for(int x = 0; x < summary.getVertices().length; x++) {
-
-            AnchorPoint anchor = getAnchorBank().get(x);
-        }
         return true;
     }
 

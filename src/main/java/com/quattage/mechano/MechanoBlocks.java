@@ -1,3 +1,4 @@
+
 package com.quattage.mechano;
 
 import com.quattage.mechano.content.block.integrated.toolStation.ToolStationBlock;
@@ -72,7 +73,7 @@ public class MechanoBlocks {
             .sound(SoundType.NETHERITE_BLOCK)
             .noOcclusion()
         )
-        .transform(BlockStressDefaults.setImpact(48.0))
+        .transform(BlockStressDefaults.setImpact(2048))
         .transform(pickaxeOnly())
         .blockstate(new DynamicStateGenerator(AbstractRotorBlock.MODEL_TYPE).in("rotor")::generate)
         .item()
@@ -85,7 +86,7 @@ public class MechanoBlocks {
             .sound(SoundType.NETHERITE_BLOCK)
             .noOcclusion()
         )
-        .transform(BlockStressDefaults.setImpact(48.0))
+        .transform(BlockStressDefaults.setImpact(4096))
         .transform(pickaxeOnly())
         .blockstate(new DynamicStateGenerator(AbstractRotorBlock.MODEL_TYPE).in("rotor")::generate)
         .item()
@@ -130,7 +131,7 @@ public class MechanoBlocks {
             .sound(SoundType.NETHERITE_BLOCK)
             .noOcclusion()
         )
-        .transform(BlockStressDefaults.setImpact(48.0))
+        .transform(BlockStressDefaults.setImpact(4.0))
         .transform(pickaxeOnly())
         .blockstate(new DynamicStateGenerator(SlipRingShaftBlock.MODEL_TYPE)::generate)
         .item()

@@ -5,19 +5,33 @@ import net.minecraftforge.eventbus.api.IEventBus;
 public class MechanoSettings {
     
     // TODO json
-    public static int ALTERNATOR_MAX_LENGTH = 16;
-    public static int ALTERNATOR_MINIMUM_PERCENT = 75;
-    public static int WIRE_ANIM_LENGTH = 300;
-    public static int POLE_STACK_SIZE = 16;
+    public static byte ALTERNATOR_MAX_LENGTH = 16;
+    public static byte ALTERNATOR_MINIMUM_PERCENT = 75;
+    public static short WIRE_ANIM_LENGTH = 300;
+    public static byte POLE_STACK_SIZE = 16;
 
-    public static int FE2W_RATE = 32; // 1 watt = (FE2W_RATE) FE
-    public static int FE2W_VOLTAGE = 128;
+    // 1 Watt = (FE2W_RATE) * FE
+    public static short FE2W_RATE = 32; 
+    public static short FE2W_VOLTAGE = 128;
 
-    public static int ANCHOR_SELECT_SIZE = 40;
-    public static int ANCHOR_NORMAL_SIZE = 20;
-    public static float ANCHOR_OBSERVE_RATE = 0.4f;
+    // 1 Watt = (SU2W_RATE) * StressUnits
+    public static float SU2W_RATE = 0.008f;
+    
+    // RPM to voltage exponent
+    public static float RPM_VOLTAGE = 1.0474f;
 
-    public static int GRID_WORKER_THREADS = 6;
+    // size of AnchorPoint hitboxes
+    public static byte ANCHOR_SELECT_SIZE = 40;
+    public static byte ANCHOR_NORMAL_SIZE = 20;
+
+    // resolution of raymarch to select AnchorPoints - lower numbers = higher resolution
+    public static float ANCHOR_SELECT_RAYMARCH_RESOLUTION = 0.01f;
+
+    // distance that's considered "close enough" to select the closest AnchorPoint
+    public static float ANCHOR_BAILOUT_DISTANCE = 0.4f;
+
+    public static byte GRID_WORKER_THREADS = 6;
+
 
     protected static void init(IEventBus modBus) {
         

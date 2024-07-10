@@ -1,7 +1,6 @@
 
 package com.quattage.mechano.foundation.electricity.core.watt.unit;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoSettings;
 
 import net.minecraft.nbt.CompoundTag;
@@ -40,6 +39,7 @@ public class WattUnit implements Comparable<WattUnit> {
         this.amps = other.amps;
         setZeroIfNoPotential();
     }
+    
 
     /**
      * Make a new WattUnit from total power in watts.
@@ -200,7 +200,7 @@ public class WattUnit implements Comparable<WattUnit> {
      * (that is, if {@link WattUnit#getCurrent() <code>getCurrent()</code>} returns less than 1 equivalent unit of FE, whatever the conversion rate may be return <code>TRUE</code>)
      */
     public boolean hasNoPotential() {
-        return getCurrent() < MIN_WATTS;
+        return getWatts() < MIN_WATTS;
     }
 
     /**

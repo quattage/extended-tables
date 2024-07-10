@@ -8,10 +8,12 @@
 		
 	],
 	"client": [
+		"KineticNetworkMixin",
 		"client.DynamicWireRenderMixin",
 		"client.StaticWireRenderMixin",
 		"client.StaticWireCullingMixin",
-		"client.RenderChunkInvoker"
+		"client.RenderChunkInvoker",
+		"client.GoggleOverlayRendererMixin"
 	],
 	"minVersion": "0.8.5"
 }

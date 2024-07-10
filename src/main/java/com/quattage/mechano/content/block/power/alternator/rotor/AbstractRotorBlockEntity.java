@@ -6,16 +6,20 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import static com.quattage.mechano.Mechano.lang;
+
 import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.stator.AbstractStatorBlock;
 import com.quattage.mechano.foundation.helper.shape.CircleGetter;
 import com.quattage.mechano.foundation.helper.shape.ShapeGetter;
+import com.simibubi.create.content.kinetics.BlockStressValues;
+import com.simibubi.create.content.kinetics.KineticNetwork;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.foundation.utility.Lang;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -92,8 +96,9 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
             return null;
         });
 
-        if(notifyIfChanged && (oldCount != statorCount)) 
+        if(notifyIfChanged && (oldCount != statorCount)) {
             notifyUpdate();
+        }
     }
 
     public void incStatorCount() {
@@ -119,6 +124,13 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
     }
 
     private void getAndRefreshController() {
+
+        if(hasNetwork()) {
+            KineticNetwork parent = getOrCreateNetwork();
+            parent.updateStressFor(this, calculateStressApplied());
+            parent.sync();
+        }
+
         if(controllerPos == null) return;
         if(getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe)
             srbe.initialize();
@@ -126,6 +138,7 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
 
     public abstract int getStatorCircumference();
     protected abstract int getStatorRadius();
+    protected abstract float getEfficiencyBonus();
 
     protected BlockPos getControllerPos() {
         return controllerPos;
@@ -142,11 +155,36 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
     }
 
     @Override
+    public float calculateStressApplied() {
+        float impact = calculateStressWithStators((float) BlockStressValues.getImpact(getStressConfigKey()));
+		this.lastStressApplied = impact;
+		return impact;
+    }
+
+    private float calculateStressWithStators(float max) {
+        float sP = (float)statorCount / (float)getStatorCircumference(); 
+        return toNearest4((float)(0.00196f * Math.pow(262144, sP)));
+    }
+
+    private float toNearest4(float in) {
+        float remainder = in % 4;
+        return Math.max(1, remainder < 4 ? in - remainder : in + (4 - remainder));
+    }
+
+    public float getWeightedSpeed() {
+        float out = (float)Mth.clamp((float)0.0039f * Math.pow(1.0218971487f, 2f * Math.abs(getTheoreticalSpeed())), 0f, 256f);
+        return out >= 0.1 ? out : 0;
+    }
+
+    public float calculateMaximumPossibleStress() {
+        return calculateStressApplied() * 256;
+    }
+
+    @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        super.addToGoggleTooltip(tooltip, isPlayerSneaking);
-        Lang.text(statorCount + " stators").forGoggles(tooltip);
-        Lang.text(controllerPos + "").forGoggles(tooltip);
-        return true;
+        lang().text(statorCount + " stators").forGoggles(tooltip);
+        lang().text(getWeightedSpeed() + " weighted rpm").forGoggles(tooltip);
+        return super.addToGoggleTooltip(tooltip, isPlayerSneaking);
     }
 
     public byte getStatorCount() {

@@ -20,5 +20,8 @@ public class SmallRotorBlockEntity extends AbstractRotorBlockEntity {
         return 1;
     }
 
-    
+    @Override
+    protected float getEfficiencyBonus() {
+        return 1f;
+    }
 }

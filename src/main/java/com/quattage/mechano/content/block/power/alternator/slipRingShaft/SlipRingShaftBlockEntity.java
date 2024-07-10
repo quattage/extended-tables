@@ -1,7 +1,5 @@
 package com.quattage.mechano.content.block.power.alternator.slipRingShaft;
 
-import com.quattage.mechano.Mechano;
-
 import static com.quattage.mechano.Mechano.lang;
 
 import com.quattage.mechano.MechanoSettings;
@@ -11,6 +9,8 @@ import com.quattage.mechano.foundation.electricity.ElectroKineticBlockEntity;
 import com.quattage.mechano.foundation.electricity.WattBatteryHandlable;
 import com.quattage.mechano.foundation.electricity.builder.WattBatteryHandlerBuilder;
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable.OvervoltBehavior;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
+import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnitConversions;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 
@@ -38,6 +38,8 @@ public class SlipRingShaftBlockEntity extends ElectroKineticBlockEntity {
     private int length;
     private int currentPowerScore = 0;
     private int potentialPowerScore = 0;
+    private float currentStress = 0;
+    private float maximumStress = 0;
 
     public SlipRingShaftBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -97,6 +99,15 @@ public class SlipRingShaftBlockEntity extends ElectroKineticBlockEntity {
         this.length = 0;
         this.currentPowerScore = 0;
         this.potentialPowerScore = 0;
+        
+        this.currentStress = 0;
+        this.maximumStress = 0;
+
+        syncToChild();
+    }
+
+    public float getCurrentStress() {
+        return currentStress;
     }
 
     private void refreshSlipRingStatus(Direction dir, boolean preserveParentChildRelationship) {
@@ -157,13 +168,35 @@ public class SlipRingShaftBlockEntity extends ElectroKineticBlockEntity {
                 this.length++;
                 this.potentialPowerScore += arbe.getStatorCircumference();
                 this.currentPowerScore += arbe.getStatorCount();
+                this.maximumStress += arbe.calculateMaximumPossibleStress();
+                this.currentStress += arbe.calculateStressApplied();
                 if(this.status.canControl) arbe.setControllerPos(this.getBlockPos());
                 continue;
             }
 
             break;
         }
+
+        syncToChild();
     }
+
+    private void syncToChild() {
+        if(status != SlipRingShaftStatus.ROTORED_PARENT) return;
+        if(!(getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe)) return;
+        srbe.length = this.length;
+        srbe.potentialPowerScore = this.potentialPowerScore;
+        srbe.currentPowerScore = this.currentPowerScore;
+        srbe.maximumStress = this.maximumStress;
+        srbe.currentStress = this.currentStress;
+    }
+
+    @Override
+    public void onSpeedChanged(float previousSpeed) {
+        Direction dir = getBlockState().getValue(DirectionalKineticBlock.FACING);
+        if(this.status != SlipRingShaftStatus.ROTORED_CHILD) refreshRotorScore(dir);
+    }
+
+    
 
     public void undoAlternator() {
         undoAlternator(getBlockState().getValue(DirectionalKineticBlock.FACING));
@@ -208,6 +241,8 @@ public class SlipRingShaftBlockEntity extends ElectroKineticBlockEntity {
             srbe.undoAlternator(dir.getOpposite());
             opposingPos = null;
         }
+
+        syncToChild();
     }
 
     private void setStatusAndUpdate(SlipRingShaftStatus newStatus) {
@@ -243,6 +278,12 @@ public class SlipRingShaftBlockEntity extends ElectroKineticBlockEntity {
         return buildStats(tooltip, this.length, this.currentPowerScore, this.potentialPowerScore, this.status);
     }
 
+    @Override
+    public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        lang().text("§7§l🔧§9§l").translate("gui.alternator.status.unfinishedTitle")
+			.forGoggles(tooltip);
+        return super.addToTooltip(tooltip, isPlayerSneaking);
+    }
 
     // TODO are these utf8 or nah lol
     // ✔ ❌    §    https://hypixel.net/attachments/colorcodes-png.2694223/
@@ -250,16 +291,19 @@ public class SlipRingShaftBlockEntity extends ElectroKineticBlockEntity {
 
         if(status == SlipRingShaftStatus.NONE) return false;
         final boolean hasOpposite = status != SlipRingShaftStatus.ROTORED_NO_OPPOSITE;
-        final float sPercent = Math.round(((float)cScore / (float)pScore) * 100);
+        final int sPercent = Math.round(((float)cScore / (float)pScore) * 100);
 
-        lang().translate("gui.alternator.status.title")
+        lang().text("§7§l🔧§9§l ").translate("gui.alternator.status.unfinishedTitle")
+            .forGoggles(tooltip);
+
+        lang().text("§7§l🔧§9§l").translate("gui.alternator.status.title")
 			.forGoggles(tooltip);
 
         lang().text("§9§l———— §7§l🔧§9§l Assembly —————").style(ChatFormatting.GRAY).forGoggles(tooltip);
 
-        if(len > 1)
+        if(len > 0)
             lang().text("  §2§l✔ ").translate("gui.alternator.status.hasLength").style(ChatFormatting.GRAY).forGoggles(tooltip);
-        else lang().text("  §2§l❌ ").translate("gui.alternator.status.noLength").style(ChatFormatting.GRAY).forGoggles(tooltip);
+        else lang().text("  §c§l❌ ").translate("gui.alternator.status.noLength").style(ChatFormatting.GRAY).forGoggles(tooltip);
         if(hasOpposite)
             lang().text("  §2§l✔ ").translate("gui.alternator.status.hasOpposing").style(ChatFormatting.GRAY).forGoggles(tooltip);
         else lang().text("  §c§l❌ ").translate("gui.alternator.status.noOpposing").style(ChatFormatting.GRAY).forGoggles(tooltip);
@@ -278,6 +322,12 @@ public class SlipRingShaftBlockEntity extends ElectroKineticBlockEntity {
         lang().text("").forGoggles(tooltip);
         lang().text("§9§l————— §7§l⚡§9§l Status —————").style(ChatFormatting.GRAY).forGoggles(tooltip);
         lang().text(cScore + "/" + pScore + " stators").forGoggles(tooltip);
+
+        lang().text("stress: " + currentStress * Math.abs(getTheoreticalSpeed()) + " / " + maximumStress).forGoggles(tooltip);
+        WattUnit power = WattUnitConversions.toWatts(currentStress * getTheoreticalSpeed(), getTheoreticalSpeed());
+        lang().text("Output: " + power).forGoggles(tooltip);
+        lang().text("FE Equivalent: " + WattUnitConversions.toFE(power)).forGoggles(tooltip);
+
 
         if(status == SlipRingShaftStatus.ROTORED_CHILD)
             lang().text("♠ Child").style(ChatFormatting.GRAY).forGoggles(tooltip);

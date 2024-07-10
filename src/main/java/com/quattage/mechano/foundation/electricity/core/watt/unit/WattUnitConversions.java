@@ -1,7 +1,10 @@
 
 package com.quattage.mechano.foundation.electricity.core.watt.unit;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoSettings;
+
+import net.minecraft.util.Mth;
 
 public class WattUnitConversions {
     
@@ -64,6 +67,39 @@ public class WattUnitConversions {
 
         int volts = (int)((MechanoSettings.FE2W_VOLTAGE * fe) * 0.001);
         return out.adjustVoltage(volts < MechanoSettings.FE2W_VOLTAGE ? (volts < 4 ? 4 : volts) : MechanoSettings.FE2W_VOLTAGE);
+    }
+
+    /**
+     * Makes a new Watt from a StressUnit and an RPM value.
+     * RPM is used to scale the resulting WattUnit's voltage.
+     * @param fe FE value to convert from
+     * @return a new Watt object whose power value is representative of the given SU andd RPM values
+     */
+    public static WattUnit toWatts(float SU, float RPM) {
+
+        float RPMA = Math.abs(RPM);
+        int rBonus = Math.round(Mth.clamp((float)(0.00041f * Math.pow(1.033f, RPMA)), 0.25f, 2f));
+
+        WattUnit out = WattUnit.of(toVolts(RPMA), Math.abs(SU * MechanoSettings.SU2W_RATE) * rBonus);
+
+        Mechano.log("outV: " + toVolts(RPMA));
+        return out;
+    }
+
+    /**
+     * Converts an RPM value to voltage
+     * @param RPM float value (the <code>speed</code> parameter in <code>KineticBlockEntity</code>)
+     * @return A Voltage object representing the given RPM value
+     */
+    public static Voltage toVolts(float RPM) {
+        return new Voltage(toNearest64(Mth.clamp(Math.round(0.1149 * (Math.pow(MechanoSettings.RPM_VOLTAGE, RPM))), 4, Voltage.MAX_VOLTS.get())));
+    }
+
+    private static int toNearest64(float in) {
+        if(in < 512) return Math.round(in);
+        int rounded = Math.round(in);
+        int remainder = rounded % 64;
+        return remainder < 32 ? rounded - remainder : rounded + (64 - remainder);
     }
 
     /**

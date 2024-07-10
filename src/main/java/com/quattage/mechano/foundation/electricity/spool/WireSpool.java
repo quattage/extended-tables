@@ -52,7 +52,7 @@ public abstract class WireSpool extends Item {
     private final ItemStack rawDrop;
 
     private GlobalTransferGrid network = null;
-    private GID selectedAnchorID = null;
+    private static GID selectedAnchorID = null;
     private Pair<AnchorPoint, WireAnchorBlockEntity> aP = null;
 
     public WireSpool(Properties properties) {
@@ -152,7 +152,7 @@ public abstract class WireSpool extends Item {
         return maxWatts;
     }
 
-    public static ItemStack getHeldSpool(Player player) {
+    public static ItemStack getHeldByPlayer(Player player) {
         if(player == null) return null;
         ItemStack stack = player.getMainHandItem();
         if(stack != null && stack.getItem() instanceof WireSpool) return stack;
@@ -168,7 +168,8 @@ public abstract class WireSpool extends Item {
         Pair<AnchorPoint, WireAnchorBlockEntity> currentAnchor = null;
 
         if(world.isClientSide()) {
-            AnchorPoint present = WireAnchorBlockRenderer.getSelectedAnchor();
+            AnchorPoint present = MechanoClient.ANCHOR_SELECTOR.getSelectedAnchor(world);
+            if(present == null) return InteractionResultHolder.pass(handStack);
             network = GlobalTransferGrid.of(world);
             MechanoPackets.sendToServer(new AnchorSelectC2SPacket(present));
             return InteractionResultHolder.pass(handStack);
@@ -235,6 +236,8 @@ public abstract class WireSpool extends Item {
     public void inventoryTick(ItemStack stack, Level world, Entity entity, int slot, boolean isSelected) {
         if(entity instanceof Player player) {
 
+            if(!isSelected) selectedAnchorID = null;
+
             CompoundTag nbt = stack.getOrCreateTag();
             if(GID.isValidTag(nbt)) {
                 aP = AnchorPoint.getAnchorAt(world, GID.of(nbt));
@@ -256,7 +259,7 @@ public abstract class WireSpool extends Item {
         }
     }
 
-    public void setSelectedAnchor(GID selectedAnchorID) {
-        this.selectedAnchorID = selectedAnchorID;
+    public void setSelectedAnchor(GID id) {
+        selectedAnchorID = id;
     }
 }

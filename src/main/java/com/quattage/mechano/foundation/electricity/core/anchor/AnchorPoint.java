@@ -1,9 +1,13 @@
 package com.quattage.mechano.foundation.electricity.core.anchor;
 
-import java.util.Set;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
+import static com.quattage.mechano.Mechano.lang;
+
+import com.quattage.mechano.Mechano;
+import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
@@ -15,7 +19,11 @@ import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.simibubi.create.foundation.utility.Color;
 import com.simibubi.create.foundation.utility.Pair;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,14 +38,13 @@ import net.minecraft.world.phys.Vec3;
 public class AnchorPoint {
     private final GID systemLocation;
     private final AnchorTransform transform;
-
     private final int maxConnections;
 
-    private float anchorSize;
-    private AABB hitbox;
+    private float hitboxSize = 0;
+    @Nullable private AABB hitbox = null;
+    @Nullable private AABB staticHitbox = null;
 
-    @Nullable
-    private GridVertex participant = null;
+    @Nullable private GridVertex participant = null;
 
     // TODO breakout
     private static final Color rawColor = new Color(205, 240, 231);
@@ -47,11 +54,20 @@ public class AnchorPoint {
         this.systemLocation = systemLocation;
         this.transform = transform;
         this.maxConnections = maxConnections;
-        this.anchorSize = 0;
     }
 
     @Nullable
     public static Pair<AnchorPoint, WireAnchorBlockEntity> getAnchorAt(Level world, GID loc) {
+        if(world == null) return null;
+        if(loc == null) return null;
+        BlockEntity be = world.getBlockEntity(loc.getBlockPos());
+        if(be instanceof WireAnchorBlockEntity wbe) 
+            return Pair.of(wbe.getAnchorBank().get(loc.getSubIndex()), wbe);
+        return null;
+    }
+
+    @Nullable
+    public static Pair<AnchorPoint, WireAnchorBlockEntity> getAnchorAt(ClientLevel world, GID loc) {
         if(world == null) return null;
         if(loc == null) return null;
         BlockEntity be = world.getBlockEntity(loc.getBlockPos());
@@ -83,7 +99,6 @@ public class AnchorPoint {
     }
 
     public void broadcastChunkChange(GlobalTransferGrid grid) {
-
         if(participant != null) 
             participant.refreshLinkedChunks();
         else {
@@ -93,36 +108,43 @@ public class AnchorPoint {
         }
     }
 
-    /***
+    /**
      * Gets the hitbox of this AnchorPoint
      * @return an AABB representing the bounds of this AnchorPoint at its current location
      */
     public AABB getHitbox() {
         if(hitbox == null) refreshHitbox();
-        return hitbox.inflate(anchorSize * 0.005f);
+        return hitbox.inflate(hitboxSize * 0.005f);
     }
 
-    /***
+    public AABB getStaticHitbox() {
+        if(staticHitbox == null) refreshHitbox();
+        return staticHitbox;
+    }
+
+    /**
      * @return the size of this AnchorPoint
      */
     public float getSize() {
-        return anchorSize;
+        return hitboxSize;
+    }
+
+    public boolean hasSize() {
+        return hitboxSize > 0;
     }
 
     public void increaseToSize(float sizeTarget, double delta) {
-
-        if(this.anchorSize < sizeTarget)
-            this.anchorSize += delta;
-        else if(this.anchorSize > sizeTarget)
-            anchorSize = sizeTarget;
+        if(this.hitboxSize < sizeTarget)
+            this.hitboxSize += delta * 1.6;
+        if(this.hitboxSize > sizeTarget)
+            hitboxSize = sizeTarget;
     }
 
     public void decreaseToSize(float sizeTarget, double delta) {
-
-        if(this.anchorSize > sizeTarget)
-            this.anchorSize -= delta;
-        else if(this.anchorSize < sizeTarget)
-            anchorSize = sizeTarget;
+        if(this.hitboxSize > sizeTarget)
+            this.hitboxSize -= delta * 1.6;
+        if(this.hitboxSize < sizeTarget)
+            hitboxSize = sizeTarget;
     }
 
     public void refreshHitbox() {
@@ -135,6 +157,9 @@ public class AnchorPoint {
             0.001 + realPos.y, 
             0.001 + realPos.z
         );
+
+
+        this.staticHitbox = hitbox.inflate(MechanoSettings.ANCHOR_NORMAL_SIZE * 0.005f);
     }
 
     public Vec3 getPos() {
@@ -156,9 +181,10 @@ public class AnchorPoint {
     public double getDistanceToRaycast(Vec3 start, Vec3 end) {
         double closestDist = -1;
         Vec3 anchorPos = getPos();
-        for(float x = 0f; x < 1; x += 0.05f) {
+        for(float x = 0f; x < 1; x += MechanoSettings.ANCHOR_SELECT_RAYMARCH_RESOLUTION) {
             Vec3 rayPos = start.lerp(end, x);
             double dist = rayPos.distanceTo(anchorPos);
+            
             if(closestDist == -1 || dist < closestDist) 
                 closestDist = dist;
         }
@@ -193,6 +219,17 @@ public class AnchorPoint {
         this.participant = null;
     }
 
+    public void addTooltip(List<Component> tooltip, WireAnchorBlockEntity parent, boolean isPlayerSneaking, boolean isWearingGoggles, ItemStack heldSpool) {
+        AnchorVertexData serverData = MechanoClient.ANCHOR_SELECTOR.getAnchorData();
+        boolean awaiting = serverData == null || (!getID().equals(serverData.getID()));
+        lang().translate("gui.anchorpoint.status.title").forGoggles(tooltip);
+        if(awaiting) {
+            lang().text("...").style(ChatFormatting.RED).forGoggles(tooltip);
+        } else {
+            lang().text(serverData.getConnections() + "/" + maxConnections + " ").translate("gui.anchorpoint.status.connections").style(ChatFormatting.GRAY).forGoggles(tooltip);
+        }
+    }
+
     /**
      * Sets the participant of this AnchorPoint to the provided {@link GridVertex <code>GridVertex</code>} instance.
      * @param participant <code>GridVertex</code> to set this AnchorPoint's participant to
@@ -206,6 +243,19 @@ public class AnchorPoint {
 
     @Nullable
     public GridVertex getParticipant() {
+        return participant;
+    }
+
+    /**
+     * Finds the {@link GridVertex <code>GridVertex</code>} participant that this AnchorPoint refers to within the given world.
+     * Stores the result so subsequent calls have lower overhead.
+     * @param world World to operate within
+     * @throws NullPointerException if the provided world is null
+     */
+    public GridVertex getOrFindParticipantIn(Level world) {
+        if(participant != null) return participant;
+        if(world == null) throw new NullPointerException("Error finding participant - world is null!");
+        participant = GlobalTransferGrid.of(world).getVertAt(getID());
         return participant;
     }
 
@@ -224,6 +274,6 @@ public class AnchorPoint {
     }
 
     public Color getColor() {
-        return selectedColor.copy().mixWith(rawColor, anchorSize / (float)MechanoSettings.ANCHOR_SELECT_SIZE);
+        return selectedColor.copy().mixWith(rawColor, hitboxSize / (float)MechanoSettings.ANCHOR_SELECT_SIZE);
     }
 }

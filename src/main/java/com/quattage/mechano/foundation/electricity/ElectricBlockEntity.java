@@ -30,6 +30,7 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Wa
 
         WattBatteryHandlerBuilder<ElectricBlockEntity> init = new WattBatteryHandlerBuilder<ElectricBlockEntity>().at(this);
         createWattHandlerDefinition(init);
+
         battery = init.build();
     }
 

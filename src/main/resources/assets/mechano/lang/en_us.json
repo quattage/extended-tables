@@ -1,5 +1,7 @@
+
 {
 	"mechano.gui.alternator.status.title": "Alternator Information:",
+    "mechano.gui.alternator.status.unfinishedTitle": "Assembly Checklist:",
     "mechano.gui.alternator.status.hasLength": "Has at least 1 rotor",
     "mechano.gui.alternator.status.noLength": "Needs at least 1 rotor",
     "mechano.gui.alternator.status.hasOpposing": "Has opposing Slip Ring Shaft",
@@ -8,5 +10,9 @@
     "mechano.gui.alternator.status.goodCoverage": "Good stator coverage",
     "mechano.gui.alternator.status.perfectCoverage": "Perfect stator coverage",
     "mechano.gui.alternator.status.badCoverage": "Insufficient stator coverage",
+
+    "mechano.gui.anchorpoint.status.title": "Connector Information:",
+    "mechano.gui.anchorpoint.status.connections": "attached wires",
+
     "mechano.gui.voltometer.no_power": "No Power"
 }

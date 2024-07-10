@@ -15,7 +15,6 @@ import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
 import com.quattage.mechano.foundation.network.AnchorStatRequestC2SPacket;
-import com.quattage.mechano.foundation.network.AnchorStatSummaryS2CPacket;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.core.BlockPos;
@@ -191,8 +190,6 @@ public class GridVertex {
 
         this.host = null;
         links.clear();
-
-        AnchorStatSummaryS2CPacket.resetAwaiting();
     }
 
     /**
@@ -218,9 +215,6 @@ public class GridVertex {
             if(!vert.isAt(id))
                 visited.add(vert.id.getBlockPos());
         }
-
-        for(BlockPos pos : visited) 
-            MechanoPackets.sendToAllClients(new AnchorStatRequestC2SPacket(pos));
     }
 
     /**

@@ -11,6 +11,8 @@ public class BigRotorBlockEntity extends AbstractRotorBlockEntity {
         //TODO Auto-generated constructor stub
     }
 
+
+
     @Override
     public int getMultiplier() {
         return 10;
@@ -18,11 +20,18 @@ public class BigRotorBlockEntity extends AbstractRotorBlockEntity {
 
     @Override
     public int getStatorCircumference() {
-        return 2;
+        return 12;
     }
 
     @Override
     protected int getStatorRadius() {
-        return 12;
+        return 2;
+    }
+
+
+
+    @Override
+    protected float getEfficiencyBonus() {
+        return 1.3f;
     }
 }
