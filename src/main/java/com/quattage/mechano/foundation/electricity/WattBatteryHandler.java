@@ -125,11 +125,11 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
 
         int x = 0;
         for(OptionalWattOrFE acceptorOpt : batteries) {
-            if(acceptorOpt.getFECap() instanceof IEnergyStorage acceptor) {
-                demands[x] = WattUnitConversions.toWattsSimple(acceptor.receiveEnergy(Integer.MAX_VALUE, true));
+            if(acceptorOpt.getFECap() != null) {
+                demands[x] = WattUnitConversions.toWattsSimple(acceptorOpt.getFECap().receiveEnergy(Integer.MAX_VALUE, true));
                 totalDemand += demands[x];
-            } else if(acceptorOpt.getWattCap() instanceof WattStorable acceptor) {
-                demands[x] = acceptor.receiveWatts(WattUnit.INFINITY, true).getWatts();
+            } else if(acceptorOpt.getWattCap() != null) {
+                demands[x] = acceptorOpt.getWattCap().receiveWatts(WattUnit.INFINITY, true).getWatts();
                 totalDemand += demands[x];
             } x++;
         }
@@ -146,10 +146,10 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
             float wattsToAccept = wattsToDistribute * ((float)demands[x] / totalDemand);
             wattsToAccept = Math.min(wattsToAccept, demands[x]);
 
-            if(acceptorOpt.getFECap() instanceof IEnergyStorage acceptor) {
-                acceptor.receiveEnergy(WattUnitConversions.toFE(battery.extractWatts(WattUnit.of(battery.getFlux(), wattsToAccept), false)), false);
-            } else if(acceptorOpt.getWattCap() instanceof WattStorable acceptor) {
-                acceptor.receiveWatts(battery.extractWatts(WattUnit.of(battery.getFlux(), wattsToAccept), false), false);
+            if(acceptorOpt.getFECap() != null) {
+                acceptorOpt.getFECap().receiveEnergy(WattUnitConversions.toFE(battery.extractWatts(WattUnit.of(battery.getFlux(), wattsToAccept), false)), false);
+            } else if(acceptorOpt.getWattCap() != null) {
+                acceptorOpt.getWattCap().receiveWatts(battery.extractWatts(WattUnit.of(battery.getFlux(), wattsToAccept), false), false);
             }
             
             if(battery.getStoredWatts() <= 0) break;

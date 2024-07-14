@@ -18,12 +18,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.slf4j.Logger;
 
 @Mod(Mechano.MOD_ID)

@@ -203,10 +203,14 @@ public class WireAnchorSelectionManager {
         if(selectedAnchor.getDistance() > (holdingSpool ? MechanoSettings.ANCHOR_BAILOUT_DISTANCE : 0.25))
             selectedAnchor = null;
     }
-
-    private void removeAll(Collection<AnchorEntry> entries) {
+    
+    public void removeAll(Collection<AnchorEntry> entries) {
         for(AnchorEntry entry : entries)
             nearbyAnchors.remove(entry);
+    }
+
+    public void removeAll() {
+        nearbyAnchors.clear();
     }
 
     public void setAnchorData(AnchorVertexData data) {

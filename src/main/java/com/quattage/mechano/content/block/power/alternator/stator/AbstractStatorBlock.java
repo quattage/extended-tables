@@ -2,10 +2,10 @@ package com.quattage.mechano.content.block.power.alternator.stator;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.MechanoPackets;
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
-import com.quattage.mechano.content.block.power.alternator.rotor.AlternatorUpdateS2CPacket;
+import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
@@ -34,7 +34,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
-public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentable & HitboxNameable & StatorTypeTransformable<T>> extends SimpleOrientedBlock {
+public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentable & HitboxNameable & StatorTypeTransformable<T>> extends SimpleOrientedBlock implements BlockChangeListenable {
 
     public AbstractStatorBlock(Properties pProperties) {
         super(pProperties);
@@ -95,37 +95,6 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
                     asb.forcedNeighborChange(world, rotorAxis, visitedPos, state, visitedState, cornerPositions);
             }
         }
-
-        if(state.getBlock() != oldState.getBlock()) {
-            BlockPos rotorPos = updateAttachedRotor(world, pos, state, true);
-            if(rotorPos != null)
-                MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(rotorPos, AlternatorUpdateS2CPacket.Type.ROTOR_INCREMENT));
-        }
-    }
-
-    
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
-
-        if(state.getBlock() != newState.getBlock()) {
-            BlockPos rotorPos = updateAttachedRotor(world, pos, state, false);
-            if(rotorPos != null)
-                MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(rotorPos, AlternatorUpdateS2CPacket.Type.ROTOR_DECREMENT));
-        }
-
-        super.onRemove(state, world, pos, newState, isMoving);
-    }
-
-    @Nullable 
-    private BlockPos updateAttachedRotor(Level world, BlockPos pos, BlockState state, boolean inc) {
-        if(world.getBlockEntity(getAttachedRotorPos(world, pos, state)) instanceof AbstractRotorBlockEntity arbe) {
-            if(inc) arbe.incStatorCount(); 
-            else arbe.decStatorCount();
-            return arbe.getBlockPos();
-        }
-
-        return null;
     }
 
     @Override
@@ -137,9 +106,7 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
 
         if(hasRotorBefore != hasRotorAfter) {
             BlockPos rotorPos = updateAttachedRotor(context.getLevel(), context.getClickedPos(), state, hasRotorAfter);
-            if(rotorPos != null)
-                MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(rotorPos, 
-                    hasRotorAfter ? AlternatorUpdateS2CPacket.Type.ROTOR_INCREMENT : AlternatorUpdateS2CPacket.Type.ROTOR_DECREMENT));
+            // TODO SYNC ON WRENCHED
         }
 
         return result;
@@ -211,7 +178,6 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
     protected abstract UpdateAlignment getAlignmentType();
     protected abstract BlockState getAlignedModelState(Level world, Axis fromAxis, BlockPos centerPos, BlockState fromState, BlockState thisState, BlockPos[] plane);
     protected abstract boolean areBlocksContinuous(SimpleOrientation thisOrient, T thisType, SimpleOrientation thatOrient, T thatType);
-    
     public abstract BlockPos getAttachedRotorPos(Level world, BlockPos pos, BlockState state);
 
     public boolean hasRotor(Level world, BlockPos pos, BlockState state) {
@@ -245,8 +211,7 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand,
-            BlockHitResult ray) {
+    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult ray) {
         IPlacementHelper helper = PlacementHelpers.get(getPlacementHelperId());
 
         ItemStack heldItem = player.getItemInHand(hand);
@@ -257,6 +222,38 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
 		return InteractionResult.PASS;
 	}
 
+    @Override
+    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        updateAttachedRotor(world, pos, currentState, false);
+    }
+
+    @Override
+    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        updateAttachedRotor(world, pos, currentState, true);
+    }
+
+    @Nullable 
+    private BlockPos updateAttachedRotor(Level world, BlockPos pos, BlockState state, boolean inc) {
+        if(world.getBlockEntity(getAttachedRotorPos(world, pos, state)) instanceof AbstractRotorBlockEntity arbe) {
+
+            boolean attached = 
+                state.getValue(SimpleOrientedBlock.ORIENTATION).getOrient()
+                    .equals(arbe.getBlockState().getValue(RotatedPillarKineticBlock.AXIS));
+
+            if(inc && attached) {
+                arbe.incStatorCount(); 
+                return arbe.getBlockPos();
+            }
+
+            if(attached) {
+                arbe.decStatorCount();
+                return arbe.getBlockPos();
+            }
+        }
+
+        return null;
+    }
+    
     protected enum UpdateAlignment {
         ADJACENT(false),
         CORNERS(true);

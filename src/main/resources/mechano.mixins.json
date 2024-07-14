@@ -9,6 +9,7 @@
 	],
 	"client": [
 		"KineticNetworkMixin",
+		"BlockUpdateMixin",
 		"client.DynamicWireRenderMixin",
 		"client.StaticWireRenderMixin",
 		"client.StaticWireCullingMixin",

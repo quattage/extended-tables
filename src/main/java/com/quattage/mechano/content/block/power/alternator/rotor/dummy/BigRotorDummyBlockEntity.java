@@ -4,18 +4,21 @@ import java.util.List;
 
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.content.block.power.alternator.rotor.BigRotorBlock;
+import com.quattage.mechano.content.block.power.alternator.rotor.BigRotorBlockEntity;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
+import com.simibubi.create.content.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class BigRotorDummyBlockEntity extends SmartBlockEntity {
+public class BigRotorDummyBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
 
     private BlockPos parentPos;
 
@@ -90,5 +93,13 @@ public class BigRotorDummyBlockEntity extends SmartBlockEntity {
             tag.getInt("pY"),
             tag.getInt("pZ")
         );
+    }
+
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        if(parentPos == null) return false;
+        if(getLevel().getBlockEntity(parentPos) instanceof BigRotorBlockEntity brbe)
+            return brbe.addToGoggleTooltip(tooltip, isPlayerSneaking);
+        return false;
     }
 }

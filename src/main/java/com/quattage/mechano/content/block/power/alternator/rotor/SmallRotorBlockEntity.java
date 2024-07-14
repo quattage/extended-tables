@@ -16,7 +16,7 @@ public class SmallRotorBlockEntity extends AbstractRotorBlockEntity {
     }
 
     @Override
-    protected int getStatorRadius() {
+    public int getStatorRadius() {
         return 1;
     }
 

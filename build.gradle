@@ -1,3 +1,4 @@
+
 // this stuff is just for gradle plugins - mod dependencies are below
 buildscript {
     repositories {
@@ -144,12 +145,20 @@ repositories {
         name = "shedaniel"
         url = "https://maven.shedaniel.me/"
     }
+
+    maven {
+        name "jitpack"
+        url "https://jitpack.io"
+    }
 }
 
 // the good shit
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
+
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.2"))
+    implementation "io.github.llamalad7:mixinextras-forge:0.3.2"
 
     // All of Create
     implementation fg.deobf("com.jozufozu.flywheel:flywheel-forge-${flywheel_version}")

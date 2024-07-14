@@ -6,8 +6,6 @@ import java.util.Set;
 
 import static com.quattage.mechano.Mechano.lang;
 
-import com.quattage.mechano.MechanoPackets;
-import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.builder.AnchorBankBuilder;
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.ExternalInteractMode;

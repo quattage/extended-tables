@@ -17,14 +17,14 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.SectionPos;
 
 @Mixin(LevelRenderer.class)
-public class StaticWireCullingMixin {
+public abstract class StaticWireCullingMixin {
 
     @Final @Shadow private ObjectArrayList<LevelRenderer.RenderChunkInfo> renderChunksInFrustum;
     @Final @Shadow private AtomicReference<LevelRenderer.RenderChunkStorage> renderChunkStorage;
 
     // quick and dirty frustum culling patch so wires don't dissappear while in view
     // TODO more intelligent culling for better performance
-    @Inject(method = "applyFrustum(Lnet/minecraft/client/renderer/culling/Frustum;)V", at = {@At(value = "TAIL")}, cancellable = true)
+    @Inject(method = "applyFrustum(Lnet/minecraft/client/renderer/culling/Frustum;)V", at = {@At(value = "TAIL")}, cancellable = true, remap = false)
     private void applyFrustum(Frustum pFrustum, CallbackInfo info) {
         for(LevelRenderer.RenderChunkInfo levelrenderer$renderchunkinfo : (this.renderChunkStorage.get()).renderChunks) {
             if(GridClientCache.ofInstance().containsPos(SectionPos.of(levelrenderer$renderchunkinfo.chunk.getOrigin())))

@@ -27,7 +27,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 import static com.quattage.mechano.Mechano.REGISTRATE;
 import static com.quattage.mechano.Mechano.UPGRADES;
@@ -36,7 +35,6 @@ import static com.quattage.mechano.Mechano.defer;
 import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 
-@EventBusSubscriber(modid = Mechano.MOD_ID)
 public class MechanoBlocks {
 
     static {
@@ -73,7 +71,7 @@ public class MechanoBlocks {
             .sound(SoundType.NETHERITE_BLOCK)
             .noOcclusion()
         )
-        .transform(BlockStressDefaults.setImpact(2048))
+        .transform(BlockStressDefaults.setImpact(1))
         .transform(pickaxeOnly())
         .blockstate(new DynamicStateGenerator(AbstractRotorBlock.MODEL_TYPE).in("rotor")::generate)
         .item()
@@ -86,7 +84,7 @@ public class MechanoBlocks {
             .sound(SoundType.NETHERITE_BLOCK)
             .noOcclusion()
         )
-        .transform(BlockStressDefaults.setImpact(4096))
+        .transform(BlockStressDefaults.setImpact(2))
         .transform(pickaxeOnly())
         .blockstate(new DynamicStateGenerator(AbstractRotorBlock.MODEL_TYPE).in("rotor")::generate)
         .item()

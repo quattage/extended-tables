@@ -3,9 +3,9 @@ package com.quattage.mechano.content.block.power.alternator.rotor;
 import java.util.Locale;
 
 import com.quattage.mechano.Mechano;
-import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlockEntity;
+import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
@@ -33,7 +33,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
 @SuppressWarnings("deprecation")
-public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock implements BlockRotorable {
+public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock implements BlockRotorable, BlockChangeListenable {
 
     public static final EnumProperty<RotorModelType> MODEL_TYPE = EnumProperty.create("model", RotorModelType.class);
 
@@ -102,91 +102,59 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
     }
 
     @Override
-    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
-
-        if(world.isClientSide || oldState.getBlock() == state.getBlock()) {
-            super.onPlace(state, world, pos, oldState, isMoving);
-            return;
-        }
-
+    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
         if(world.getBlockEntity(pos) instanceof AbstractRotorBlockEntity thisArbe) {
 
-            Mechano.log("PLACED " + thisArbe);
-
+            thisArbe.findConnectedStators(true);
             Direction dir = DirectionTransformer.toDirection(thisArbe.getBlockState().getValue(RotatedPillarKineticBlock.AXIS));
 
             if(world.getBlockEntity(pos.relative(dir)) instanceof AbstractRotorBlockEntity arbeNegative) {
-                
-                if(arbeNegative.getBlockState().getValue(RotatedPillarKineticBlock.AXIS) == dir.getAxis() && 
-                    arbeNegative.getControllerPos() != null &&
-                    world.getBlockEntity(arbeNegative.getControllerPos()) instanceof SlipRingShaftBlockEntity srbe) {
-
-                    srbe.initialize();
-                    MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(arbeNegative.getControllerPos(), AlternatorUpdateS2CPacket.Type.CONTROLLER_UPDATE));
-                    super.onPlace(state, world, pos, oldState, isMoving);
+                SlipRingShaftBlockEntity controller = arbeNegative.getController();
+                if(controller != null) {
+                    thisArbe.setControllerPos(controller.getBlockPos(), true);
                     return;
                 }
-
-            } else if(world.getBlockEntity(pos.relative(dir.getOpposite())) instanceof AbstractRotorBlockEntity arbePositive) {
-
-                if(arbePositive.getBlockState().getValue(RotatedPillarKineticBlock.AXIS) == dir.getAxis() && 
-                    arbePositive.getControllerPos() != null &&
-                    world.getBlockEntity(arbePositive.getControllerPos()) instanceof SlipRingShaftBlockEntity srbe) {
-
-                    srbe.initialize();
-                    MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(arbePositive.getControllerPos(), AlternatorUpdateS2CPacket.Type.CONTROLLER_UPDATE));
-                    super.onPlace(state, world, pos, oldState, isMoving);
+            }
+            
+            if(world.getBlockEntity(pos.relative(dir.getOpposite())) instanceof AbstractRotorBlockEntity arbePositive) {
+                SlipRingShaftBlockEntity controller = arbePositive.getController();
+                if(controller != null) {
+                    thisArbe.setControllerPos(controller.getBlockPos(), true);
                     return;
                 }
-
             }
 
-            if(searchForSlipRing(world, pos, dir)) {
-                super.onPlace(state, world, pos, oldState, isMoving);
-                return;
-            }
-
-            dir = dir.getOpposite();
-            searchForSlipRing(world, pos, dir);
+            if(!searchForSlipRing(world, pos, dir))
+                searchForSlipRing(world, pos, dir.getOpposite());
         }
-
-        super.onPlace(state, world, pos, oldState, isMoving);
-    }
-
-    private boolean searchForSlipRing(Level world, BlockPos pos, Direction dir) {
-        for(int x = 0; x < MechanoSettings.ALTERNATOR_MAX_LENGTH; x++) {
-
-            BlockPos thisPos = pos.relative(dir, x + 1);
-            if(world.getBlockEntity(thisPos) instanceof SlipRingShaftBlockEntity srbe 
-                && srbe.getBlockState().getValue(DirectionalKineticBlock.FACING) == dir.getOpposite()) {
-                
-                srbe.initialize();
-                MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(thisPos, AlternatorUpdateS2CPacket.Type.CONTROLLER_UPDATE));
-                return true;
-            } else if(world.getBlockEntity(thisPos) instanceof AbstractRotorBlockEntity)
-                continue;
-            break;
-        }
-        
-        return false;
     }
 
     @Override
-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
-        
-        if(world.isClientSide || state.getBlock() == newState.getBlock()) {
-            super.onRemove(state, world, pos, newState, isMoving);
-            return;
+    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        if(world.getBlockEntity(pos) instanceof AbstractRotorBlockEntity thisArbe) {
+            SlipRingShaftBlockEntity controller = thisArbe.getController();
+            //AA if(controller == null) return;
+                //AA controller.evaluateAlternatorStructure();
+        }
+    }
+
+    private boolean searchForSlipRing(Level world, BlockPos pos, Direction dir) {
+
+        if(!(world.getBlockEntity(pos) instanceof AbstractRotorBlockEntity thisArbe)) return false;
+
+        for(int x = 0; x < MechanoSettings.ALTERNATOR_MAX_LENGTH; x++) {
+
+            BlockPos thisPos = pos.relative(dir, x + 1);
+            if(world.getBlockEntity(thisPos) instanceof SlipRingShaftBlockEntity srbe && srbe.getBlockState().getValue(DirectionalKineticBlock.FACING) == dir.getOpposite()) {
+                thisArbe.setControllerPos(thisPos, true);
+                return true;
+            } 
+            
+            if(!(world.getBlockEntity(thisPos) instanceof AbstractRotorBlockEntity))
+                break;
         }
 
-        if(world.getBlockEntity(pos) instanceof AbstractRotorBlockEntity thisArbe && thisArbe.getControllerPos() != null) {
-            if(world.getBlockEntity(thisArbe.getControllerPos()) instanceof SlipRingShaftBlockEntity srbe) {
-                MechanoPackets.sendToAllClients(new AlternatorUpdateS2CPacket(thisArbe.getControllerPos(), AlternatorUpdateS2CPacket.Type.CONTROLLER_UPDATE));
-                srbe.undoAlternator();
-            }
-        }
-
-        super.onRemove(state, world, pos, newState, isMoving);
+        return false;
     }
 
     @Override

@@ -6,7 +6,7 @@ public class MechanoSettings {
     
     // TODO json
     public static byte ALTERNATOR_MAX_LENGTH = 16;
-    public static byte ALTERNATOR_MINIMUM_PERCENT = 75;
+    public static byte ALTERNATOR_MINIMUM_PERCENT = 55;
     public static short WIRE_ANIM_LENGTH = 300;
     public static byte POLE_STACK_SIZE = 16;
 

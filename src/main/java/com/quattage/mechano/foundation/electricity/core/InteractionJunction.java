@@ -126,10 +126,10 @@ public class InteractionJunction {
             return ExternalInteractStatus.NONE;
         OptionalWattOrFE battery = getConnectedCapability(parent);
 
-        if(battery.getFECap() instanceof IEnergyStorage feBatt)
-            return feBatt.getEnergyStored() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;
-        if(battery.getFECap() instanceof WattStorable wattBatt)
-            return wattBatt.getStoredWatts() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;;
+        if(battery.getFECap() != null)
+            return battery.getFECap().getEnergyStored() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;
+        if(battery.getWattCap() != null) //TODO figure out if this is wrong or not
+            return battery.getWattCap().getStoredWatts() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;;
 
         return ExternalInteractStatus.NONE;
     }

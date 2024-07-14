@@ -1,14 +1,19 @@
 package com.quattage.mechano.content.block.power.alternator.slipRingShaft;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
+import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
+import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
+import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -21,7 +26,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -39,7 +43,7 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.function.Supplier;
 
-public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<SlipRingShaftBlockEntity> {
+public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<SlipRingShaftBlockEntity>, BlockChangeListenable {
 
     private static RotatableHitboxShape<Direction> hitbox;
 
@@ -75,6 +79,22 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
     }
 
     @Override
+    public Axis getRotationAxis(BlockState state) {
+        return state.getValue(FACING).getAxis();
+    }
+
+    @Override
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.ENTITYBLOCK_ANIMATED;
+	}
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(MODEL_TYPE);
+    }
+
+    @Override
     public float getShadeBrightness(BlockState state, BlockGetter world, BlockPos pos) {
         return 1f;
     }
@@ -86,25 +106,8 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction preferred = getPreferredFacing(context);
-		if (preferred == null || (context.getPlayer() != null && context.getPlayer()
-			.isShiftKeyDown())) {
-			Direction nearestLookingDirection = context.getNearestLookingDirection();
-			return defaultBlockState().setValue(FACING, context.getPlayer() != null && context.getPlayer()
-				.isShiftKeyDown() ? nearestLookingDirection.getOpposite() : nearestLookingDirection);
-		}
-		return defaultBlockState().setValue(FACING, preferred);
-    }
-
-    @Override
 	public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction dir) {
 		return dir.getAxis() == state.getValue(FACING).getAxis();
-	}
-
-    @Override
-	public RenderShape getRenderShape(BlockState state) {
-		return RenderShape.ENTITYBLOCK_ANIMATED;
 	}
 
     @Override
@@ -122,6 +125,13 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
                 world.destroyBlock(pos, true);
         }
         else updateRotorType(world, pos, state);
+
+        if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe) {
+            if(world.getBlockEntity(pFromPos) instanceof WireAnchorBlockEntity wabe)
+                srbe.sends.add(new WattSendSummary(wabe.battery, pos, wabe.getBlockPos(), null));
+            else
+                srbe.sends.remove(new WattSendSummary(null, null, pFromPos, null));
+        }
     }
 
     private void updateRotorType(Level world, BlockPos pos, BlockState state) {
@@ -135,7 +145,7 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
 
         ItemStack heldItem = player.getItemInHand(hand);
         if(heldItem == ItemStack.EMPTY && player.isShiftKeyDown()) {
-            boolean result = SlipRingShaftBlockEntity.refreshForManualUpdate(world, pos);
+            boolean result = true; //<----   TODO CHANGE PLACEHOLDER
             if(result == true) {
                 world.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 0.3f, 1);
                 world.playSound(null, pos, SoundEvents.BLAZE_HURT, SoundSource.BLOCKS, 0.1f, 3);
@@ -171,9 +181,16 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder);
-        builder.add(MODEL_TYPE);
+    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        Mechano.log("SRB PLACED");
+        if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe)
+            srbe.evaluateAlternatorStructure();
+    }
+
+    @Override
+    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe)
+            srbe.forgetAllRotors(currentState.getValue(DirectionalKineticBlock.FACING));
     }
 
     @Override
@@ -185,9 +202,4 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
     public BlockEntityType<? extends SlipRingShaftBlockEntity> getBlockEntityType() {
         return MechanoBlockEntities.SLIP_RING_SHAFT.get();
     }
-
-    @Override
-    public Axis getRotationAxis(BlockState state) {
-        return state.getValue(FACING).getAxis();
-    }    
 }

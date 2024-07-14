@@ -20,8 +20,8 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 // The geometry to inject is based on the GridClientCache's ledger of active edges, received from
 // the GridSyncDirector.
 // TODO Sodium derivatives need custom implementation for this to function. 
-@Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask")
-public class StaticWireRenderMixin {
+@Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask", remap = false)
+public abstract class StaticWireRenderMixin {
 
     @SuppressWarnings("target") @Shadow(aliases = {"this$1", "f_112859_"}) 
     private ChunkRenderDispatcher.RenderChunk this$1;

@@ -2,7 +2,6 @@ package com.quattage.mechano.content.block.power.transfer.connector.tiered;
 
 import java.util.Locale;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
@@ -10,7 +9,6 @@ import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.electricity.core.EBEWrenchable;
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
-import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.OptionalWattOrFE;
 import com.simibubi.create.AllBlocks;
 
 import net.minecraft.core.BlockPos;
@@ -25,7 +23,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SupportType;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
@@ -33,8 +30,6 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.energy.IEnergyStorage;
 
 public abstract class AbstractConnectorBlock extends SimpleOrientedBlock implements EBEWrenchable {
 

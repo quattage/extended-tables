@@ -2,7 +2,6 @@ package com.quattage.mechano;
 
 import com.quattage.mechano.foundation.network.Packetable;
 import com.quattage.mechano.foundation.network.WattModeSyncS2CPacket;
-import com.quattage.mechano.content.block.power.alternator.rotor.AlternatorUpdateS2CPacket;
 import com.quattage.mechano.foundation.network.GridPathViewMaskS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorStatRequestC2SPacket;
 import com.quattage.mechano.foundation.network.AnchorVertexDataSyncS2CPacket;
@@ -67,12 +66,6 @@ public class MechanoPackets {
             .decoder(GridPathUpdateSyncS2CPacket::new)
             .encoder(GridPathUpdateSyncS2CPacket::toBytes)
             .consumerMainThread(GridPathUpdateSyncS2CPacket::handle)
-            .add();
-
-        NETWORK.messageBuilder(AlternatorUpdateS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
-            .decoder(AlternatorUpdateS2CPacket::new)
-            .encoder(AlternatorUpdateS2CPacket::toBytes)
-            .consumerMainThread(AlternatorUpdateS2CPacket::handle)
             .add();
 
         NETWORK.messageBuilder(AnchorStatRequestC2SPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)

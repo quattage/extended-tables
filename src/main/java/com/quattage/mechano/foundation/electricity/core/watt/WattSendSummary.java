@@ -22,8 +22,21 @@ public class WattSendSummary {
         return destination;
     }
 
-    public BlockPos getBlockPos() {
+    public BlockPos getDestinationPos() {
         return destinationPos;
+    }
+
+    public BlockPos getSourcePos() {
+        return sourcePos;
+    }
+
+    public String toString() {
+        return destinationPos.toShortString();
+    }
+
+    public boolean equals(Object o) {
+        if(!(o instanceof WattSendSummary that)) return false;
+        return this.destinationPos.equals(that.destinationPos);
     }
 
     public GridPath getAddressedPath() {

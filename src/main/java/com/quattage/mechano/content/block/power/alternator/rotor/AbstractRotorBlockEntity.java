@@ -6,8 +6,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import static com.quattage.mechano.Mechano.lang;
-
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.stator.AbstractStatorBlock;
 import com.quattage.mechano.foundation.helper.shape.CircleGetter;
@@ -71,12 +70,6 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         super.write(nbt, clientPacket);
     }
 
-    @Override
-    public void initialize() {
-        super.initialize();
-        findConnectedStators(true);
-    }
-
     protected void findConnectedStators(boolean notifyIfChanged) {
 
         final Set<BlockPos> visited = new HashSet<>();
@@ -132,20 +125,34 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         }
 
         if(controllerPos == null) return;
-        if(getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe)
-            srbe.initialize();
+        //AA if(getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe)
+            //AA srbe.initialize();
     }
 
     public abstract int getStatorCircumference();
-    protected abstract int getStatorRadius();
+    public abstract int getStatorRadius();
     protected abstract float getEfficiencyBonus();
 
-    protected BlockPos getControllerPos() {
-        return controllerPos;
+    @Nullable
+    protected SlipRingShaftBlockEntity getController() {
+        if(controllerPos == null) return null;
+        if(getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe) 
+            return srbe;
+        return null;
     }
 
-    public void setControllerPos(BlockPos controllerPos) {
+    /**
+     * Sets the BlockPos of the connected SlipRingShaft. 
+     * @param controllerPos BlockPos of the slip ring
+     * @param update <code>TRUE</code> to automatically re-evaluate the slip ring at the given BlockPos.
+     */
+    public void setControllerPos(BlockPos controllerPos, boolean update) {
         this.controllerPos = controllerPos;
+
+        //AA if(controllerPos != null && update 
+            //AA && getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe)
+                //AA srbe.evaluateAlternatorStructure();
+
         notifyUpdate();
     }
 
@@ -156,14 +163,16 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
 
     @Override
     public float calculateStressApplied() {
-        float impact = calculateStressWithStators((float) BlockStressValues.getImpact(getStressConfigKey()));
+        float impact = calculateStressWithStators((float) BlockStressValues.getImpact(getStressConfigKey()), false);
 		this.lastStressApplied = impact;
 		return impact;
     }
 
-    private float calculateStressWithStators(float max) {
+    private float calculateStressWithStators(float mul, boolean max) {
         float sP = (float)statorCount / (float)getStatorCircumference(); 
-        return toNearest4((float)(0.00196f * Math.pow(262144, sP)));
+        if(max)
+            return toNearest4((float)(0.00196f * Math.pow(262144, 1))) * mul;
+        else return toNearest4((float)(0.00196f * Math.pow(262144, sP))) * mul;
     }
 
     private float toNearest4(float in) {
@@ -176,14 +185,16 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         return out >= 0.1 ? out : 0;
     }
 
-    public float calculateMaximumPossibleStress() {
-        return calculateStressApplied() * 256;
+    public float getMaximumRotaryStress() {
+        return toNearest4(calculateStressWithStators((float)BlockStressValues.getImpact(getStressConfigKey()), false) * 256);
+    }
+
+    public float getMaximumPossibleStress() {
+        return toNearest4(calculateStressWithStators((float)BlockStressValues.getImpact(getStressConfigKey()), true) * 256);
     }
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        lang().text(statorCount + " stators").forGoggles(tooltip);
-        lang().text(getWeightedSpeed() + " weighted rpm").forGoggles(tooltip);
         return super.addToGoggleTooltip(tooltip, isPlayerSneaking);
     }
 

@@ -17,7 +17,7 @@ public abstract class KineticNetworkMixin {
 
     @Shadow private Map<KineticBlockEntity, Float> members;
     
-    @Inject(method = "getActualStressOf", at = {@At(value = "HEAD")}, cancellable = true)
+    @Inject(method = "getActualStressOf", at = {@At(value = "HEAD")}, cancellable = true, remap = false)
     private void getActualStressOf(KineticBlockEntity be, CallbackInfoReturnable<Float> cir) {
         if(be instanceof AbstractRotorBlockEntity arbe) {
             cir.setReturnValue(members.get(be) * arbe.getWeightedSpeed());

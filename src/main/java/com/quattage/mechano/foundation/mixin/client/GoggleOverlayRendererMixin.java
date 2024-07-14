@@ -18,12 +18,12 @@ import net.minecraftforge.client.gui.overlay.ForgeGui;
  * at the same time as Mechano's
  */
 @Mixin(GoggleOverlayRenderer.class)
-public class GoggleOverlayRendererMixin {
+public abstract class GoggleOverlayRendererMixin {
 
     @Shadow 
     private static int hoverTicks;
     
-    @Inject(method = "renderOverlay", at = {@At(value = "HEAD")}, cancellable = true)
+    @Inject(method = "renderOverlay", at = {@At(value = "HEAD")}, cancellable = true, remap = false)
     private static void renderOverlay(ForgeGui gui, GuiGraphics graphis, float partialTicks, int width, int height, CallbackInfo info) {
         if(MechanoClient.ANCHOR_SELECTOR.getSelectedEntry() != null) {
             hoverTicks = 0;
