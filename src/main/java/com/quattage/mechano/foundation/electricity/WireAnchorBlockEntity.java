@@ -7,7 +7,6 @@ import java.util.Set;
 import static com.quattage.mechano.Mechano.lang;
 
 import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlock;
 import com.quattage.mechano.content.block.power.transfer.connector.tiered.AbstractConnectorBlock;

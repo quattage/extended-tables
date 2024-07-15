@@ -2,14 +2,19 @@ package com.quattage.mechano.content.block.power.transfer.connector.tiered;
 
 import java.util.Locale;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoSettings;
+import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlock;
+import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.electricity.core.EBEWrenchable;
+import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
+import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.ExternalInteractMode;
 import com.simibubi.create.AllBlocks;
 
 import net.minecraft.core.BlockPos;
@@ -32,7 +37,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public abstract class AbstractConnectorBlock extends SimpleOrientedBlock implements EBEWrenchable {
+public abstract class AbstractConnectorBlock extends SimpleOrientedBlock implements EBEWrenchable, BlockChangeListenable {
 
     private static final VoxelShape ROOTX = Block.box(0, 7, 7, 10, 9, 9);
     private static final VoxelShape ROOTY = Block.box(7, 7, 0, 9, 9, 10);
@@ -179,9 +184,12 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-        InteractionResult result = super.onWrenched(state, context);
         syncEBE(context.getLevel(), context.getClickedPos());
-        return result;
+
+        if(context.getLevel().getBlockEntity(context.getClickedPos()) instanceof WireAnchorBlockEntity wabe)
+            wabe.battery.cycleMode();
+
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -195,5 +203,16 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
         return new ItemStack(MechanoBlocks.CONNECTOR_T0.get());
     }
 
-    
+    @Override
+    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        Direction facing = currentState.getValue(SimpleOrientedBlock.ORIENTATION).getCardinal();
+        Block supportingBlock = world.getBlockState(pos.relative(facing.getOpposite())).getBlock();
+        if(supportingBlock instanceof SlipRingShaftBlock) {
+            if(world.getBlockEntity(pos) instanceof WireAnchorBlockEntity wabe) {
+                wabe.battery.forceMode(ExternalInteractMode.PULL_IN);
+                wabe.getAnchorBank().sync(world);
+                Mechano.log("SYNC.");
+            }
+        }
+    }
 }

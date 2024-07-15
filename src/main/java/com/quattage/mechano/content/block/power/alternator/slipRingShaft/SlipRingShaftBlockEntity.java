@@ -2,12 +2,11 @@ package com.quattage.mechano.content.block.power.alternator.slipRingShaft;
 
 import static com.quattage.mechano.Mechano.lang;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
-import com.quattage.mechano.content.block.power.transfer.connector.tiered.AbstractConnectorBlock;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.WattBatteryHandler;
+import com.quattage.mechano.foundation.electricity.core.AnonymousWattProducable;
 import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnitConversions;
@@ -33,7 +32,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-public class SlipRingShaftBlockEntity extends KineticBlockEntity {
+public class SlipRingShaftBlockEntity extends KineticBlockEntity implements AnonymousWattProducable {
 
     private SlipRingShaftStatus status = SlipRingShaftStatus.NONE;
 
@@ -116,6 +115,17 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
         super.initialize();
         findAdjacentConnectors();
     }
+
+    /**
+     * 
+     * 
+     * Expected (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;IILorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V 
+     *but found (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;IILorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)V 
+     * 
+     * 
+     * 
+     * 
+     */
 
     public void findAdjacentConnectors() {
         Direction facing = getBlockState().getValue(DirectionalKineticBlock.FACING);

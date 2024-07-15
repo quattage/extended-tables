@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class BlockUpdateMixin {
 
-    @Inject(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = {@At(value = "TAIL")}, cancellable = false)
+    @Inject(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = {@At(value = "TAIL")}, cancellable = false, remap = false)
     private void onSetBlock(BlockPos pPos, BlockState pNewState, int pFlags, int pRecursionLeft, CallbackInfoReturnable<Boolean> cir, @Local(ordinal = 0) BlockState arg1, @Local(ordinal = 1) BlockState arg2) {
         if(arg2.getBlock() != arg1.getBlock()) {
             if(arg2.getBlock() instanceof BlockChangeListenable bcl)

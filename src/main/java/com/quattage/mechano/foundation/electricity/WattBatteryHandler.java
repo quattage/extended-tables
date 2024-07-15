@@ -42,6 +42,8 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
     @Nullable
 
     private ExternalInteractMode mode = ExternalInteractMode.BOTH;
+    private boolean canChangeMode = true;
+
     private final InteractionJunction[] interactions;
 
     private final WattStorable battery;
@@ -357,8 +359,14 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
         setMode(mode.next());
     }
 
+    public void forceMode(ExternalInteractMode mode) {
+        canChangeMode = true;
+        setMode(mode);
+        canChangeMode = false;
+    }
+
     public void setMode(ExternalInteractMode mode) {
-        if(this.mode != mode) {
+        if(canChangeMode && this.mode != mode) {
             this.mode = mode;
             if(!(target instanceof WireAnchorBlockEntity wbe)) return;
             MechanoPackets.sendToAllClients(new WattModeSyncS2CPacket(target.getBlockPos(), mode));

@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class BlockPreUpdateMixin {
 
-    @Inject(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At(value = "HEAD"), cancellable = false)
+    @Inject(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At(value = "HEAD"), cancellable = false, remap = false)
     private void onSetBlock(BlockPos pPos, BlockState pState, int pFlags, int pRecursionLeft, CallbackInfoReturnable<Boolean> cir) {
         BlockState currentState = ((Level)(Object)this).getBlockState(pPos);
         if(currentState != null && currentState.getBlock() != pState.getBlock()) {

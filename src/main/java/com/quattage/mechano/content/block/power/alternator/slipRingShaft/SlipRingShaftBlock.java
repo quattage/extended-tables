@@ -150,7 +150,7 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
         if(world.getBlockEntity(sourcePos) instanceof SlipRingShaftBlockEntity srbe) {
             if(world.getBlockEntity(updatePos) instanceof WireAnchorBlockEntity wabe) {
 
-                if(!srbe.canControl()) {
+                if(!srbe.canControl() && srbe.opposingPos != null) {
                     if(world.getBlockEntity(srbe.opposingPos) instanceof SlipRingShaftBlockEntity srbe2)
                         srbe = srbe2;
                 }

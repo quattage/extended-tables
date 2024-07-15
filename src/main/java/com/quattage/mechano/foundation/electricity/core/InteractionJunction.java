@@ -126,10 +126,13 @@ public class InteractionJunction {
             return ExternalInteractStatus.NONE;
         OptionalWattOrFE battery = getConnectedCapability(parent);
 
+        if(isConnectedToAnonymousProducer(parent))
+            return ExternalInteractStatus.HAS_POWER;    
+
         if(battery.getFECap() != null)
             return battery.getFECap().getEnergyStored() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;
-        if(battery.getWattCap() != null) //TODO figure out if this is wrong or not
-            return battery.getWattCap().getStoredWatts() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;;
+        if(battery.getFECap() instanceof WattStorable wattBatt) //TODO figure out if this is wrong or not
+            return wattBatt.getStoredWatts() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;;
 
         return ExternalInteractStatus.NONE;
     }
@@ -146,6 +149,9 @@ public class InteractionJunction {
         if((!isInput && !isOutput) || parent.getLevel() == null) 
             return false;
         OptionalWattOrFE battery = getConnectedCapability(parent);
+
+        if(!battery.isPresent())    
+
 
         if(battery.isFE())
             return battery.getFECap().canReceive();
@@ -170,10 +176,14 @@ public class InteractionJunction {
 
     public OptionalWattOrFE getConnectedCapability(BlockEntity parent) {
         return DirectionalWattProvidable.getFEOrWattsAt(
-                parent.getLevel().getBlockEntity(
-                parent.getBlockPos().relative(getDirection())), 
-                getDirection().getOpposite()
-            );
+            parent.getLevel().getBlockEntity(
+            parent.getBlockPos().relative(getDirection())), 
+            getDirection().getOpposite()
+        );
+    }
+
+    public boolean isConnectedToAnonymousProducer(BlockEntity parent) {
+        return parent.getLevel().getBlockEntity(parent.getBlockPos().relative(getDirection())) instanceof AnonymousWattProducable;
     }
 
     public boolean equals(Object other) {
