@@ -27,7 +27,8 @@ public class ToolStationMenu extends MenuBase<ToolStationBlockEntity> {
 		return new ToolStationMenu(MechanoMenus.TOOL_STATION.get(), id, inv, te);
 	}
 
-    @Override
+	@Override
+	@SuppressWarnings("resource")
     protected ToolStationBlockEntity createOnClient(FriendlyByteBuf extraData) {
         
 		ClientLevel world = Minecraft.getInstance().level;

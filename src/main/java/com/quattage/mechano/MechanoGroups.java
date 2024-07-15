@@ -6,7 +6,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.quattage.mechano.core.CreativeTabExcludable;
+import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
+import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.RegistryEntry;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
@@ -33,7 +34,7 @@ public class MechanoGroups {
     private static final DeferredRegister<CreativeModeTab> TAB_REGISTER =
 		DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Mechano.MOD_ID);
 
-    public static final RegistryObject<CreativeModeTab> MAIN_TAB = newTab(() -> MechanoBlocks.ROTOR.asStack(), "main");
+    public static final RegistryObject<CreativeModeTab> MAIN_TAB = newTab(() -> MechanoBlocks.SMALL_ROTOR.asStack(), "main");
 
     public static RegistryObject<CreativeModeTab> newTab(Supplier<ItemStack> icon, String name) {
         return TAB_REGISTER.register(name,
@@ -79,12 +80,11 @@ public class MechanoGroups {
             apply(output, inclusions, stackoWacko);
 
         }
-        
 
         public static List<Item> getBlocks() {
             List<Item> out  = new ReferenceArrayList<>();
             for(RegistryEntry<Block> blockEntry : Mechano.REGISTRATE.getAll(Registries.BLOCK)) {
-                if(!Mechano.REGISTRATE.isInCreativeTab(blockEntry, tab)) continue;
+                if(!CreateRegistrate.isInCreativeTab(blockEntry, tab)) continue;
                 if(blockEntry.get() instanceof CreativeTabExcludable) continue;
                 Item blockItem = blockEntry.get().asItem();
                 if(blockItem == Items.AIR) continue;
@@ -96,7 +96,7 @@ public class MechanoGroups {
         public static List<Item> getItems() {
             List<Item> out = new ReferenceArrayList<>();
             for(RegistryEntry<Item> itemEntry : Mechano.REGISTRATE.getAll(Registries.ITEM)) {
-                if(!Mechano.REGISTRATE.isInCreativeTab(itemEntry, tab)) continue;
+                if(!CreateRegistrate.isInCreativeTab(itemEntry, tab)) continue;
                 if(itemEntry.get() instanceof CreativeTabExcludable) continue;
                 Item item = itemEntry.get();
                 if(item instanceof BlockItem) continue;

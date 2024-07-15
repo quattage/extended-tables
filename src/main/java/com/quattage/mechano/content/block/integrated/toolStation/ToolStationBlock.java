@@ -6,9 +6,9 @@ import javax.annotation.Nullable;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
+import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.item.ItemHelper;
 
@@ -42,7 +42,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 
 
-public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<ToolStationBlockEntity> {
+public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<ToolStationBlockEntity>, CreativeTabExcludable {
     public static final EnumProperty<WideBlockModelType> MODEL_TYPE = EnumProperty.create("model", WideBlockModelType.class);
     protected static final VoxelShape BLOCK_NORTH = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
     protected static final VoxelShape BLOCK_SOUTH = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
@@ -91,8 +91,6 @@ public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<
             else {
                 BlockPos otherpos = pos.relative(state.getValue(FACING).getCounterClockWise());
                 BlockState otherstate = level.getBlockState(otherpos);
-
-                Mechano.log("POSITION: " + otherpos + " STATE: " + otherstate);
                 if (otherstate.getBlock() == this) {
                     level.setBlock(otherpos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                     if (!state.hasBlockEntity())
@@ -144,16 +142,16 @@ public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<
             BlockState leftBlockState = world.getBlockState(left);
             BlockState rightBlockState = world.getBlockState(right);
                                                                                         // TODO -> rightBlockState.getBlock().equals(MechanoBlocks.INDUCTOR.get()
-            if(leftBlockState.getBlock().equals(MechanoBlocks.FORGE_UPGRADE.get()) && rightBlockState.getBlock().equals(Blocks.DIRT)) {
-                setLevel(world, pos, state, WideBlockModelType.MAXIMIZED);
-            } else if(leftBlockState.getBlock().equals(MechanoBlocks.FORGE_UPGRADE.get())) {
-                setLevel(world, pos, state, WideBlockModelType.FORGED);
-                // TODO -> rightBlockState.getBlock().equals(MechanoBlocks.INDUCTOR.get()
-            } else if(rightBlockState.getBlock().equals(Blocks.DIRT)) {
-                setLevel(world, pos, state, WideBlockModelType.HEATED);
-            } else {
-                setLevel(world, pos, state, WideBlockModelType.BASE);
-            }
+            // if(leftBlockState.getBlock().equals(MechanoBlocks.FORGE_UPGRADE.get()) && rightBlockState.getBlock().equals(Blocks.DIRT)) {
+            //     setLevel(world, pos, state, WideBlockModelType.MAXIMIZED);
+            // } else if(leftBlockState.getBlock().equals(MechanoBlocks.FORGE_UPGRADE.get())) {
+            //     setLevel(world, pos, state, WideBlockModelType.FORGED);
+            //     // TODO -> rightBlockState.getBlock().equals(MechanoBlocks.INDUCTOR.get()
+            // } else if(rightBlockState.getBlock().equals(Blocks.DIRT)) {
+            //     setLevel(world, pos, state, WideBlockModelType.HEATED);
+            // } else {
+            //     setLevel(world, pos, state, WideBlockModelType.BASE);
+            // }
         }
     }
 
@@ -237,7 +235,8 @@ public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<
 
     @Override
 	public BlockEntityType<? extends ToolStationBlockEntity> getBlockEntityType() {
-		return MechanoBlockEntities.TOOL_STATION.get();
+		// return MechanoBlockEntities.TOOL_STATION.get();
+        return null;
 	}
 
     @Override

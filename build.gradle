@@ -1,3 +1,4 @@
+
 // this stuff is just for gradle plugins - mod dependencies are below
 buildscript {
     repositories {
@@ -7,7 +8,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: "${forgegradle_version}", changing: true
+        classpath "net.minecraftforge.gradle:ForgeGradle:${forgegradle_version}"
         classpath "org.parchmentmc:librarian:${librarian_version}"
         classpath "org.spongepowered:mixingradle:${mixingradle_version}"
     }
@@ -31,13 +32,17 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     mappings channel: 'parchment', version: "${parchment_version}-${minecraft_version}"
     runs {
         client {
+            
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'info'
             property 'forge.enabledGameTestNamespaces', 'mechano'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             property 'terminal.jline', 'true' // colors :)
 
             mods {
@@ -52,6 +57,8 @@ minecraft {
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'info'
             property 'forge.enabledGameTestNamespaces', 'mechano'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             property 'terminal.jline', 'true' // colors :)
 
             mods {
@@ -66,6 +73,8 @@ minecraft {
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'info'
             property 'forge.enabledGameTestNamespaces', 'mechano'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
             mods {
                 mechano {
@@ -78,6 +87,8 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES,REGISTRYDUMP'
             property 'forge.logging.console.level', 'info'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             property 'terminal.jline', 'true'
             args '--mod', 'mechano', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/'), '--existing-mod', 'create'
 
@@ -102,37 +113,42 @@ mixin {
     debug.export = true
 }
 
-processResources {
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+eclipse {
+    synchronizationTasks processResources
+    classpath {
+        defaultOutputDir = file('$rootDir/bin/main')
+    }
 }
 
 // repos to look for mod dependencies in 
 repositories {
     maven {
-		name = "Jared's maven"                            // new JEI place
+		name = "blamejared"                            // new JEI place, vazkii's
 		url = "https://maven.blamejared.com/"
 	}
 	maven {
-		name = "ModMaven"                                 // JEI Mirror, Mekanism
+		name = "modmaven"                                 // JEI Mirror, Mekanism
 		url = "https://modmaven.dev"
 	}
     maven {
-        name 'blamejared'                                 // vazkii's
-        url 'https://maven.blamejared.com'
+        name = "tterrag"                           // Registrate/Flywheel/Create
+        url  = "https://maven.tterrag.com"
     }
     maven {
-        name 'tterrag maven'                              // Registrate/Flywheel/Create
-        url 'https://maven.tterrag.com'
-    }
-    maven {
-        url 'https://www.cursemaven.com'                  // Misc
+        name = "cursemaven"
+        url  = "https://www.cursemaven.com"                  // Misc
         content {
             includeGroup "curse.maven"
         }
     }
-    maven { 
-        name 'geckolib'                                  //Geckolib
-        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' 
+    maven {                                               // cloth config api
+        name = "shedaniel"
+        url = "https://maven.shedaniel.me/"
+    }
+
+    maven {
+        name "jitpack"
+        url "https://jitpack.io"
     }
 }
 
@@ -141,18 +157,30 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
 
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.2"))
+    implementation "io.github.llamalad7:mixinextras-forge:0.3.2"
+
     // All of Create
     implementation fg.deobf("com.jozufozu.flywheel:flywheel-forge-${flywheel_version}")
     implementation fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}")
     implementation fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
 
     // JEI local runtime and API to compile against
-    runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
-    compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"))
-	compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
+    runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
+	compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
 
-    // Geckolib
-    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${geckolib_version}")
+    // cloth config
+    implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
+
+    // BetterF3
+    if(Boolean.parseBoolean(project.use_betterf3)) {
+        runtimeOnly fg.deobf("curse.maven:betterf3-401648:${project.betterf3_version}")
+    }
+
+    if(Boolean.parseBoolean(project.use_mekanism)) {
+        runtimeOnly fg.deobf("mekanism:Mekanism:${minecraft_version}-${mekanism_version}")
+    }
 }
 
 jar {
@@ -170,11 +198,30 @@ jar {
     
 }
 
-// Example configuration to allow publishing using the maven-publish plugin
-// This is the preferred method to reobfuscate your jar file
+// this is required in order to patch what I believe is a gradle-vscode bug when running in windows 11
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    var resourceTargets = [
+        'META-INF/mods.toml', 
+        'pack.mcmeta',
+        'logo.png',
+        'mechano.mixins.json'
+    ]
+    var intoTargets = ["$rootDir/bin/main/"]
+    intoTargets.each { target ->
+        if (file(target).exists()) {
+            copy {
+                from(sourceSets.main.resources) {
+                    include resourceTargets
+                }
+                into target
+            }
+        }
+    }
+}
+
 jar.finalizedBy('reobfJar')
-// However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing
-// publish.dependsOn('reobfJar')
 
 publishing {
     publications {

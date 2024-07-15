@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.content.block.simple.diagonalGirder.DiagonalGirderBlock.GirderPartial;
-import com.quattage.mechano.core.events.ClientBehavior;
+import com.quattage.mechano.foundation.behavior.ClientBehavior;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.foundation.utility.Color;
@@ -32,9 +32,10 @@ public class DiagonalGirderWrenchBehavior extends ClientBehavior {
     @Override
     public boolean shouldTick(ClientLevel world, Player player, ItemStack mainHand, ItemStack offHand,
             Vec3 lookingPosition, BlockPos lookingBlockPos) {    
-        return AllItems.WRENCH.isIn(mainHand) && 
-            MechanoBlocks.DIAGONAL_GIRDER.has(world.getBlockState(lookingBlockPos)) &&
-            !isShifting();
+        //return AllItems.WRENCH.isIn(mainHand) && 
+            //MechanoBlocks.DIAGONAL_GIRDER.has(world.getBlockState(lookingBlockPos)) &&
+            //!isShifting();
+        return false;
     }
 
     @Override
@@ -85,8 +86,8 @@ public class DiagonalGirderWrenchBehavior extends ClientBehavior {
 
         if(shapeCheck == null) return false;
         if(entity == null) return false;
-        if (!MechanoBlocks.DIAGONAL_GIRDER.has(world.getBlockState(pos))) 
-            return false;
+        //if(!MechanoBlocks.DIAGONAL_GIRDER.has(world.getBlockState(pos))) 
+            //return false;
         if(!(entity instanceof DiagonalGirderBlockEntity)) return false;
         
         switch(shapeCheck.getSecond()) {

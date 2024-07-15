@@ -1,19 +1,25 @@
+
 package com.quattage.mechano;
 
-import com.quattage.mechano.core.electricity.rendering.WireTextureProvider;
+import net.minecraft.client.Minecraft;
+import net.minecraftforge.eventbus.api.IEventBus;
 
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.api.distmarker.Dist;
+import com.quattage.mechano.foundation.block.hitbox.HitboxCache;
+import com.quattage.mechano.foundation.block.hitbox.HitboxProvider;
+import com.quattage.mechano.foundation.electricity.grid.WireAnchorSelectionManager;
+import com.quattage.mechano.foundation.electricity.rendering.WireTextureProvider;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = Mechano.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+
+
 public class MechanoClient {
-    
-    public static final WireTextureProvider WIRE_TEXTURE_PROVIDER = new WireTextureProvider();
 
-    @SubscribeEvent
-    public static void onReisterReloadListener(RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(WIRE_TEXTURE_PROVIDER);
+    public static final WireTextureProvider WIRE_TEXTURE_PROVIDER = new WireTextureProvider();
+    public static final HitboxCache HITBOXES = new HitboxCache();
+    public static final WireAnchorSelectionManager ANCHOR_SELECTOR = new WireAnchorSelectionManager(Minecraft.getInstance());
+
+    protected static final HitboxProvider HITBOX_PROVIDER = new HitboxProvider();
+
+    protected static void init(IEventBus modBus, IEventBus forgeBus) {
+        MechanoPartials.register();
     }
 }

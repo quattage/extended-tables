@@ -1,74 +1,88 @@
 package com.quattage.mechano;
 
 import com.mojang.logging.LogUtils;
-import com.quattage.mechano.network.MechanoPackets;
+import com.quattage.mechano.foundation.block.upgradable.UpgradeCache;
+import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridDispatcher;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.utility.LangBuilder;
 import com.tterrag.registrate.providers.DataGenContext;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
+
+import java.io.File;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(Mechano.MOD_ID)
 public class Mechano {
     
     public static final String MOD_ID = "mechano";
-    public static final String ROOT = "com.quattage." + MOD_ID;
     public static final String ESC = "\u001b";
-
-
-    private static final String NET_VERSION = "0.1";
-    private static int netCount = 0;
 
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(Mechano.MOD_ID);
-
-    public static final SimpleChannel network = NetworkRegistry.ChannelBuilder
-        .named(Mechano.asResource("mechanoNetwork"))
-        .clientAcceptedVersions(NET_VERSION::equals)
-        .serverAcceptedVersions(NET_VERSION::equals)
-        .networkProtocolVersion(() -> NET_VERSION)
-        .simpleChannel();
+    public static final MechanoCapabilities CAPABILITIES = new MechanoCapabilities();
+    public static final UpgradeCache UPGRADES = new UpgradeCache();
+    
+    public static boolean isLoaded = false;
+    public static boolean IS_DEV_ENV;
 
     public Mechano() {
-        Mechano.log("loading mechano");
-        IEventBus bussy = FMLJavaModLoadingContext.get().getModEventBus();
-        REGISTRATE.registerEventListeners(bussy);
+        Mechano.LOGGER.info("loading mechano");
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
-        MechanoBlocks.register(bussy);
-        MechanoItems.register(bussy);
-        MechanoGroups.register(bussy);
-        MechanoMenus.register(bussy);
-        MechanoBlockEntities.register(bussy);
-        MechanoRecipes.register(bussy);
-        MechanoSounds.register(bussy);
+        REGISTRATE.registerEventListeners(modBus);
+        CAPABILITIES.registerTo(forgeBus);
+        MechanoSettings.init(modBus);
+        MechanoBlocks.register(modBus);
+        MechanoItems.register(modBus);
+        MechanoBlockEntities.register(modBus);
+        
+        MechanoRecipes.register(modBus);
+        MechanoSounds.register(modBus);
+        MechanoGroups.register(modBus);
+        MechanoMenus.register(modBus);
+        GlobalTransferGridDispatcher.initTasks();
 
-        bussy.addListener(this::clientSetup);
-        bussy.addListener(this::commonSetup);
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MechanoClient.init(modBus, forgeBus));
+
+        modBus.addListener(EventPriority.LOWEST, MechanoData::gather);
+        modBus.addListener(this::onCommonSetup);
+
+        IS_DEV_ENV = (new File(System.getProperty( "user.dir" ) + "/IDEFlag.txt" )).exists();
+        isLoaded = true;
+
+        if(IS_DEV_ENV)
+            Mechano.LOGGER.warn("IDE detected - Mechano development features enabled.");
     }
 
-    public void clientSetup(final FMLClientSetupEvent event) {
-        MechanoPartials.register();
-    }
-
-    public void commonSetup(final FMLCommonSetupEvent event) {
+    public void onCommonSetup(final FMLCommonSetupEvent event) {
         MechanoPackets.register();
+    }
+
+    public static LangBuilder lang() {
+        return new LangBuilder(MOD_ID);
     }
 
     public static void log(String message) {      
         String side = ESC + "[1;34m" + Thread.currentThread().getName() + ESC + "[1;35m";
 
-        String prefix = ESC + "[1;35m[quattage/" + MOD_ID + "] {" + side + "} >> " + ESC + "[1;36m";
+        String time = LocalTime.now(ZoneId.of("America/Montreal")).truncatedTo(ChronoUnit.MILLIS).toString();
+        String prefix = ESC + "[1;35m[{" + side + "} " + time + "] >> " + ESC + "[1;36m";
         String suffix = ESC + "[1;35m -" + ESC;
         System.out.println(prefix + message + suffix);
     }
@@ -77,8 +91,14 @@ public class Mechano {
         log("'" + o.getClass().getName() + "' -> [" + o + "]");
     }
 
-    public static void logReg(String message) {      
-        log("Registering " + MOD_ID + " " + message);
+    public static void logReg(String message) {
+        if(isDevEnv()) log("Registering " + MOD_ID + " " + message);
+    }
+
+    public static boolean isDevEnv() {
+        if(!isLoaded)
+            return new File(System.getProperty( "user.dir" ) + "/IDEFlag.txt" ).exists();
+        return Mechano.IS_DEV_ENV;
     }
 
     public static void logSlow(String text) {
@@ -104,21 +124,29 @@ public class Mechano {
 
     public static ResourceLocation defer(DataGenContext<?, ?> ctx, String append, String realName) {
         String resource = ctx.getId().getNamespace() + ":block/" + append + "/" + realName;
-        Mechano.log("resource: " + resource);
         return new ResourceLocation(resource);
     }
 
-    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String folder) {
-        return extend(ctx, "block", folder);
+    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String rootType, String item) {
+        return new ResourceLocation(ctx.getId().getNamespace(), rootType + "/" + ctx.getId().getPath() + "/" + item);
     }
 
-    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String root, String folder) {
-        String path = root + "/" + ctx.getId().getPath() + "/" + folder;
-        return new ResourceLocation(ctx.getId().getNamespace(), path);
-    }
+    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String rootType, String[] in, String[] sub, String item) {
+        
+        String path = rootType;
 
-    public static ResourceLocation extend(DataGenContext<?, ?> ctx, String root, String sub, String folder) {
-        String path = root + "/" + sub + "/" + folder;
+        if(in != null) {
+            for(String s : in) path += "/" + s;
+        }
+
+        path += "/" + ctx.getName();
+        
+        if(sub != null) {
+            for(String s : sub) path += "/" + s;
+        }
+
+        path += "/" + item;
+
         return new ResourceLocation(ctx.getId().getNamespace(), path);
     }
 

@@ -26,7 +26,7 @@ public class ToolStationGenerator extends SpecialBlockStateGen {
     public <T extends Block> ModelFile getModel(DataGenContext<Block, T> ctx, 
         RegistrateBlockstateProvider provider, BlockState state) {
 
-        return provider.models().getExistingFile(Mechano.extend(ctx, 
+        return provider.models().getExistingFile(Mechano.extend(ctx, "block",
             state.getValue(ToolStationBlock.MODEL_TYPE).getSerializedName()));
     }
 }
