@@ -23,7 +23,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class VoltometerBlock extends HorizontalDirectionalBlock implements IBE<VoltometerBlockEntity>, IWrenchable {
+public class VoltometerBlock extends HorizontalDirectionalBlock implements IWrenchable {
     
     public static final EnumProperty<VoltometerModelType> MODEL_TYPE = EnumProperty.create("model", VoltometerModelType.class);
     private static RotatableHitboxShape<Direction> hitbox;
@@ -63,13 +63,8 @@ public class VoltometerBlock extends HorizontalDirectionalBlock implements IBE<V
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-         hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
+        hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(FACING));
-    }
-
-    @Override
-    public Class<VoltometerBlockEntity> getBlockEntityClass() {
-        return VoltometerBlockEntity.class;
     }
 
     @Override
@@ -95,10 +90,4 @@ public class VoltometerBlock extends HorizontalDirectionalBlock implements IBE<V
         super.createBlockStateDefinition(builder);
         builder.add(FACING).add(MODEL_TYPE);
     }
-
-    @Override
-    public BlockEntityType<? extends VoltometerBlockEntity> getBlockEntityType() {
-        return MechanoBlockEntities.VOLTOMETER.get();
-    }
-    
 }

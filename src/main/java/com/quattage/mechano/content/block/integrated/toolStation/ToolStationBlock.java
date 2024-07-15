@@ -142,16 +142,16 @@ public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<
             BlockState leftBlockState = world.getBlockState(left);
             BlockState rightBlockState = world.getBlockState(right);
                                                                                         // TODO -> rightBlockState.getBlock().equals(MechanoBlocks.INDUCTOR.get()
-            if(leftBlockState.getBlock().equals(MechanoBlocks.FORGE_UPGRADE.get()) && rightBlockState.getBlock().equals(Blocks.DIRT)) {
-                setLevel(world, pos, state, WideBlockModelType.MAXIMIZED);
-            } else if(leftBlockState.getBlock().equals(MechanoBlocks.FORGE_UPGRADE.get())) {
-                setLevel(world, pos, state, WideBlockModelType.FORGED);
-                // TODO -> rightBlockState.getBlock().equals(MechanoBlocks.INDUCTOR.get()
-            } else if(rightBlockState.getBlock().equals(Blocks.DIRT)) {
-                setLevel(world, pos, state, WideBlockModelType.HEATED);
-            } else {
-                setLevel(world, pos, state, WideBlockModelType.BASE);
-            }
+            // if(leftBlockState.getBlock().equals(MechanoBlocks.FORGE_UPGRADE.get()) && rightBlockState.getBlock().equals(Blocks.DIRT)) {
+            //     setLevel(world, pos, state, WideBlockModelType.MAXIMIZED);
+            // } else if(leftBlockState.getBlock().equals(MechanoBlocks.FORGE_UPGRADE.get())) {
+            //     setLevel(world, pos, state, WideBlockModelType.FORGED);
+            //     // TODO -> rightBlockState.getBlock().equals(MechanoBlocks.INDUCTOR.get()
+            // } else if(rightBlockState.getBlock().equals(Blocks.DIRT)) {
+            //     setLevel(world, pos, state, WideBlockModelType.HEATED);
+            // } else {
+            //     setLevel(world, pos, state, WideBlockModelType.BASE);
+            // }
         }
     }
 
@@ -235,7 +235,8 @@ public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<
 
     @Override
 	public BlockEntityType<? extends ToolStationBlockEntity> getBlockEntityType() {
-		return MechanoBlockEntities.TOOL_STATION.get();
+		// return MechanoBlockEntities.TOOL_STATION.get();
+        return null;
 	}
 
     @Override

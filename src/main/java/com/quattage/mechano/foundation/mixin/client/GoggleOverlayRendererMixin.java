@@ -10,6 +10,7 @@ import com.quattage.mechano.MechanoClient;
 import com.simibubi.create.content.equipment.goggles.GoggleOverlayRenderer;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 
 /**
@@ -20,11 +21,18 @@ import net.minecraftforge.client.gui.overlay.ForgeGui;
 @Mixin(GoggleOverlayRenderer.class)
 public abstract class GoggleOverlayRendererMixin {
 
-    @Shadow 
+    @Shadow(remap = false)
     private static int hoverTicks;
+
+    @Shadow(remap = false)
+    private static BlockPos lastHovered;
     
     @Inject(method = "renderOverlay", at = {@At(value = "HEAD")}, cancellable = true, remap = false)
-    private static void renderOverlay(ForgeGui gui, GuiGraphics graphis, float partialTicks, int width, int height, CallbackInfo info) {
+    private static void renderOverlay(ForgeGui gui, GuiGraphics graphics, float partialTicks, int width, int height, CallbackInfo info) {
+
+        if(hoverTicks == 0)
+            MechanoClient.ANCHOR_SELECTOR.tenaciousTerriblyTemporaryTickingTracker.reset();
+
         if(MechanoClient.ANCHOR_SELECTOR.getSelectedEntry() != null) {
             hoverTicks = 0;
             info.cancel();

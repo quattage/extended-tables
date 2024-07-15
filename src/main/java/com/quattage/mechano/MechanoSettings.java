@@ -11,14 +11,14 @@ public class MechanoSettings {
     public static byte POLE_STACK_SIZE = 16;
 
     // 1 Watt = (FE2W_RATE) * FE
-    public static short FE2W_RATE = 32; 
+    public static short FE2W_RATE = 64; 
     public static short FE2W_VOLTAGE = 128;
 
     // 1 Watt = (SU2W_RATE) * StressUnits
     public static float SU2W_RATE = 0.008f;
     
     // RPM to voltage exponent
-    public static float RPM_VOLTAGE = 1.0474f;
+    public static float RPM_VOLTAGE = 1.0247183464f;
 
     // size of AnchorPoint hitboxes
     public static byte ANCHOR_SELECT_SIZE = 40;

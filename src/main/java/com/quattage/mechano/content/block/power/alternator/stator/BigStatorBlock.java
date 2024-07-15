@@ -7,15 +7,13 @@ import com.google.common.base.Predicates;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
-import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
-import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlock;
 import com.quattage.mechano.foundation.block.hitbox.Hitbox;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
+import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
 import com.simibubi.create.foundation.placement.PlacementOffset;
-import com.simibubi.create.foundation.utility.Pair;
 import com.tterrag.registrate.util.entry.BlockEntry;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -27,7 +25,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
@@ -40,7 +37,7 @@ public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.con
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper(2));
     private static Hitbox<SimpleOrientation> hitbox = new Hitbox<>();
 
-    protected static enum BigStatorModelType implements StringRepresentable, HitboxNameable, StatorTypeTransformable<BigStatorModelType> {
+    protected static enum BigStatorModelType implements StringRepresentable, HitboxNameable, StatorTypeTransformable<BigStatorModelType>, CreativeTabExcludable {
         
         BASE_SINGLE(0, 0),
         BASE_END_A(0, 1),

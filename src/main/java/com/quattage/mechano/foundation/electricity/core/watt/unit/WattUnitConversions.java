@@ -73,16 +73,16 @@ public class WattUnitConversions {
      * Makes a new Watt from a StressUnit and an RPM value.
      * RPM is used to scale the resulting WattUnit's voltage.
      * @param fe FE value to convert from
-     * @return a new Watt object whose power value is representative of the given SU andd RPM values
+     * @return a new Watt object whose power value ifs representative of the given SU andd RPM values
      */
     public static WattUnit toWatts(float SU, float RPM) {
 
         float RPMA = Math.abs(RPM);
-        int rBonus = Math.round(Mth.clamp((float)(0.00041f * Math.pow(1.033f, RPMA)), 0.25f, 2f));
+        float rModifier = 1;
 
-        WattUnit out = WattUnit.of(toVolts(RPMA), Math.abs(SU * MechanoSettings.SU2W_RATE) * rBonus);
-
-        Mechano.log("outV: " + toVolts(RPMA));
+        Voltage volts = toVolts(RPMA);
+        
+        WattUnit out = WattUnit.of(volts, Math.max(Math.abs(SU / 1024f) * rModifier, 1));
         return out;
     }
 
@@ -92,14 +92,14 @@ public class WattUnitConversions {
      * @return A Voltage object representing the given RPM value
      */
     public static Voltage toVolts(float RPM) {
-        return new Voltage(toNearest64(Mth.clamp(Math.round(0.1149 * (Math.pow(MechanoSettings.RPM_VOLTAGE, RPM))), 4, Voltage.MAX_VOLTS.get())));
+        return new Voltage(toNearest64(Math.round(62.4561863491f * Math.pow(MechanoSettings.RPM_VOLTAGE, RPM))));
     }
 
     private static int toNearest64(float in) {
         if(in < 512) return Math.round(in);
         int rounded = Math.round(in);
         int remainder = rounded % 64;
-        return remainder < 32 ? rounded - remainder : rounded + (64 - remainder);
+        return Math.max(64, remainder < 32 ? rounded - remainder : rounded + (64 - remainder));
     }
 
     /**

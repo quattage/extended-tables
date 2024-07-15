@@ -25,6 +25,10 @@ public class TickingTimeTracker extends TimeTracker {
             return false;
         }
 
+        public boolean isFulfilled() {
+            return ticks > maxTicks;
+        }
+
         public void reset() {
             ticks = 0;
             resetDelta();

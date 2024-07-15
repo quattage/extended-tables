@@ -36,6 +36,7 @@ import net.minecraft.world.phys.BlockHitResult;
 public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock implements BlockRotorable, BlockChangeListenable {
 
     public static final EnumProperty<RotorModelType> MODEL_TYPE = EnumProperty.create("model", RotorModelType.class);
+    private BlockPos controllerPos = null;
 
     public AbstractRotorBlock(Properties properties) {
         super(properties);
@@ -129,32 +130,43 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
         }
     }
 
+    public static void searchExternally(Level world, BlockPos pos, BlockState state) {
+        if(state.getBlock() instanceof AbstractRotorBlock arb) {
+            Direction dir = DirectionTransformer.toDirection(state.getValue(RotatedPillarKineticBlock.AXIS));
+            arb.searchForSlipRing(world, pos, dir);
+            arb.searchForSlipRing(world, pos, dir.getOpposite());
+        }
+    }
+
     @Override
     public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
-        if(world.getBlockEntity(pos) instanceof AbstractRotorBlockEntity thisArbe) {
-            SlipRingShaftBlockEntity controller = thisArbe.getController();
-            //AA if(controller == null) return;
-                //AA controller.evaluateAlternatorStructure();
-        }
+
+        Direction dir = DirectionTransformer.toDirection(currentState.getValue(RotatedPillarKineticBlock.AXIS));
+        SlipRingShaftBlockEntity positiveBE = findSlipRing(world, pos, dir);
+        SlipRingShaftBlockEntity negativeBE = findSlipRing(world, pos, dir.getOpposite());
+
+        if(positiveBE != null) positiveBE.evaluateAlternatorStructure();
+        if(negativeBE != null) negativeBE.evaluateAlternatorStructure();
     }
 
     private boolean searchForSlipRing(Level world, BlockPos pos, Direction dir) {
 
         if(!(world.getBlockEntity(pos) instanceof AbstractRotorBlockEntity thisArbe)) return false;
+        SlipRingShaftBlockEntity srbe = findSlipRing(world, pos, dir);
+        if(srbe != null) thisArbe.setControllerPos(srbe.getBlockPos(), true);
 
+        return false;
+    }
+
+    private SlipRingShaftBlockEntity findSlipRing(Level world, BlockPos pos, Direction dir) {
         for(int x = 0; x < MechanoSettings.ALTERNATOR_MAX_LENGTH; x++) {
-
             BlockPos thisPos = pos.relative(dir, x + 1);
-            if(world.getBlockEntity(thisPos) instanceof SlipRingShaftBlockEntity srbe && srbe.getBlockState().getValue(DirectionalKineticBlock.FACING) == dir.getOpposite()) {
-                thisArbe.setControllerPos(thisPos, true);
-                return true;
-            } 
-            
+            if(world.getBlockEntity(thisPos) instanceof SlipRingShaftBlockEntity srbe && srbe.getBlockState().getValue(DirectionalKineticBlock.FACING) == dir.getOpposite())
+                return srbe;
             if(!(world.getBlockEntity(thisPos) instanceof AbstractRotorBlockEntity))
                 break;
         }
-
-        return false;
+        return null;
     }
 
     @Override

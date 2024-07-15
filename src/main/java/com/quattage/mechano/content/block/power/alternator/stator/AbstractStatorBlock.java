@@ -2,7 +2,6 @@ package com.quattage.mechano.content.block.power.alternator.stator;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
 import com.quattage.mechano.foundation.block.BlockChangeListenable;

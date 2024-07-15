@@ -49,9 +49,6 @@ public class TransferPathManager {
         GridPath pathInv = path.copyAndInvert();
         GID keyB = pathInv.getStart().getID();
 
-        Mechano.log("ADDING PATH (BASE): " + path);
-        Mechano.log("ADDING PATH (INV): " + pathInv);
-
         Set<GridPath> queryA = paths.get(keyA);
         Set<GridPath> queryB = paths.get(keyB);
         if(queryA == null && queryB == null) {

@@ -23,10 +23,10 @@ import net.minecraftforge.eventbus.api.IEventBus;
 // This is where BlockEntities get regisrered.
 public class MechanoBlockEntities {
 
-    public static final BlockEntityEntry<ToolStationBlockEntity> TOOL_STATION = Mechano.REGISTRATE
-		.blockEntity("tool_station", ToolStationBlockEntity::new)
-		.validBlocks(MechanoBlocks.TOOL_STATION)
-		.register();
+    // public static final BlockEntityEntry<ToolStationBlockEntity> TOOL_STATION = Mechano.REGISTRATE
+	// 	.blockEntity("tool_station", ToolStationBlockEntity::new)
+	// 	.validBlocks(MechanoBlocks.TOOL_STATION)
+	// 	.register();
 
     public static final BlockEntityEntry<SmallRotorBlockEntity> SMALL_ROTOR = Mechano.REGISTRATE
 		.blockEntity("small_rotor", SmallRotorBlockEntity::new)
@@ -72,22 +72,22 @@ public class MechanoBlockEntities {
 		.renderer(() -> TieredConnectorRenderer::new)
 		.register();
 
-    public static final BlockEntityEntry<DiagonalGirderBlockEntity> DIAGONAL_GIRDER = Mechano.REGISTRATE
-		.blockEntity("diagonal_girder", DiagonalGirderBlockEntity::new)
-		.validBlocks(MechanoBlocks.DIAGONAL_GIRDER)
-		.renderer(() -> DiagonalGirderRenderer::new)
-		.register();
+    // public static final BlockEntityEntry<DiagonalGirderBlockEntity> DIAGONAL_GIRDER = Mechano.REGISTRATE
+	// 	.blockEntity("diagonal_girder", DiagonalGirderBlockEntity::new)
+	// 	.validBlocks(MechanoBlocks.DIAGONAL_GIRDER)
+	// 	.renderer(() -> DiagonalGirderRenderer::new)
+	// 	.register();
 
-    public static final BlockEntityEntry<VoltometerBlockEntity> VOLTOMETER = Mechano.REGISTRATE
-		.blockEntity("voltometer", VoltometerBlockEntity::new)
-		.validBlocks(MechanoBlocks.VOLTOMETER)
-		.register();
+    // public static final BlockEntityEntry<VoltometerBlockEntity> VOLTOMETER = Mechano.REGISTRATE
+	// 	.blockEntity("voltometer", VoltometerBlockEntity::new)
+	// 	.validBlocks(MechanoBlocks.VOLTOMETER)
+	// 	.register();
 
-    public static final BlockEntityEntry<TestBlockEntity> TEST_BLOCK = Mechano.REGISTRATE
-		.blockEntity("test", TestBlockEntity::new)
-		.validBlocks(MechanoBlocks.TEST_BLOCK)
-		.renderer(() -> TestBlockRenderer::new)
-		.register();
+    // public static final BlockEntityEntry<TestBlockEntity> TEST_BLOCK = Mechano.REGISTRATE
+	// 	.blockEntity("test", TestBlockEntity::new)
+	// 	.validBlocks(MechanoBlocks.TEST_BLOCK)
+	// 	.renderer(() -> TestBlockRenderer::new)
+	// 	.register();
 
     public static void register(IEventBus event) {
 	Mechano.logReg("block entities");

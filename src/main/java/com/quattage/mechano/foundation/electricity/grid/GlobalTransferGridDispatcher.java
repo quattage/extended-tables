@@ -122,13 +122,10 @@ public class GlobalTransferGridDispatcher implements ICapabilityProvider, INBTSe
         GridAsyncTask pathResetter = new GridAsyncTask(
             "Reset GridPaths",
             () -> {
-
                 synchronized(dirtyPaths) {
                     while(!dirtyPaths.isEmpty()) {
                         GridPath path = dirtyPaths.removeFirst();
-                        Mechano.log("REMOVING PATH LOAD: " + path.getMaxTransferRate());
                         path.resetLoad();
-                        Mechano.log("RESET PATH TO " + path.getMaxTransferRate());
                     }
                 }
             }

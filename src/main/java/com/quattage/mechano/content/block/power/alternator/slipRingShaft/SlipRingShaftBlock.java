@@ -26,8 +26,10 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -93,6 +95,21 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
         super.createBlockStateDefinition(builder);
         builder.add(MODEL_TYPE);
     }
+    
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+
+        BlockPos origin = context.getClickedPos();
+        for(Direction dir : Direction.values()) {
+            BlockState relativeState = context.getLevel().getBlockState(origin.relative(dir));
+            if(relativeState.getBlock() instanceof AbstractRotorBlock) {
+                if(relativeState.getValue(RotatedPillarKineticBlock.AXIS) == dir.getAxis())
+                    return defaultBlockState().setValue(DirectionalKineticBlock.FACING, dir);
+            }
+        }
+
+        return super.getStateForPlacement(context);
+    }
 
     @Override
     public float getShadeBrightness(BlockState state, BlockGetter world, BlockPos pos) {
@@ -126,11 +143,25 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
         }
         else updateRotorType(world, pos, state);
 
-        if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe) {
-            if(world.getBlockEntity(pFromPos) instanceof WireAnchorBlockEntity wabe)
-                srbe.sends.add(new WattSendSummary(wabe.battery, pos, wabe.getBlockPos(), null));
-            else
-                srbe.sends.remove(new WattSendSummary(null, null, pFromPos, null));
+        evaluateNeighbor(world, pos, pFromPos);
+    }
+
+    public void evaluateNeighbor(Level world, BlockPos sourcePos, BlockPos updatePos) {
+        if(world.getBlockEntity(sourcePos) instanceof SlipRingShaftBlockEntity srbe) {
+            if(world.getBlockEntity(updatePos) instanceof WireAnchorBlockEntity wabe) {
+
+                if(!srbe.canControl()) {
+                    if(world.getBlockEntity(srbe.opposingPos) instanceof SlipRingShaftBlockEntity srbe2)
+                        srbe = srbe2;
+                }
+
+                srbe.sends.add(new WattSendSummary(wabe.battery, sourcePos, wabe.getBlockPos(), null));
+            } else
+                srbe.sends.removeBy(
+                    updatePos, (lookup, compare) -> (
+                        lookup.getDestinationPos().equals(compare)
+                    ), true
+                );
         }
     }
 
@@ -145,7 +176,7 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
 
         ItemStack heldItem = player.getItemInHand(hand);
         if(heldItem == ItemStack.EMPTY && player.isShiftKeyDown()) {
-            boolean result = true; //<----   TODO CHANGE PLACEHOLDER
+            boolean result = true; //       <----   TODO CHANGE PLACEHOLDER
             if(result == true) {
                 world.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 0.3f, 1);
                 world.playSound(null, pos, SoundEvents.BLAZE_HURT, SoundSource.BLOCKS, 0.1f, 3);
@@ -181,16 +212,13 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
     }
 
     @Override
-    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
-        Mechano.log("SRB PLACED");
-        if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe)
-            srbe.evaluateAlternatorStructure();
+    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
     }
 
     @Override
-    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onBeforeBlockBroken(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {
         if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe)
-            srbe.forgetAllRotors(currentState.getValue(DirectionalKineticBlock.FACING));
+            srbe.forgetAlternatorStructure(currentState.getValue(DirectionalKineticBlock.FACING));
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.quattage.mechano.foundation.electricity.core.watt;
 
+import javax.annotation.Nullable;
+
 import com.quattage.mechano.foundation.electricity.WattBatteryHandler;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
 
@@ -9,9 +11,9 @@ public class WattSendSummary {
     final WattBatteryHandler<?> destination;
     final BlockPos sourcePos;
     final BlockPos destinationPos;
-    final GridPath addressedPath;
+    @Nullable final GridPath addressedPath;
 
-    public WattSendSummary(WattBatteryHandler<?> destination, BlockPos sourcePos, BlockPos destinationPos, GridPath addressedPath) {
+    public WattSendSummary(WattBatteryHandler<?> destination, BlockPos sourcePos, BlockPos destinationPos, @Nullable GridPath addressedPath) {
         this.destination = destination;
         this.sourcePos = sourcePos;
         this.destinationPos = destinationPos;
@@ -41,5 +43,9 @@ public class WattSendSummary {
 
     public GridPath getAddressedPath() {
         return addressedPath;
+    }
+
+    public boolean hasPath() {
+        return addressedPath != null;
     }
 }

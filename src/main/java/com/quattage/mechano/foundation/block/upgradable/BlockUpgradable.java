@@ -25,6 +25,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.quattage.mechano.Mechano;
+import com.quattage.mechano.content.block.power.transfer.connector.tiered.AbstractConnectorBlock;
 import com.quattage.mechano.foundation.block.upgradable.UpgradeCache.UpgradeStep;
 import com.simibubi.create.AllItems;
 import com.tterrag.registrate.providers.loot.RegistrateBlockLootTables;
@@ -72,11 +73,22 @@ public interface BlockUpgradable {
                 }
             } else
                 subtractFromHand(player, hand, heldItem, 1);
+
+            if(state != newState)
+                onStateChange(world, state, newState, pos);
             return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.FAIL;
     }
+
+    /**
+     * Called whenever a block's state is successfully changed as a result of an upgrade or downgrade
+     * @param oldState state before the upgrade/downgrade
+     * @param newState state after the upgrade/downgrade
+     * @param pos BlockPos of the upgraded/downgraded block
+     */
+    abstract void onStateChange(Level world, BlockState oldState, BlockState newState, BlockPos pos);
 
     @Nullable
     default BlockState swapInPlace(Level world, BlockPos pos, BlockState operantState, Block product) {

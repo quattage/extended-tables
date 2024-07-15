@@ -12,6 +12,8 @@ import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnitConversions;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
+import com.quattage.mechano.foundation.helper.NullSortedArray;
 import com.quattage.mechano.foundation.network.WattModeSyncS2CPacket;
 import com.quattage.mechano.foundation.network.WattSyncS2CPacket;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -206,14 +208,62 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
         }
     }
 
-    /***
+    /**
+     * Awards "free" Watts to the specified destination handlers. <p>
+     * In this case, by "free" we're simply refering to an arbitrary amount of watts.
+     * These watts do not have to be extracted from any pre-existing energy store in order
+     * to be properly sent.
+     * <p>
+     * Prioritizes even distribution of energy to all destinations evenly whenever possible
+     * @param sends List of <code>WattSendSummary</code> objects containing paths to send across.
+     */
+    public static synchronized void awardWattsTo(final WattUnit wattsToAward, final NullSortedArray<WattSendSummary> sends) {
+
+        if(wattsToAward.hasNoPotential()) return;
+
+        float totalDemand = 0;
+        final float[] demands = new float[sends.size()];
+
+        for(int x = 0; x < sends.size(); x++) {
+            WattSendSummary acceptor = sends.get(x);
+            if(acceptor == null)
+                break;
+            float maxPathRate = acceptor.hasPath() ? acceptor.getAddressedPath().getMaxTransferRate() : Float.MAX_VALUE;
+            if(WattUnit.hasNoPotential(maxPathRate)) demands[x] = 0;
+            else {
+                demands[x] = acceptor.getDestination().getEnergyHolder().receiveWatts(WattUnit.of(wattsToAward.getVoltage(), maxPathRate), true).getWatts();
+                totalDemand += demands[x];
+            }
+        }
+
+        if(totalDemand == 0) return;
+        final float wattsToDistribute = Math.min(wattsToAward.getWatts(), totalDemand);
+
+        for(int x = 0; x < sends.size(); x++) {
+            WattSendSummary acceptor = sends.get(x);
+            if(acceptor == null) break;
+
+            if(WattUnit.hasNoPotential(demands[x])) continue;
+        
+            // Watts added to this iteration's energy store are multiplied by the distribution ratio for even splitting
+            float wattsToAccept = Math.min(wattsToDistribute * (demands[x] / totalDemand), demands[x]);
+
+            WattUnit receieved;
+            if(acceptor.hasPath()) {
+                receieved = acceptor.getDestination().getEnergyHolder().receiveWatts(WattUnit.of(wattsToAward.getVoltage(), Math.min(wattsToAccept, acceptor.getAddressedPath().getMaxTransferRate())), false);
+                acceptor.getAddressedPath().addLoad(receieved.copy());
+            } else
+                receieved = acceptor.getDestination().getEnergyHolder().receiveWatts(WattUnit.of(wattsToAward.getVoltage(), wattsToAccept), false);
+        }
+    }
+
+    /**
      * Called every time energy is added or removed from this WattBatteryHandler.
      */
     @Override
     public void onWattsUpdated(float oldStoredWatts, float newStoredWatts) {
         target.onWattsUpdated();
         target.setChanged();
-        Mechano.log("WATTS UPDATED AT " + target.getBlockPos() + " FROM " + oldStoredWatts + " TO " + newStoredWatts);
         MechanoPackets.sendToAllClients(WattSyncS2CPacket.ofSource(battery, target.getBlockPos()));
     }
 

@@ -213,7 +213,7 @@ public abstract class WireSpool extends Item {
             if(!previousAnchor.getFirst().equals(currentAnchor.getFirst())) {
                 
                 if(network.isVertAvailable(currentAnchor.getFirst().getID()) && network.isVertAvailable(previousAnchor.getFirst().getID())) {
-                    AnchorInteractType linkResult = network.link(previousAnchor.getFirst().getID(), selectedAnchorID, this.getSpoolID());
+                    AnchorInteractType linkResult = network.link(player, previousAnchor.getFirst().getID(), selectedAnchorID, this.getSpoolID());
                     player.displayClientMessage(linkResult.getMessage(), true);
                     clearTag(handStack);
                     if(linkResult.isSuccessful()) return InteractionResultHolder.success(handStack);

@@ -40,6 +40,9 @@ public class WireAnchorSelectionManager {
     private final HashSet<AnchorEntry> nearbyAnchors;
     private final TickingTimeTracker packetClock = new TickingTimeTracker(500);
 
+    // only for displaying temporary warning messages
+    public final TickingTimeTracker tenaciousTerriblyTemporaryTickingTracker = new TickingTimeTracker(5000);
+
     public boolean hasOutgoingRequest = false;
     @Nullable private AnchorEntry selectedAnchor = null;
     @Nullable private AnchorVertexData selectedVertex = null;
@@ -127,7 +130,6 @@ public class WireAnchorSelectionManager {
 
         final List<AnchorEntry> outdated = new ArrayList<>();
         for(AnchorEntry near : MechanoClient.ANCHOR_SELECTOR.allNearbyEntries()) {
-            // Mechano.log("anchor: " + near + " size: " + near.get().getSize());
             if(near == null || near.get() == null) continue;
             if(AnchorPoint.getAnchorAt(instance.level, near.get().getID()) == null) {
                 outdated.add(near);

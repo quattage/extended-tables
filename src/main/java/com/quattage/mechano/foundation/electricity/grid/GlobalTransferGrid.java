@@ -20,6 +20,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.util.LazyOptional;
@@ -97,7 +99,7 @@ public class GlobalTransferGrid {
      * @param idA
      * @param idB
      */
-    public AnchorInteractType link(GID idA, GID idB, int typeID) {
+    public AnchorInteractType link(Entity linker, GID idA, GID idB, int typeID) {
         Pair<Integer, LocalTransferGrid> sysA = getSystemContaining(idA);
         Pair<Integer, LocalTransferGrid> sysB = getSystemContaining(idB);
 
@@ -144,7 +146,8 @@ public class GlobalTransferGrid {
             subgrids.add(merged);
         }
 
-        Mechano.log("Informing update [" + idA + " -> " + idB + "]");
+        String entity = linker instanceof Player p ? p.getName().getString() : linker.toString();
+        Mechano.LOGGER.info("Link (" + idA + " -> " + idB + ") established by player '" + entity + "'' in GlobalTransferGrid(" + getDimensionName() + ")");
         GridSyncHelper.informPlayerEdgeUpdate(GridSyncPacketType.ADD_NEW, new GridClientEdge(idA, idB, typeID));
         return AnchorInteractType.LINK_ADDED;
     }

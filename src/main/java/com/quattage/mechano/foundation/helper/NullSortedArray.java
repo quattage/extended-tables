@@ -4,6 +4,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+
+import com.quattage.mechano.Mechano;
 
 /**
  * A wrapper for a primitive array that sorts nulls to the end
@@ -82,6 +85,7 @@ public class NullSortedArray<T> implements Collection<T> {
         for(int x = 0; x < backingArray.length; x++) {
             if(backingArray[x] == null) {
                 backingArray[x] = e;
+                size++;
                 onUpdated(e, true);
                 return true;
             }
@@ -105,11 +109,46 @@ public class NullSortedArray<T> implements Collection<T> {
             T temp = backingArray[index];
             backingArray[index] = null;
             sortNulls();
+            size--;
             onUpdated(temp, false);
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Removes objects by equivalence with a predicate.
+     * @param o Object to remove
+     * @param equivalence Predicate for comparison. If it returns <code>TRUE</code>, the object will be removed.
+     * @param bailout if <code>TRUE</code>, iteration will be stopped at the first object found.
+     * @return
+     */
+    public <R> boolean removeBy(R o, BiPredicate<T, R> equivalence, boolean bailout) {
+        
+        boolean changed = false;
+
+        for(int x = 0; x < backingArray.length; x++) {
+            T temp = backingArray[x];
+            if(temp == null) break;
+
+            if(equivalence.test(temp, o)) {
+                changed = true;
+                backingArray[x] = null;
+                size--;
+                onUpdated(temp, false);
+
+                if(bailout) {
+                    sortNulls();
+                    return true;
+                }
+            }
+        }
+
+        if(changed)
+            sortNulls();
+
+        return changed;
     }
 
     @Override
@@ -165,21 +204,19 @@ public class NullSortedArray<T> implements Collection<T> {
                 backingArray[lastIndex] = null;
             }
         }
-
-        size = firstIndex;
     }
 
     public String toString() {
 
-        String out = "NullSortedArray[";
+        String out = "NullSortedArray (length: " + size + ", [";
         for(int x = 0; x < backingArray.length; x++) {
-            out += backingArray[x] + (x < backingArray.length - 1 ? ", " : " ");
-
+            out += "(" + backingArray[x] + ")" + (x < backingArray.length - 1 ? ", " : " ");
         }
-        return out;
+        return out + "])";
     }
 
     private void onUpdated(T object, boolean addOrRemove) {
+        if(updateAction == null) return;
         updateAction.accept(object, addOrRemove);
     }
 }

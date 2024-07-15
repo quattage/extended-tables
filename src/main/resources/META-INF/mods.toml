@@ -8,7 +8,7 @@ modId="mechano"
 version="${file.jarVersion}"
 displayName="Mechano"
 #updateJSONURL=""
-displayURL="https://discord.gg/2HBUz75Dg6"
+displayURL="https://github.com/quattage/mechano"
 logoFile="logo.png"
 credits='''
 Jake - Logos.

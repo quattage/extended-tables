@@ -15,7 +15,8 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 @Mixin(KineticNetwork.class)
 public abstract class KineticNetworkMixin {
 
-    @Shadow private Map<KineticBlockEntity, Float> members;
+    @Shadow(remap = false) 
+    private Map<KineticBlockEntity, Float> members;
     
     @Inject(method = "getActualStressOf", at = {@At(value = "HEAD")}, cancellable = true, remap = false)
     private void getActualStressOf(KineticBlockEntity be, CallbackInfoReturnable<Float> cir) {

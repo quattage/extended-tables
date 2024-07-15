@@ -223,7 +223,8 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
     }
 
     private boolean isDiagonalGirder(BlockState state) {
-        return state.getBlock() == MechanoBlocks.DIAGONAL_GIRDER.get();
+        return false;
+        // return state.getBlock() == MechanoBlocks.DIAGONAL_GIRDER.get();
     }
 
     private boolean isCreateGirder(Level world, BlockPos pos, BlockState targetState, BlockState girderState) {
@@ -328,7 +329,8 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
 
 		@Override
 		public Predicate<BlockState> getStatePredicate() {
-			return Predicates.or(MechanoBlocks.DIAGONAL_GIRDER::has);
+			// return Predicates.or(MechanoBlocks.DIAGONAL_GIRDER::has);
+            return null;
 		}
 
 		@Override
@@ -349,7 +351,8 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
 
     @Override
     public BlockEntityType<? extends DiagonalGirderBlockEntity> getBlockEntityType() {
-        return MechanoBlockEntities.DIAGONAL_GIRDER.get();
+        // return MechanoBlockEntities.DIAGONAL_GIRDER.get();
+        return null;
     }
 
     public enum GirderPartial {

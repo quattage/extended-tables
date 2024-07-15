@@ -7,6 +7,11 @@ import java.util.Set;
 import static com.quattage.mechano.Mechano.lang;
 
 import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
+import com.quattage.mechano.Mechano;
+import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlock;
+import com.quattage.mechano.content.block.power.transfer.connector.tiered.AbstractConnectorBlock;
+import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.electricity.builder.AnchorBankBuilder;
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.ExternalInteractMode;
 import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
@@ -128,6 +133,22 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
 
         lang().text(getWattBatteryHandler().getEnergyHolder().getStoredWatts() + " watts").forGoggles(tooltip);
         lang().text("Mode - " + battery.getMode()).style(ChatFormatting.GRAY).forGoggles(tooltip);
+
+        if(getBlockState().getBlock() instanceof AbstractConnectorBlock) {
+            BlockState adjState = getLevel().getBlockState(getBlockPos().relative(getBlockState().getValue(SimpleOrientedBlock.ORIENTATION).getCardinal().getOpposite()));
+            if(adjState.getBlock() instanceof SlipRingShaftBlock) {
+
+                MechanoClient.ANCHOR_SELECTOR.tenaciousTerriblyTemporaryTickingTracker.tickTimer();
+
+                if(MechanoClient.ANCHOR_SELECTOR.tenaciousTerriblyTemporaryTickingTracker.isFulfilled()) {
+                    lang().text("").forGoggles(tooltip);
+                    lang().text("").forGoggles(tooltip);
+                    lang().text("hi").style(ChatFormatting.DARK_GRAY).style(ChatFormatting.ITALIC).forGoggles(tooltip);
+                    lang().text("P.S. the floating connector is temporary").style(ChatFormatting.DARK_GRAY).style(ChatFormatting.ITALIC).forGoggles(tooltip);
+                    lang().text("have fun :)").style(ChatFormatting.DARK_GRAY).style(ChatFormatting.ITALIC).forGoggles(tooltip);
+                }
+            }
+        }
 
         return true;
     }

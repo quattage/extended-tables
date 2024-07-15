@@ -180,7 +180,6 @@ public class WattBattery<T extends DirectionalWattProvidable> implements WattSto
 
     @Override
     public void onOvervolt(OvervoltEvent event) {
-        Mechano.log("BATTERY IS OVERVOLTED!");
         if(overvoltEvent != null) overvoltEvent.accept(event);
     }
 

@@ -41,29 +41,29 @@ public class MechanoBlocks {
 		REGISTRATE.setCreativeTab(MechanoGroups.MAIN_TAB);
 	}
 
-    public static final BlockEntry<UpgradeBlock> FORGE_UPGRADE = REGISTRATE.block("tool_forge", UpgradeBlock::new)
-        .initialProperties(CommonProperties::dense)
-        .properties(props -> props
-            .sound(SoundType.NETHERITE_BLOCK)
-            .noOcclusion()
-        )
-        .transform(pickaxeOnly())
-        .blockstate((ctx, prov) -> prov.horizontalBlock(ctx.getEntry(), prov.models()
-            .getExistingFile(defer(ctx, "tool_station", "forge")), 180))
-        .simpleItem()
-        .register();
+    // public static final BlockEntry<UpgradeBlock> FORGE_UPGRADE = REGISTRATE.block("tool_forge", UpgradeBlock::new)
+    //     .initialProperties(CommonProperties::dense)
+    //     .properties(props -> props
+    //         .sound(SoundType.NETHERITE_BLOCK)
+    //         .noOcclusion()
+    //     )
+    //     .transform(pickaxeOnly())
+    //     .blockstate((ctx, prov) -> prov.horizontalBlock(ctx.getEntry(), prov.models()
+    //         .getExistingFile(defer(ctx, "tool_station", "forge")), 180))
+    //     .simpleItem()
+    //     .register();
 
-    public static final BlockEntry<ToolStationBlock> TOOL_STATION = REGISTRATE.block("tool_station", ToolStationBlock::new)
-        .initialProperties(CommonProperties::wooden)
-        .properties(props -> props
-            .sound(SoundType.WOOD)
-            .noOcclusion()
-        )
-        .transform(pickaxeOnly())
-        .blockstate(new ToolStationGenerator()::generate)
-        .item()
-        .transform(customItemModel("tool_station", "base"))
-        .register();
+    // public static final BlockEntry<ToolStationBlock> TOOL_STATION = REGISTRATE.block("tool_station", ToolStationBlock::new)
+    //     .initialProperties(CommonProperties::wooden)
+    //     .properties(props -> props
+    //         .sound(SoundType.WOOD)
+    //         .noOcclusion()
+    //     )
+    //     .transform(pickaxeOnly())
+    //     .blockstate(new ToolStationGenerator()::generate)
+    //     .item()
+    //     .transform(customItemModel("tool_station", "base"))
+    //     .register();
 
     public static final BlockEntry<SmallRotorBlock> SMALL_ROTOR = REGISTRATE.block("small_rotor", SmallRotorBlock::new)
         .initialProperties(CommonProperties::ductile)
@@ -144,6 +144,7 @@ public class MechanoBlocks {
         .loot((lt, block) -> block.buildUpgradableLoot(block, lt))
         .item()
         .transform(customItemModel("connector", "connector_tier_zero/base"))
+        .lang("Connector")
         .register();
 
     public static final BlockEntry<ConnectorTier1Block> CONNECTOR_T1 = REGISTRATE.block("connector_tier_one", ConnectorTier1Block::new)
@@ -155,6 +156,7 @@ public class MechanoBlocks {
         .loot((lt, block) -> block.buildUpgradableLoot(block, lt))
         .item()
         .transform(customItemModel("connector", "connector_tier_one/base"))
+        .lang("Connector")
         .register();
     
     public static final BlockEntry<ConnectorTier2Block> CONNECTOR_T2 = REGISTRATE.block("connector_tier_two", ConnectorTier2Block::new)
@@ -166,38 +168,40 @@ public class MechanoBlocks {
         .loot((lt, block) -> block.buildUpgradableLoot(block, lt))
         .item()
         .transform(customItemModel("connector", "connector_tier_two/base"))
+        .lang("Connector")
         .register();
 
-    public static final BlockEntry<DiagonalGirderBlock> DIAGONAL_GIRDER = REGISTRATE.block("diagonal_girder", DiagonalGirderBlock::new)
-		.initialProperties(CommonProperties::malleable)
-		.properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
-		.transform(pickaxeOnly())
-        .blockstate(new DynamicStateGenerator(DiagonalGirderBlock.MODEL_TYPE)::generate)
-		.item()
-        .transform(customItemModel("diagonal_girder", "item"))
-		.register();
+    // public static final BlockEntry<DiagonalGirderBlock> DIAGONAL_GIRDER = REGISTRATE.block("diagonal_girder", DiagonalGirderBlock::new)
+	// 	.initialProperties(CommonProperties::malleable)
+	// 	.properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
+	// 	.transform(pickaxeOnly())
+    //     .blockstate(new DynamicStateGenerator(DiagonalGirderBlock.MODEL_TYPE)::generate)
+	// 	.item()
+    //     .transform(customItemModel("diagonal_girder", "item"))
+	// 	.register();
 
-    public static final BlockEntry<VoltometerBlock> VOLTOMETER = REGISTRATE.block("voltometer", VoltometerBlock::new)
-		.initialProperties(CommonProperties::malleable)
-		.properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
-		.transform(pickaxeOnly())
-        .blockstate(new DynamicStateGenerator(VoltometerBlock.MODEL_TYPE)::generate)
-		.item()
-        .transform(customItemModel("voltometer", "floor"))
-		.register();
+    // public static final BlockEntry<VoltometerBlock> VOLTOMETER = REGISTRATE.block("voltometer", VoltometerBlock::new)
+	// 	.initialProperties(CommonProperties::malleable)
+	// 	.properties(p -> p.sound(SoundType.NETHERITE_BLOCK))
+	// 	.transform(pickaxeOnly())
+    //     .blockstate(new DynamicStateGenerator(VoltometerBlock.MODEL_TYPE)::generate)
+	// 	.item()
+    //     .transform(customItemModel("voltometer", "floor"))
+	// 	.register();
     
 
-    public static final BlockEntry<TestBlock> TEST_BLOCK = REGISTRATE.block("test_block", TestBlock::new)
-		.initialProperties(CommonProperties::malleable)
-		.properties(p -> p
-            .sound(SoundType.NETHERITE_BLOCK)
-            .noOcclusion()
-        )
-        .blockstate(new DynamicStateGenerator()::generate)
-		.transform(pickaxeOnly())
-		.item()
-        .transform(customItemModel("test_block", "base"))
-		.register();
+
+    // public static final BlockEntry<TestBlock> TEST_BLOCK = REGISTRATE.block("test_block", TestBlock::new)
+	// 	.initialProperties(CommonProperties::malleable)
+	// 	.properties(p -> p
+    //         .sound(SoundType.NETHERITE_BLOCK)
+    //         .noOcclusion()
+    //     )
+    //     .blockstate(new DynamicStateGenerator()::generate)
+	// 	.transform(pickaxeOnly())
+	// 	.item()
+    //     .transform(customItemModel("test_block", "base"))
+	// 	.register();
 
     public static void register(IEventBus event) {
         Mechano.logReg("blocks");

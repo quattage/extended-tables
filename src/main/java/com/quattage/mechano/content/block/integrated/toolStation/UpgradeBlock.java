@@ -67,16 +67,15 @@ public class UpgradeBlock extends Block {
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(MODEL_TYPE, UpgradeBlockModelType.STANDALONE));
     }
 
-    @SuppressWarnings("deprecation") // TODO investigate
     @Override
+    @SuppressWarnings("deprecation")
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
         super.neighborChanged(state, level, pos, sourceBlock, sourcePos, notify);
-        if(!level.isClientSide) {
-            BlockState adjacentBlockState = level.getBlockState(pos.relative(state.getValue(FACING).getClockWise()));
-            if(!adjacentBlockState.getBlock().equals(MechanoBlocks.TOOL_STATION.get())) {
-                level.destroyBlock(pos, true);
-            }
-        }
+
+        BlockState adjacentBlockState = level.getBlockState(pos.relative(state.getValue(FACING).getClockWise()));
+        // if(!adjacentBlockState.getBlock().equals(MechanoBlocks.TOOL_STATION.get())) {
+        //     level.destroyBlock(pos, true);
+        // }
     }
 
     @Override
@@ -84,11 +83,11 @@ public class UpgradeBlock extends Block {
         BlockPos possy = pos.relative(state.getValue(FACING).getClockWise());
         BlockState targetBlockState = level.getBlockState(possy);
         Block targetBlock = targetBlockState.getBlock();
-        if(targetBlock == MechanoBlocks.TOOL_STATION.get()) {
-            if (targetBlockState.getValue(FACING) == state.getValue(FACING)) {
-                return true;
-            }
-        }
+        // if(targetBlock == MechanoBlocks.TOOL_STATION.get()) {
+        //     if (targetBlockState.getValue(FACING) == state.getValue(FACING)) {
+        //         return true;
+        //     }
+        // }
         return false;
     }
 

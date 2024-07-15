@@ -5,6 +5,9 @@ import static com.quattage.mechano.Mechano.lang;
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
+import com.quattage.mechano.content.block.power.transfer.connector.tiered.AbstractConnectorBlock;
+import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
+import com.quattage.mechano.foundation.electricity.WattBatteryHandler;
 import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnitConversions;
@@ -45,7 +48,10 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
 
     private boolean isBuilt = false;
 
-    public final NullSortedArray<WattSendSummary> sends = new NullSortedArray<>(8);
+    public NullSortedArray<WattSendSummary> sends = new NullSortedArray<>(8);
+    
+    public WattUnit energyProduced = WattUnit.EMPTY;
+    public WattUnit maxEnergyProduced = WattUnit.EMPTY;
 
     public SlipRingShaftBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -59,6 +65,8 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
         potentialPowerScore = nbt.getInt("pS");
         length = nbt.getInt("lE");
         isBuilt = nbt.getBoolean("V");
+        energyProduced = WattUnit.ofTag(nbt.getCompound("cE"));
+        maxEnergyProduced = WattUnit.ofTag(nbt.getCompound("mE"));
 
         if(nbt.contains("opX")) {
             opposingPos = new BlockPos(
@@ -78,6 +86,9 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
         nbt.putInt("pS", potentialPowerScore);
         nbt.putInt("lE", length);
         nbt.putBoolean("V", isBuilt);
+        nbt.put("cE", energyProduced.writeTo(new CompoundTag()));
+        
+        nbt.put("mE", maxEnergyProduced.writeTo(new CompoundTag()));
 
         if(opposingPos != null) {
             nbt.putInt("opX", opposingPos.getX());
@@ -91,6 +102,25 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
     @Override
     public void tick() {
         super.tick();
+        energyProduced = WattUnitConversions.toWatts(currentStress * getTheoreticalSpeed(), getTheoreticalSpeed());
+        if(energyProduced.getWatts() < 8)
+            energyProduced = WattUnit.EMPTY;
+
+        if(canControl() && (!getLevel().isClientSide()))
+            WattBatteryHandler.awardWattsTo(energyProduced, sends);
+    }
+
+    @Override
+    public void initialize() {
+        evaluateAlternatorStructure();
+        super.initialize();
+        findAdjacentConnectors();
+    }
+
+    public void findAdjacentConnectors() {
+        Direction facing = getBlockState().getValue(DirectionalKineticBlock.FACING);
+        for(BlockPos adjacent : DirectionTransformer.getAllAdjacent(getBlockPos(), facing.getAxis()))
+            ((SlipRingShaftBlock)getBlockState().getBlock()).evaluateNeighbor(getLevel(), getBlockPos(), adjacent);
     }
 
     /**
@@ -99,19 +129,18 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
     public void evaluateAlternatorStructure() {
 
         // reset all values to zero
-        SlipRingShaftStatus oldStatus = this.status;
-
         this.length = 0;
         this.currentPowerScore = 0;
         this.potentialPowerScore = 0;        
         this.currentStress = 0;
         this.maximumStress = 0;
+        this.maxEnergyProduced = WattUnit.EMPTY;
 
         // grab the facing direction if this slip ring
         Direction dir = getBlockState().getValue(DirectionalKineticBlock.FACING);
 
         // iterate over the blocks in the facing direction
-        for(int x = 0; x < MechanoSettings.ALTERNATOR_MAX_LENGTH; x++) {
+        for(int x = 0; x < MechanoSettings.ALTERNATOR_MAX_LENGTH + 1; x++) {
 
             // get the block and blockentity in the facing direction
             BlockPos thisPos = getBlockPos().relative(dir, x + 1);
@@ -125,6 +154,11 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
                 this.currentPowerScore += arbe.getStatorCount();
                 this.maximumStress += arbe.getMaximumPossibleStress();
                 this.currentStress += arbe.calculateStressApplied();
+                arbe.setControllerPos(getBlockPos(), false);
+
+                if(x == MechanoSettings.ALTERNATOR_MAX_LENGTH) {
+                    this.status = SlipRingShaftStatus.ROTORED_TOO_LONG;
+                }
 
                 continue;
             }
@@ -133,13 +167,18 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
             if(thisEntity instanceof SlipRingShaftBlockEntity srbe && isConnected(srbe, dir)) {
                 this.status = SlipRingShaftStatus.ROTORED_PARENT;
                 this.opposingPos = srbe.getBlockPos();
-
+                
+                srbe.opposingPos = getBlockPos();
                 srbe.status = SlipRingShaftStatus.ROTORED_CHILD;
                 srbe.length = this.length;
                 srbe.potentialPowerScore = this.potentialPowerScore;
                 srbe.currentPowerScore = this.currentPowerScore;
                 srbe.maximumStress = this.maximumStress;
                 srbe.currentStress = this.currentStress;
+                
+
+                this.maxEnergyProduced = WattUnitConversions.toWatts(maximumStress, 256);
+                srbe.maxEnergyProduced = this.maxEnergyProduced;
 
                 continue;
             }
@@ -149,23 +188,12 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
 
         // if the status has changed after the execution of the loop, evaluate the validity of this alternator's structure
         // and call notifyUpdate();
-        if(oldStatus != this.status) {
 
-            this.isBuilt = status.hasComplementary && getStatorPercent() >= MechanoSettings.ALTERNATOR_MINIMUM_PERCENT;
-            notifyUpdate();
+        this.isBuilt = status.hasComplementary && getStatorPercent() >= MechanoSettings.ALTERNATOR_MINIMUM_PERCENT;
+        notifyUpdate();
 
-            // if the alternator is valid, then loop back over visited stators and set their controller position to here
-            // OR, if the alternator has been invalidated, tell all connected stators to forget their controller
-            if(this.status.canControl) { 
-                for(int x = 0; x < this.length; x++) {
-                    if(getLevel().getBlockEntity(getBlockPos().relative(dir, x + 1)) instanceof AbstractRotorBlockEntity arbe)
-                        arbe.setControllerPos(getBlockPos(), false);
-                }
-            } else {
-                forgetAllRotors(dir);
-                copyStatsToChild();
-            }
-        }
+        if(!this.status.canControl) forgetAlternatorStructure(dir);
+        else copyStatsToChild();
     }
 
     /////////////////////////// helpers for evaluateAlternatorStructure() //////////////////////////
@@ -180,28 +208,52 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
 
 
     /**
-     * Tells all connected rotors to "forget" their controller position.
+     * Tells all connected rotors to "forget" their controller position and cuts ties with the 
+     * opposing slip ring.
      * @param dir Direction that this slip ring is facing
      */
-    public void forgetAllRotors(Direction dir) {
+    public void forgetAlternatorStructure(Direction dir) {
+
+        boolean forgotOpposite = false;
+        if(opposingPos != null) {
+            forgotOpposite = true;
+            if(getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
+                srbe.status = SlipRingShaftStatus.ROTORED_NO_OPPOSITE;
+                srbe.isBuilt = false;
+                opposingPos = null;
+            }
+        }
+
         for(int x = 0; x < MechanoSettings.ALTERNATOR_MAX_LENGTH; x++) {
-            if(getLevel().getBlockEntity(getBlockPos().relative(dir, x + 1)) instanceof AbstractRotorBlockEntity arbe)
+            BlockPos pos = getBlockPos().relative(dir, x + 1);
+            if(getLevel().getBlockEntity(pos) instanceof AbstractRotorBlockEntity arbe)
                 arbe.setControllerPos(null, false);
+            else if(!forgotOpposite && getLevel().getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe) {
+                srbe.status = SlipRingShaftStatus.ROTORED_NO_OPPOSITE;
+                srbe.isBuilt = false;
+                srbe.opposingPos = null;
+            }
             else break;
         }
     }
 
+    /**
+     * Copies all data from parent to child. If this is called by a child slip ring, it'll just be ignored.
+     */
     private void copyStatsToChild() {
-        if(opposingPos == null)
-            throw new NullPointerException("Error copying SlipRingShaftBlockEntity stats from parent to child - Opposing Position is null!");
+        if(opposingPos == null) return;
         if(!(getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe)) 
-            throw new NullPointerException("Error copying SlipRingShaftBlockEntity stats from parent to child - No child Slip Ring could be found at " + opposingPos);
+            return;    
+        //throw new NullPointerException("Error copying SlipRingShaftBlockEntity stats from parent to child - No child Slip Ring could be found at " + opposingPos);
         srbe.length = this.length;
         srbe.potentialPowerScore = this.potentialPowerScore;
         srbe.currentPowerScore = this.currentPowerScore;
         srbe.maximumStress = this.maximumStress;
         srbe.currentStress = this.currentStress;
         srbe.opposingPos = null;
+        srbe.isBuilt = this.isBuilt;
+        srbe.opposingPos = getBlockPos();
+        srbe.sends = sends;
     }
 
     @Override
@@ -287,8 +339,7 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
 
         final int barPercent = sPercent > 0.99f ? Math.round(sPercent * 4f) : (int)Math.floor(sPercent * 4f);
         int diameter = 0;
-        float speed = Math.abs(getTheoreticalSpeed());
-        float rStress = cStress * speed;
+        float rStress = cStress * Math.abs(getTheoreticalSpeed());
 
         lang().translate("gui.alternator.status.statusTitle").style(ChatFormatting.GRAY).forGoggles(tooltip);;
         if(status == SlipRingShaftStatus.ROTORED_CHILD)
@@ -333,9 +384,9 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
         lang().text("").forGoggles(tooltip);
         lang().text("§7§l⚡ §9§l").translate("gui.alternator.status.predictiveTitle").style(ChatFormatting.BLUE).style(ChatFormatting.BOLD).text(" ")
             .forGoggles(tooltip);
-
-        float cWatts = Math.round(WattUnitConversions.toWatts(rStress, speed).getWatts() * 10f) / 10f;
-        float mWatts = Math.round(WattUnitConversions.toWatts(mStress, 256).getWatts() * 10f) / 10f;
+        
+        float cWatts = energyProduced.getWatts();
+        float mWatts = maxEnergyProduced.getWatts();
         float wPercent = 1 - (cWatts / mWatts);
 
         LangBuilder su = Lang.translate("generic.unit.stress").style(ChatFormatting.DARK_GRAY);

@@ -3,8 +3,10 @@ package com.quattage.mechano.content.block.power.transfer.connector.tiered;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlock;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
@@ -12,6 +14,7 @@ import com.quattage.mechano.foundation.block.upgradable.BlockUpgradable;
 import com.simibubi.create.foundation.block.IBE;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -79,6 +82,14 @@ public class ConnectorTier0Block extends AbstractConnectorBlock implements IBE<C
         pool.add(LootItem.lootTableItem(this));
         table.withPool(pool.setRolls(ConstantValue.exactly(1)));
         return table;
+    }
+
+    @Override
+    public void onStateChange(Level world, BlockState oldState, BlockState newState, BlockPos pos) {
+        Direction facing = oldState.getValue(SimpleOrientedBlock.ORIENTATION).getCardinal();
+        BlockPos offset = pos.relative(facing.getOpposite());
+        if(world.getBlockState(offset).getBlock() instanceof SlipRingShaftBlock srb)
+            srb.evaluateNeighbor(world, offset, pos);
     }
 }
     

@@ -7,6 +7,7 @@ import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlock;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
+import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
 import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
@@ -27,7 +28,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlockEntity>{
+public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlockEntity>, CreativeTabExcludable {
 
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
 

@@ -6,6 +6,7 @@ import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
+import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.electricity.core.EBEWrenchable;
 import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
@@ -71,10 +72,22 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        
-        BlockState out = super.getStateForPlacement(context);
 
-        if(!canSurvive(out, context.getLevel(), context.getClickedPos())) return out;
+        Direction orientation = context.getClickedFace();
+        Direction followingDir = CombinedOrientation.getClickedQuadrant(context, orientation, true);
+
+        if(orientation == followingDir) followingDir = context.getHorizontalDirection();
+        if(orientation.getAxis() == followingDir.getAxis()) followingDir = followingDir.getClockWise();
+
+        BlockState out = defaultBlockState().setValue(ORIENTATION, 
+            SimpleOrientation.combine(orientation, followingDir.getAxis()));
+
+        // if(context.getPlayer().isCrouching()) {
+        //     BlockState opposite = defaultBlockState().setValue(ORIENTATION, 
+        //         SimpleOrientation.combine(orientation.getOpposite(), followingDir.getAxis()));
+        //     if(opposite.getBlock().canSurvive(opposite, context.getLevel(), context.getClickedPos()));
+        //         out = opposite;
+        // }
 
         BlockPos under = context.getClickedPos().relative(out.getValue(ORIENTATION).getCardinal().getOpposite());
         BlockState underState = context.getLevel().getBlockState(under);
@@ -84,8 +97,7 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
         else if(underState.getBlock() == MechanoBlocks.CONNECTOR_T2.get()) {
             out = out.setValue(MODEL_TYPE, TieredConnectorModelType.STACKED)
                 .setValue(ORIENTATION, underState.getValue(ORIENTATION));
-        }   
-            
+        }
 
         return out;
     }
@@ -182,4 +194,6 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
     public ItemStack getCloneItemStack(BlockGetter pLevel, BlockPos pPos, BlockState pState) {
         return new ItemStack(MechanoBlocks.CONNECTOR_T0.get());
     }
+
+    
 }

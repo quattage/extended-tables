@@ -12,12 +12,14 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
+import java.io.File;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -34,6 +36,9 @@ public class Mechano {
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(Mechano.MOD_ID);
     public static final MechanoCapabilities CAPABILITIES = new MechanoCapabilities();
     public static final UpgradeCache UPGRADES = new UpgradeCache();
+    
+    public static boolean isLoaded = false;
+    public static boolean IS_DEV_ENV;
 
     public Mechano() {
         Mechano.LOGGER.info("loading mechano");
@@ -55,7 +60,14 @@ public class Mechano {
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MechanoClient.init(modBus, forgeBus));
 
+        modBus.addListener(EventPriority.LOWEST, MechanoData::gather);
         modBus.addListener(this::onCommonSetup);
+
+        IS_DEV_ENV = (new File(System.getProperty( "user.dir" ) + "/IDEFlag.txt" )).exists();
+        isLoaded = true;
+
+        if(IS_DEV_ENV)
+            Mechano.LOGGER.warn("IDE detected - Mechano development features enabled.");
     }
 
     public void onCommonSetup(final FMLCommonSetupEvent event) {
@@ -79,8 +91,14 @@ public class Mechano {
         log("'" + o.getClass().getName() + "' -> [" + o + "]");
     }
 
-    public static void logReg(String message) {      
-        log("Registering " + MOD_ID + " " + message);
+    public static void logReg(String message) {
+        if(isDevEnv()) log("Registering " + MOD_ID + " " + message);
+    }
+
+    public static boolean isDevEnv() {
+        if(!isLoaded)
+            return new File(System.getProperty( "user.dir" ) + "/IDEFlag.txt" ).exists();
+        return Mechano.IS_DEV_ENV;
     }
 
     public static void logSlow(String text) {

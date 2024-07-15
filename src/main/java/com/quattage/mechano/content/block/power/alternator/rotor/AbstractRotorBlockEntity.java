@@ -124,9 +124,15 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
             parent.sync();
         }
 
+        if(controllerPos != null && getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe) {
+            srbe.evaluateAlternatorStructure();
+            return;
+        }
+
+        AbstractRotorBlock.searchExternally(level, worldPosition, getBlockState());
         if(controllerPos == null) return;
-        //AA if(getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe)
-            //AA srbe.initialize();
+        if(getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe)
+            srbe.evaluateAlternatorStructure();
     }
 
     public abstract int getStatorCircumference();
@@ -141,6 +147,11 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         return null;
     }
 
+    @Nullable
+    protected BlockPos getControllerPos() {
+        return controllerPos;
+    }
+
     /**
      * Sets the BlockPos of the connected SlipRingShaft. 
      * @param controllerPos BlockPos of the slip ring
@@ -149,15 +160,10 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
     public void setControllerPos(BlockPos controllerPos, boolean update) {
         this.controllerPos = controllerPos;
 
-        //AA if(controllerPos != null && update 
-            //AA && getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe)
-                //AA srbe.evaluateAlternatorStructure();
+        if(controllerPos != null && update 
+            && getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe)
+                srbe.evaluateAlternatorStructure();
 
-        notifyUpdate();
-    }
-
-    protected void setStatorCount(byte statorCount) {
-        this.statorCount = statorCount;
         notifyUpdate();
     }
 
