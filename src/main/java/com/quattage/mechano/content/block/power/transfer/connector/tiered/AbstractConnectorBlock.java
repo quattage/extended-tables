@@ -204,7 +204,7 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
     }
 
     @Override
-    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
         Direction facing = currentState.getValue(SimpleOrientedBlock.ORIENTATION).getCardinal();
         Block supportingBlock = world.getBlockState(pos.relative(facing.getOpposite())).getBlock();
         if(supportingBlock instanceof SlipRingShaftBlock) {

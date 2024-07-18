@@ -1,5 +1,7 @@
 package com.quattage.mechano.foundation.block;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,6 +17,13 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public interface BlockChangeListenable {
 
+    @Nullable
+    public static BlockChangeListenable get(BlockState state) {
+        if(state.getBlock() instanceof BlockChangeListenable bcl)
+            return bcl;
+        return null;
+    }
+
     /**
      * Called by both the logical client and server before this block is broken, 
      * whether that be by a player, an explosion, or the level.
@@ -24,9 +33,9 @@ public interface BlockChangeListenable {
      * @param world World to operate within
      * @param pos BlockPos of block broken
      * @param currentState BlockState of what is present at the time of the invocation.
-     * * @param destinedState What currentState will be after this call, assuming the event isn't cancellled elsewhere
+     * * @param futureState What currentState will be after this call, assuming the event isn't cancellled elsewhere
      */
-    default void onBeforeBlockBroken(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {};
+    default void onBeforeBlockBroken(Level world, BlockPos pos, BlockState currentState, BlockState futureState) {};
 
     /**
      * Called by both the logical client and server before this block is placed.
@@ -37,9 +46,9 @@ public interface BlockChangeListenable {
      * @param world World to operate within
      * @param pos BlockPos of block placed
      * @param currentState BlockState of what is present at the time of the invocation
-     * @param destinedState What currentState will be after this call, assuming the event isn't cancellled elsewhere
+     * @param futureState What currentState will be after this call, assuming the event isn't cancellled elsewhere
      */
-    default void onBeforeBlockPlaced(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {};
+    default void onBeforeBlockPlaced(Level world, BlockPos pos, BlockState currentState, BlockState futureState) {};
     
     
     /**
@@ -54,7 +63,7 @@ public interface BlockChangeListenable {
      * @param pastState BlockState containing what was present before this block was placed (9/10 times, this will contain the implementing block)
      * @param currentState BlockState of what is present at the time of the invocation. (What the block was replaced with - If the player breaks it, this will be air)
      */
-    default void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {};
+    default void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {};
 
     /**
      * Called by both the logical client and server whenever this block is placed.
@@ -67,5 +76,11 @@ public interface BlockChangeListenable {
      * @param pastState BlockState containing what was present before this block was placed (Usually this would just contain air)
      * @param currentState BlockState of what is present at the time of the invocation. (What the block was replaced with - 9/10 times, this will contain the implementing block)
      */
-    default void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {};
+    default void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {};
+
+    public interface BlockPreUpdatable {
+        abstract BlockState mechano_getPreState();
+        abstract BlockChangeListenable mechano_getPreBCL();
+        abstract void mechano_resetPreUpdate();
+    }
 }

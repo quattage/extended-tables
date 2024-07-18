@@ -28,7 +28,7 @@ public abstract class GoggleOverlayRendererMixin {
     private static BlockPos lastHovered;
     
     @Inject(method = "renderOverlay", at = {@At(value = "HEAD")}, cancellable = true, remap = false)
-    private static void renderOverlay(ForgeGui gui, GuiGraphics graphics, float partialTicks, int width, int height, CallbackInfo info) {
+    private static void mechano_suppressGoggleOverlay(ForgeGui gui, GuiGraphics graphics, float partialTicks, int width, int height, CallbackInfo info) {
 
         if(hoverTicks == 0)
             MechanoClient.ANCHOR_SELECTOR.tenaciousTerriblyTemporaryTickingTracker.reset();

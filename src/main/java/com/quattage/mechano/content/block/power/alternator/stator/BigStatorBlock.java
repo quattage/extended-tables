@@ -31,7 +31,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.content.block.power.alternator.stator.BigStatorBlock.BigStatorModelType> {
+public class BigStatorBlock extends AbstractStatorBlock<BigStatorBlock.BigStatorModelType> implements CreativeTabExcludable {
 
     public static final EnumProperty<BigStatorModelType> MODEL_TYPE = EnumProperty.create("model", BigStatorModelType.class);
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper(2));

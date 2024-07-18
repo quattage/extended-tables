@@ -2,6 +2,7 @@ package com.quattage.mechano.content.block.power.alternator.stator;
 
 import javax.annotation.Nullable;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
 import com.quattage.mechano.foundation.block.BlockChangeListenable;
@@ -105,7 +106,6 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
 
         if(hasRotorBefore != hasRotorAfter) {
             BlockPos rotorPos = updateAttachedRotor(context.getLevel(), context.getClickedPos(), state, hasRotorAfter);
-            // TODO SYNC ON WRENCHED
         }
 
         return result;
@@ -222,18 +222,31 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
 	}
 
     @Override
-    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
-        updateAttachedRotor(world, pos, currentState, false);
+    public void onBeforeBlockBroken(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {
+        
     }
 
     @Override
-    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        updateAttachedRotor(world, pos, pastState, false);
+    }
+
+    @Override
+    public void onBeforeBlockPlaced(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {
+        
+    }
+
+    @Override
+    public void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
         updateAttachedRotor(world, pos, currentState, true);
     }
 
     @Nullable 
     private BlockPos updateAttachedRotor(Level world, BlockPos pos, BlockState state, boolean inc) {
+        Mechano.log("UPDAT????");
         if(world.getBlockEntity(getAttachedRotorPos(world, pos, state)) instanceof AbstractRotorBlockEntity arbe) {
+
+            Mechano.log("UPDATE ATTACHED");
 
             boolean attached = 
                 state.getValue(SimpleOrientedBlock.ORIENTATION).getOrient()

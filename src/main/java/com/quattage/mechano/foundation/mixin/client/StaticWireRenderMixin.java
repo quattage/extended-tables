@@ -34,7 +34,7 @@ public abstract class StaticWireRenderMixin {
 	}
 
     @Inject(method = "compile", at = @At(value = "INVOKE", target = "Ljava/util/Set;iterator()Ljava/util/Iterator;"))
-    public void injectEdgeRendering(float pX, float pY, float pZ, ChunkBufferBuilderPack buffer, CallbackInfoReturnable<?> cir) {
+    public void mechano_injectWireGeometry(float pX, float pY, float pZ, ChunkBufferBuilderPack buffer, CallbackInfoReturnable<?> cir) {
         GridClientCache.ofInstance().renderConnectionsInChunk(this$1, mechano$chunkRenderTypes, buffer, this$1.getOrigin());
 		this.mechano$chunkRenderTypes = null;
 	}

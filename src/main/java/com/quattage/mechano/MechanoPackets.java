@@ -5,6 +5,7 @@ import com.quattage.mechano.foundation.network.WattModeSyncS2CPacket;
 import com.quattage.mechano.foundation.network.GridPathViewMaskS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorStatRequestC2SPacket;
 import com.quattage.mechano.foundation.network.AnchorVertexDataSyncS2CPacket;
+import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftSpeedUpdateS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.network.GridEdgeUpdateSyncS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.network.GridPathUpdateSyncS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.network.GridVertUpdateSyncS2CPacket;
@@ -85,6 +86,13 @@ public class MechanoPackets {
             .encoder(GridPathViewMaskS2CPacket::toBytes)
             .consumerMainThread(GridPathViewMaskS2CPacket::handle)
             .add();
+
+        NETWORK.messageBuilder(SlipRingShaftSpeedUpdateS2CPacket.class, nextId(), NetworkDirection.PLAY_TO_CLIENT)
+            .decoder(SlipRingShaftSpeedUpdateS2CPacket::new)
+            .encoder(SlipRingShaftSpeedUpdateS2CPacket::toBytes)
+            .consumerMainThread(SlipRingShaftSpeedUpdateS2CPacket::handle)
+            .add();
+
 
 
         //C2S

@@ -5,6 +5,7 @@ import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
+import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlockEntity.SlipRingShaftStatus;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
@@ -29,7 +30,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -48,8 +48,8 @@ import java.util.function.Supplier;
 public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<SlipRingShaftBlockEntity>, BlockChangeListenable {
 
     private static RotatableHitboxShape<Direction> hitbox;
-
     public static final EnumProperty<CollectorBlockModelType> MODEL_TYPE = EnumProperty.create("model", CollectorBlockModelType.class);
+    private SlipRingShaftBlockEntity temporary = null;
 
     public SlipRingShaftBlock(Properties properties) {
         super(properties);
@@ -129,8 +129,8 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
 
     @Override
     public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
-        super.onPlace(state, world, pos, oldState, isMoving);
         updateRotorType(world, pos, state);
+        super.onPlace(state, world, pos, oldState, isMoving);
     }
 
     @Override
@@ -167,7 +167,7 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
 
     private void updateRotorType(Level world, BlockPos pos, BlockState state) {
         CollectorBlockModelType result = getRotoredType(world, pos, state);
-        if(result != state.getValue(MODEL_TYPE))
+        if(result != state.getValue(MODEL_TYPE)) 
             world.setBlock(pos, state.setValue(MODEL_TYPE, result), 3);
     }
 
@@ -176,8 +176,15 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
 
         ItemStack heldItem = player.getItemInHand(hand);
         if(heldItem == ItemStack.EMPTY && player.isShiftKeyDown()) {
-            boolean result = true; //       <----   TODO CHANGE PLACEHOLDER
-            if(result == true) {
+
+            boolean didChange = false;
+            if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe) {
+                SlipRingShaftStatus before = srbe.getStatus();
+                srbe.evaluateAlternatorStructure();
+                didChange = before != srbe.getStatus();
+            }
+
+            if(didChange) {
                 world.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 0.3f, 1);
                 world.playSound(null, pos, SoundEvents.BLAZE_HURT, SoundSource.BLOCKS, 0.1f, 3);
                 spawnParticles(world, ParticleTypes.END_ROD, pos, 10);
@@ -212,13 +219,20 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
     }
 
     @Override
-    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onBeforeBlockBroken(Level world, BlockPos pos, BlockState currentState, BlockState futureState) {
+        if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe)
+            temporary = srbe;
     }
 
     @Override
-    public void onBeforeBlockBroken(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {
-        if(world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe)
-            srbe.forgetAlternatorStructure(currentState.getValue(DirectionalKineticBlock.FACING));
+    public void onAfterBlockBroken(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {
+        if(temporary != null) temporary.forgetAlternatorStructure(currentState.getValue(DirectionalKineticBlock.FACING));
+    }
+
+    @Override
+    public void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        if(world.isClientSide() && world.getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe) 
+            srbe.evaluateAlternatorStructure();
     }
 
     @Override

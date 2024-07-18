@@ -29,8 +29,8 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(PlayerRenderer.class)
 public abstract class DynamicWireRenderMixin {
 
-    @Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = {@At(value = "TAIL")}, cancellable = true, remap = false)
-    public void renderWireThirdPerson(AbstractClientPlayer player, float yaw, float pTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight, CallbackInfo info) { 
+    @Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = {@At(value = "TAIL")}, cancellable = true)
+    public void mechano_renderWireThirdPerson(AbstractClientPlayer player, float yaw, float pTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight, CallbackInfo info) { 
         ItemStack spool = WireSpool.getHeldByPlayer(player);
         if(spool == null) return;
         CompoundTag spoolTag = spool.getOrCreateTag();

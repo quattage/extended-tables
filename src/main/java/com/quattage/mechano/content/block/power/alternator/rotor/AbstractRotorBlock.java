@@ -1,3 +1,4 @@
+
 package com.quattage.mechano.content.block.power.alternator.rotor;
 
 import java.util.Locale;
@@ -55,6 +56,16 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
         public String toString() {
             return getSerializedName();
         }
+        
+        public static RotorModelType getFrom(boolean hasFront, boolean hasRear) {
+            if(hasFront && hasRear)
+                return MIDDLE;
+            if(hasFront)
+                return END_A;
+            if(hasRear)
+                return END_B;
+            return SINGLE;
+        }
     }
 
     @Override
@@ -74,13 +85,13 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
 
         Direction facing = DirectionTransformer.getForward(state);
 
-        boolean hasRear = this.isRotor(world.getBlockState(pos.relative(facing)).getBlock());
-        boolean hasFront = this.isRotor(world.getBlockState(pos.relative(facing.getOpposite())).getBlock());
+        RotorModelType newType = RotorModelType.getFrom(
+            isRotor(world.getBlockState(pos.relative(facing)).getBlock()), 
+            isRotor(world.getBlockState(pos.relative(facing.getOpposite())).getBlock())
+        );
 
-        if(hasFront && hasRear) setModel(world, pos, state, RotorModelType.MIDDLE);
-        else if(hasFront) setModel(world, pos, state, RotorModelType.END_B);
-        else if(hasRear)setModel(world, pos, state, RotorModelType.END_A);
-        else setModel(world, pos, state, RotorModelType.SINGLE);
+        if(newType != state.getValue(MODEL_TYPE))
+            setModel(world, pos, state, newType);
     }
 
     private void setModel(Level world, BlockPos pos, BlockState state, RotorModelType bType) {
@@ -103,7 +114,9 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
     }
 
     @Override
-    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+
+
         if(world.getBlockEntity(pos) instanceof AbstractRotorBlockEntity thisArbe) {
 
             thisArbe.findConnectedStators(true);
@@ -139,9 +152,16 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
     }
 
     @Override
-    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
 
-        Direction dir = DirectionTransformer.toDirection(currentState.getValue(RotatedPillarKineticBlock.AXIS));
+        Direction dir;
+        try {
+            dir = DirectionTransformer.toDirection(pastState.getValue(RotatedPillarKineticBlock.AXIS));
+        } catch(IllegalArgumentException e) {
+            Mechano.LOGGER.warn("Encountered an error attepmpting to capture Level#setBlock: " + e);
+            return;
+        }
+
         SlipRingShaftBlockEntity positiveBE = findSlipRing(world, pos, dir);
         SlipRingShaftBlockEntity negativeBE = findSlipRing(world, pos, dir.getOpposite());
 
@@ -168,6 +188,8 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
         }
         return null;
     }
+
+    
 
     @Override
 	public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {

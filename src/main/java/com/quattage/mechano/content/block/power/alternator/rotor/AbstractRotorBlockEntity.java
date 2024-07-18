@@ -26,7 +26,6 @@ import net.minecraft.world.level.block.state.BlockState;
 public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
 
     private final ShapeGetter circle = ShapeGetter.ofShape(CircleGetter.class).withRadius(getStatorRadius()).build();
-
     private byte statorCount = 0;
 
     @Nullable
@@ -70,18 +69,18 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         super.write(nbt, clientPacket);
     }
 
-    protected void findConnectedStators(boolean notifyIfChanged) {
+    public void findConnectedStators(boolean notifyIfChanged) {
 
         final Set<BlockPos> visited = new HashSet<>();
 
         int oldCount = statorCount;
         statorCount = 0;
         circle.moveTo(getBlockPos()).setAxis(getBlockState().getValue(RotatedPillarBlock.AXIS)).evaluatePlacement(perimeterPos -> {
-            
+
             if(visited.contains(perimeterPos)) return null;
             BlockState perimeterState = getLevel().getBlockState(perimeterPos);
             if(perimeterState.getBlock() instanceof AbstractStatorBlock asb) {
-                if(asb.hasRotor(getLevel(), perimeterPos, perimeterState))
+                if(asb.hasRotor(getLevel(), perimeterPos, perimeterState)) 
                     statorCount++;
             }
 
@@ -204,8 +203,8 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         return super.addToGoggleTooltip(tooltip, isPlayerSneaking);
     }
 
-    public byte getStatorCount() {
-        return statorCount;
+    public int getStatorCount() {
+        return (int)statorCount;
     }
 
     public int getMultiplier() {
