@@ -2,6 +2,12 @@
 {
 
     "mechano.generic.unit.watts": "w",
+
+
+    "mechano.gui.connector.mode": "Connector Mode",
+    "mechano.gui.connector.mode.pull_in": "⯇",
+    "mechano.gui.connector.mode.push_out": "⯈",
+
     "mechano.gui.generic.consuming": "Consuming",
     "mechano.gui.generic.producing": "Producing",
 

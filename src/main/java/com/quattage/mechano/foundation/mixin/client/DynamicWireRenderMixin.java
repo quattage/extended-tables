@@ -9,10 +9,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;

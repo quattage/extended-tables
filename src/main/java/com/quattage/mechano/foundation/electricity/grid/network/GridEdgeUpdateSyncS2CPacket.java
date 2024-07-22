@@ -3,7 +3,7 @@ package com.quattage.mechano.foundation.electricity.grid.network;
 import java.util.function.Supplier;
 
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
 import com.quattage.mechano.foundation.network.Packetable;
 
 import net.minecraft.network.FriendlyByteBuf;

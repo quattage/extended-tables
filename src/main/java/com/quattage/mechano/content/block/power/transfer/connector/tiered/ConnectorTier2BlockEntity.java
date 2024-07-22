@@ -1,11 +1,11 @@
 package com.quattage.mechano.content.block.power.transfer.connector.tiered;
 
-import com.quattage.mechano.foundation.block.orientation.relative.Relative;
+import com.quattage.mechano.foundation.block.orientation.Relative;
 import com.quattage.mechano.foundation.electricity.WattBatteryHandlable;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.builder.AnchorBankBuilder;
-import com.quattage.mechano.foundation.electricity.builder.WattBatteryHandlerBuilder;
-import com.quattage.mechano.foundation.electricity.core.watt.WattStorable.OvervoltBehavior;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
+import com.quattage.mechano.foundation.electricity.watt.WattStorable.OvervoltBehavior;
+import com.quattage.mechano.foundation.helper.builder.AnchorBankBuilder;
+import com.quattage.mechano.foundation.helper.builder.WattBatteryHandlerBuilder;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;

@@ -14,15 +14,15 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.quattage.mechano.Mechano;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer;
 import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer.BakedModelHashKey;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
 import com.quattage.mechano.foundation.mixin.client.RenderChunkInvoker;
 import com.simibubi.create.foundation.utility.Pair;
 
@@ -41,6 +41,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -58,14 +59,14 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 public class GridClientCache {
 
     private final Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>> 
-        edgeCache = new Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>>();;
+        edgeCache = new Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>>();
 
     private final Object2ObjectOpenHashMap<GIDPair, GridClientEdge> 
-    newEdgeCache = new Object2ObjectOpenHashMap<GIDPair, GridClientEdge>();;
+    newEdgeCache = new Object2ObjectOpenHashMap<GIDPair, GridClientEdge>();
     
     // if this system ever becomes truly watertight, this will not be necessary
     private final Object2ObjectOpenHashMap<GIDPair, GID[]>
-        pathCache  = new Object2ObjectOpenHashMap<>();;
+        pathCache  = new Object2ObjectOpenHashMap<>();
 
     private final ClientLevel world;
 
@@ -228,6 +229,10 @@ public class GridClientCache {
         return edgeCache.containsKey(pos);
     }
 
+    public Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>> getEdgeCache() {
+        return edgeCache;
+    }
+
     public static void markChunksChanged(ClientLevel world, GridEdge edge) {
         markChunksChanged(world, edge.toLightweight());
     }
@@ -298,6 +303,16 @@ public class GridClientCache {
         }
 
         lastTime = time;
+    }
+
+    @SubscribeEvent
+    @SuppressWarnings("resource")
+    public static void onLeave(ClientPlayerNetworkEvent.LoggingOut event) {
+        Level world = Minecraft.getInstance().level;
+        if(world != null) {
+            GridClientCache.of(world).clearAll();
+            Mechano.LOGGER.info("Clearing all cached wire geometry");
+        }
     }
 
     public void clearAll() {

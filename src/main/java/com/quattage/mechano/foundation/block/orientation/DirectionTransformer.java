@@ -2,10 +2,13 @@ package com.quattage.mechano.foundation.block.orientation;
 
 import javax.annotation.Nullable;
 
+import org.joml.Vector3f;
+
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.CombinedOrientedBlock;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.VerticallyOrientedBlock;
+import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 import com.simibubi.create.foundation.utility.Pair;
@@ -30,6 +33,8 @@ import net.minecraft.world.level.block.state.properties.Property;
  * converting them to CombinedOrientations.
  */
 public class DirectionTransformer {
+
+    private static final Vec3i MIDDLE = new Vec3i(8, 8, 8);
     
     /***
      * Pulls the forwards facing direction from the given BlockState and returns it.
@@ -395,5 +400,18 @@ public class DirectionTransformer {
         if(dir == Direction.SOUTH) return true;
         if(dir == Direction.EAST) return true;
         return false;
+    }
+
+    public static Axis fromDisplacement(Vector3f offset) {
+
+
+        Vector3f disp = new Vector3f(Math.abs(0.5f - offset.x), Math.abs(0.5f - offset.y), Math.abs(0.5f - offset.z));
+    
+
+        float greatest = VectorHelper.getGreatest(disp);
+
+        if(greatest == disp.x) return Axis.X;
+        if(greatest == disp.y) return Axis.Y;
+        return Axis.Z;
     }
 }

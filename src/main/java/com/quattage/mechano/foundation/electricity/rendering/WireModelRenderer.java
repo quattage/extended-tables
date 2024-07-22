@@ -15,6 +15,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
@@ -328,6 +329,10 @@ public class WireModelRenderer {
         return deriveLightmap(world, VectorHelper.toBlockPos(from), VectorHelper.toBlockPos(to));
     }
 
+    public static int[] deriveLightmap(BlockAndTintGetter accessor, Vec3 from, Vec3 to) {
+        return deriveLightmap(accessor, VectorHelper.toBlockPos(from), VectorHelper.toBlockPos(to));
+    }
+
     public static int[] deriveLightmap(Level world, BlockPos from, BlockPos to) {
         int[] out = new int[4];
 
@@ -335,6 +340,17 @@ public class WireModelRenderer {
         out[1] = world.getBrightness(LightLayer.BLOCK, to);
         out[2] = world.getBrightness(LightLayer.SKY, from);
         out[3] = world.getBrightness(LightLayer.SKY, to);
+
+        return out;
+    }
+
+    public static int[] deriveLightmap(BlockAndTintGetter accessor, BlockPos from, BlockPos to) {
+        int[] out = new int[4];
+
+        out[0] = accessor.getBrightness(LightLayer.BLOCK, from);
+        out[1] = accessor.getBrightness(LightLayer.BLOCK, to);
+        out[2] = accessor.getBrightness(LightLayer.SKY, from);
+        out[3] = accessor.getBrightness(LightLayer.SKY, to);
 
         return out;
     }

@@ -6,8 +6,8 @@ import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
+import com.quattage.mechano.foundation.electricity.watt.WattSendSummary;
 import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
@@ -212,7 +212,7 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
     }
 
     @Override
-    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
     }
 
     @Override

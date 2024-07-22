@@ -12,10 +12,10 @@ import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;

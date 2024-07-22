@@ -54,7 +54,7 @@ public interface BlockChangeListenable {
      * @param pastState BlockState containing what was present before this block was placed (9/10 times, this will contain the implementing block)
      * @param currentState BlockState of what is present at the time of the invocation. (What the block was replaced with - If the player breaks it, this will be air)
      */
-    default void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {};
+    default void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {};
 
     /**
      * Called by both the logical client and server whenever this block is placed.
@@ -67,5 +67,5 @@ public interface BlockChangeListenable {
      * @param pastState BlockState containing what was present before this block was placed (Usually this would just contain air)
      * @param currentState BlockState of what is present at the time of the invocation. (What the block was replaced with - 9/10 times, this will contain the implementing block)
      */
-    default void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {};
+    default void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {};
 }

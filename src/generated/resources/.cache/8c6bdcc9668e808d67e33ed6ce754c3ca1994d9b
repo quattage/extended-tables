@@ -1,4 +1,4 @@
-// 1.20.1	2024-07-15T12:08:11.9171713	Registrate Provider for mechano [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
+// 1.20.1	2024-07-19T20:34:35.8364194	Registrate Provider for mechano [Recipes, Advancements, Loot Tables, Tags (blocks), Tags (items), Tags (fluids), Tags (entity_types), Blockstates, Item models, Lang (en_us/en_ud)]
 36d58ef389ec7fc88bb0130fc30fb0fca0e24913 assets/mechano/blockstates/big_rotor.json
 faed7284078bd4637397b90dd711bdef181152aa assets/mechano/blockstates/big_rotor_dummy.json
 e9949528359a2c89400103aef3696b5fc70f7e1d assets/mechano/blockstates/big_stator.json
@@ -8,8 +8,8 @@ aa05c0bf0c2598d2334d112f71564b238f236558 assets/mechano/blockstates/connector_ti
 9fc6c24297aa920762ec74b4437f61e3a315e96c assets/mechano/blockstates/slip_ring_shaft.json
 c7f812ba7399409254b15135d86283a946c8369b assets/mechano/blockstates/small_rotor.json
 28c960ae2cb3263807e927e3d08d86de6dd33429 assets/mechano/blockstates/small_stator.json
-480e4291291216ea01aeba383b06ff3f8904d2d3 assets/mechano/lang/en_ud.json
-b33268c7eceecb0db4c71093fa42a79a777e1deb assets/mechano/lang/en_us.json
+23c55a0c4ff79955db20454d1a486fef83119fdf assets/mechano/lang/en_ud.json
+7a46d38a9fd6eb9d51bf55ac28194344c41b50d5 assets/mechano/lang/en_us.json
 1a3bcd28a77299029ffdefa180564a49683695b6 assets/mechano/models/item/big_rotor.json
 4c7bd224163908944a5cb2675470da6a7fb2c08e assets/mechano/models/item/big_stator.json
 5a76ccb4835b4e939685c5735f5565778a0091ba assets/mechano/models/item/connector_tier_one.json

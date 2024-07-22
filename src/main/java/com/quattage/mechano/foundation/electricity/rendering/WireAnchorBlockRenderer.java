@@ -3,17 +3,25 @@ package com.quattage.mechano.foundation.electricity.rendering;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.quattage.mechano.MechanoRenderTypes;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
+import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
+import com.quattage.mechano.foundation.electricity.WattBatteryHandlable.ExternalInteractMode;
+import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity.ChevronTransform;
+import com.quattage.mechano.foundation.helper.VectorHelper;
+import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBuffer;
 import com.simibubi.create.foundation.utility.Pair;
 
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoClient;
 
 import net.minecraft.client.Minecraft;
@@ -21,6 +29,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -57,11 +67,13 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
 
         if(cache == null) cache = GridClientCache.ofInstance();
         else drawWigglyWires(be, partialTicks, cache, matrixStack, bufferSource);
+
+        drawChevron(be, partialTicks, matrixStack, bufferSource);
     }
 
     @Override
     public boolean shouldRenderOffScreen(T be) {
-        return false;
+        return true;
     }
 
     private void drawWigglyWires(T be, float pTicks, GridClientCache cache, PoseStack matrixStack, MultiBufferSource bufferSource) {
@@ -178,6 +190,88 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
         if(pair.getSecond() == null) return false;
         return true;
     }
+
+    private void drawChevron(T be, float pTicks, PoseStack matrixStack, MultiBufferSource bufferSource) {
+
+        // TODO store this BE side so it doesn't have to be called constantly
+        if(!be.getWattBatteryHandler().getInteractionStatus().isInteracting()) return;
+
+        CombinedOrientation orient = DirectionTransformer.extract(be.getBlockState());
+        SuperByteBuffer headBufferA = CachedBufferer.partial(MechanoClient.PART_CHEV_OVERLAY, be.getBlockState());
+        SuperByteBuffer headBufferB = CachedBufferer.partial(MechanoClient.PART_CHEV_OVERLAY_INV, be.getBlockState());
+        VertexConsumer buffer = bufferSource.getBuffer(RenderType.cutout());
+
+        ChevronTransform[] chevrons = be.getChevronLocations();
+
+        float scalar = Mth.lerp(pTicks, be.getPrevRotation(), be.getNextRotation());
+    
+        float progress = be.getWattBatteryHandler().getMode() == 
+            ExternalInteractMode.PUSH_OUT ? (float)easeInElastic(scalar) * 2 : (float)easeOutElastic(scalar) * 2;
+
+        for(int x = 0; x < chevrons.length; x++) {
+            ChevronTransform transform = chevrons[x];
+            Vector3f scaledOffset = VectorHelper.rotate(transform.getOffset(), orient);
+            Direction rotationAxis = getRotationAxis(transform, orient);
+
+            if(arbitrary(transform.getDefault(), orient)) {
+                headBufferB
+                    .translate(scaledOffset)
+                    .rotate(rotationAxis, (float) (Math.PI / 2 * progress))
+                    .rotateToFace(orient.getLocalUp())
+                    .renderInto(matrixStack, buffer);
+            } else {
+                headBufferA
+                    .translate(scaledOffset)
+                    .rotate(rotationAxis, (float) (Math.PI / 2 * progress))
+                    .rotateToFace(orient.getLocalUp())
+                    .renderInto(matrixStack, buffer);
+            }
+        }
+    }
+
+    private double easeOutElastic(float x) {
+        double c4 = (2 * Math.PI) / 3;
+        return x == 0 ? 0 : x == 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
+    }
+
+
+    private double easeInElastic(float x) {
+        double c4 = (2 * Math.PI) / 3;
+        return x == 0 ? 0 : x == 1 ? 1 : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * c4);
+    }
+
+
+    // this is stupid but i hate matrix math and im tired
+    private static boolean arbitrary(Direction a, CombinedOrientation b) {
+        Direction dir = b.getLocalUp();
+        Direction fac = b.getLocalForward();
+        boolean out = dir.getAxis() == Axis.Y ? a.getAxis() == Axis.Z : a.getAxis() == Axis.X;
+        boolean out2 = fac.getAxis() != Axis.Z ? !out : out;
+        return dir.getAxis() == Axis.Z && fac.getAxis() == Axis.X ? !out2 : out2;
+    }
+
+    
+    public Direction getRotationAxis(ChevronTransform transform, CombinedOrientation orient) {
+
+        if(transform.getDefault() != Direction.EAST) 
+            return transform.getRotated(orient);
+
+        if(orient == CombinedOrientation.UP_SOUTH)
+            return Direction.WEST;
+        if(orient == CombinedOrientation.UP_WEST)
+            return Direction.NORTH;
+        if(orient == CombinedOrientation.DOWN_WEST)
+            return Direction.SOUTH;
+        if(orient == CombinedOrientation.NORTH_DOWN)
+            return Direction.EAST;
+        if(orient == CombinedOrientation.SOUTH_DOWN)
+            return Direction.WEST;
+        if(orient == CombinedOrientation.WEST_DOWN)
+            return Direction.NORTH;
+        
+        return transform.getRotated(orient);
+    }
+
 
     public static void resetOldPos(Player player, AnchorPoint anchor) {
         oldToPos = player.getOnPos().getCenter().lerp(anchor.getPos(), 0.5);

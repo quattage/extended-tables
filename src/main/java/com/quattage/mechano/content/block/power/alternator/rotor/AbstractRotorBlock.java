@@ -103,7 +103,7 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
     }
 
     @Override
-    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
         if(world.getBlockEntity(pos) instanceof AbstractRotorBlockEntity thisArbe) {
 
             thisArbe.findConnectedStators(true);
@@ -139,7 +139,7 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
     }
 
     @Override
-    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
 
         Direction dir = DirectionTransformer.toDirection(currentState.getValue(RotatedPillarKineticBlock.AXIS));
         SlipRingShaftBlockEntity positiveBE = findSlipRing(world, pos, dir);

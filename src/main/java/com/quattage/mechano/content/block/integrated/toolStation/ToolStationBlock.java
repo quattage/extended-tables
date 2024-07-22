@@ -85,7 +85,6 @@ public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<
                     level.setBlock(otherpos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                     if (!state.hasBlockEntity())
                         return;
-                    withBlockEntityDo(level, pos, te -> te.spawnOpposingBreakParticles(otherpos));
                 }
             }
             else {
@@ -95,7 +94,6 @@ public class ToolStationBlock extends HorizontalDirectionalBlock implements IBE<
                     level.setBlock(otherpos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                     if (!state.hasBlockEntity())
                         return;
-                    withBlockEntityDo(level, pos, te -> te.spawnOpposingBreakParticles(otherpos));
                 }
             }
         }

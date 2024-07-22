@@ -1,24 +1,29 @@
+
 package com.quattage.mechano.content.block.power.transfer.connector.tiered;
 
 import java.util.Locale;
 
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoSettings;
+import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.SimpleOrientedBlock;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
-import com.quattage.mechano.foundation.electricity.core.EBEWrenchable;
-import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable;
+import com.quattage.mechano.foundation.electricity.watt.DirectionalWattProvidable;
+import com.quattage.mechano.foundation.electricity.EBEWrenchable;
+import com.quattage.mechano.foundation.electricity.WattBatteryHandlable;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.simibubi.create.AllBlocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -27,12 +32,13 @@ import net.minecraft.world.level.block.SupportType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public abstract class AbstractConnectorBlock extends SimpleOrientedBlock implements EBEWrenchable {
+public abstract class AbstractConnectorBlock extends SimpleOrientedBlock implements EBEWrenchable, BlockChangeListenable {
 
     private static final VoxelShape ROOTX = Block.box(0, 7, 7, 10, 9, 9);
     private static final VoxelShape ROOTY = Block.box(7, 7, 0, 9, 9, 10);
@@ -178,10 +184,8 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
     }
 
     @Override
-    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-        InteractionResult result = super.onWrenched(state, context);
-        syncEBE(context.getLevel(), context.getClickedPos());
-        return result;
+    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        return WattBatteryHandlable.cycleModeOnRightClick(world, player, pos);
     }
 
     @Override
@@ -195,5 +199,8 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
         return new ItemStack(MechanoBlocks.CONNECTOR_T0.get());
     }
 
-    
+    @Override
+    public void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        WattBatteryHandlable.setDefaultMode(world, pos);
+    }
 }

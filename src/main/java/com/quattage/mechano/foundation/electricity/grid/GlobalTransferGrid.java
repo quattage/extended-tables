@@ -6,14 +6,13 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.quattage.mechano.Mechano;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
-import com.quattage.mechano.foundation.electricity.core.anchor.interaction.AnchorInteractType;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.network.GridSyncHelper;
 import com.quattage.mechano.foundation.electricity.grid.network.GridSyncPacketType;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.core.BlockPos;
@@ -99,17 +98,17 @@ public class GlobalTransferGrid {
      * @param idA
      * @param idB
      */
-    public AnchorInteractType link(Entity linker, GID idA, GID idB, int typeID) {
+    public LinkResult link(Entity linker, GID idA, GID idB, int typeID) {
         Pair<Integer, LocalTransferGrid> sysA = getSystemContaining(idA);
         Pair<Integer, LocalTransferGrid> sysB = getSystemContaining(idB);
 
-        if(idA.equals(idB)) return AnchorInteractType.GENERIC;
+        if(idA.equals(idB)) return LinkResult.GENERIC;
         //if(getLinkBetween(idA, idB) != null) return AnchorInteractType.LINK_EXISTS;
 
         BlockEntity beA = world.getBlockEntity(idA.getBlockPos());
-        if(!(beA instanceof WireAnchorBlockEntity wbeA)) return AnchorInteractType.GENERIC;
+        if(!(beA instanceof WireAnchorBlockEntity wbeA)) return LinkResult.GENERIC;
         BlockEntity beB = world.getBlockEntity(idB.getBlockPos());
-        if(!(beB instanceof WireAnchorBlockEntity wbeB)) return AnchorInteractType.GENERIC;
+        if(!(beB instanceof WireAnchorBlockEntity wbeB)) return LinkResult.GENERIC;
 
         if(sysA == null && sysB == null) {
             LocalTransferGrid newSystem = new LocalTransferGrid(this);
@@ -133,7 +132,7 @@ public class GlobalTransferGrid {
 
         } else if(sysA.getFirst() == sysB.getFirst()) {
             if(!sysA.getSecond().linkVerts(idA, idB, typeID, true))
-                return AnchorInteractType.LINK_EXISTS;
+                return LinkResult.ALREADY_EXISTS;
 
         } else if(sysA.getFirst() != sysB.getFirst()) {
 
@@ -149,7 +148,7 @@ public class GlobalTransferGrid {
         String entity = linker instanceof Player p ? p.getName().getString() : linker.toString();
         Mechano.LOGGER.info("Link (" + idA + " -> " + idB + ") established by player '" + entity + "'' in GlobalTransferGrid(" + getDimensionName() + ")");
         GridSyncHelper.informPlayerEdgeUpdate(GridSyncPacketType.ADD_NEW, new GridClientEdge(idA, idB, typeID));
-        return AnchorInteractType.LINK_ADDED;
+        return LinkResult.SUCCESS;
     }
 
     /***

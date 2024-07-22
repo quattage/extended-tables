@@ -2,8 +2,8 @@ package com.quattage.mechano.foundation.network;
 
 import java.util.function.Supplier;
 
-import com.quattage.mechano.foundation.electricity.ElectricBlockEntity;
 import com.quattage.mechano.foundation.electricity.grid.network.GridSyncHelper;
+import com.quattage.mechano.foundation.electricity.impl.ElectricBlockEntity;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;

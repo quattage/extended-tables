@@ -22,11 +22,11 @@ import java.util.function.Supplier;
 
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.content.item.DebugButter;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 import com.quattage.mechano.foundation.network.GridPathViewMaskS2CPacket;
 import com.simibubi.create.CreateClient;

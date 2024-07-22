@@ -2,9 +2,9 @@ package com.quattage.mechano.foundation.network;
 
 import java.util.function.Supplier;
 
-import com.quattage.mechano.foundation.electricity.ElectricBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.ExternalInteractMode;
-import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
+import com.quattage.mechano.foundation.electricity.WattBatteryHandlable.ExternalInteractMode;
+import com.quattage.mechano.foundation.electricity.impl.ElectricBlockEntity;
+import com.quattage.mechano.foundation.electricity.watt.WattStorable;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;

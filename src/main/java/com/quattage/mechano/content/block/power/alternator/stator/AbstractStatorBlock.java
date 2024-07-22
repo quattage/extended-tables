@@ -222,12 +222,12 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
 	}
 
     @Override
-    public void onBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
         updateAttachedRotor(world, pos, currentState, false);
     }
 
     @Override
-    public void onBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+    public void onAfterBlockPlaced(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
         updateAttachedRotor(world, pos, currentState, true);
     }
 

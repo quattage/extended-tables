@@ -20,9 +20,9 @@ public abstract class BlockUpdateMixin {
     private void onSetBlock(BlockPos pPos, BlockState pNewState, int pFlags, int pRecursionLeft, CallbackInfoReturnable<Boolean> cir, @Local(ordinal = 0) BlockState arg1, @Local(ordinal = 1) BlockState arg2) {
         if(arg2.getBlock() != arg1.getBlock()) {
             if(arg2.getBlock() instanceof BlockChangeListenable bcl)
-                bcl.onBlockBroken((Level)(Object)this, pPos, arg1, arg2); 
+                bcl.onAfterBlockBroken((Level)(Object)this, pPos, arg1, arg2); 
             if(arg1.getBlock() instanceof BlockChangeListenable bcl2)
-                bcl2.onBlockPlaced((Level)(Object)this, pPos, arg2, arg1); 
+                bcl2.onAfterBlockPlaced((Level)(Object)this, pPos, arg2, arg1); 
         }
     }
 }

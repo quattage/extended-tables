@@ -2,15 +2,13 @@ package com.quattage.mechano.content.block.power.alternator.slipRingShaft;
 
 import static com.quattage.mechano.Mechano.lang;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
-import com.quattage.mechano.content.block.power.transfer.connector.tiered.AbstractConnectorBlock;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.WattBatteryHandler;
-import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnitConversions;
+import com.quattage.mechano.foundation.electricity.watt.WattSendSummary;
+import com.quattage.mechano.foundation.electricity.watt.unit.WattUnit;
+import com.quattage.mechano.foundation.electricity.watt.unit.WattUnitConversions;
 import com.quattage.mechano.foundation.helper.NullSortedArray;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate.StressImpact;
@@ -106,8 +104,13 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
         if(energyProduced.getWatts() < 8)
             energyProduced = WattUnit.EMPTY;
 
-        if(canControl() && (!getLevel().isClientSide()))
-            WattBatteryHandler.awardWattsTo(energyProduced, sends);
+        if(canControl() && (!getLevel().isClientSide())) {
+            if(!sends.isEmpty())
+                WattBatteryHandler.awardWattsTo(energyProduced, sends);
+        }
+
+        super.tick();
+
     }
 
     @Override

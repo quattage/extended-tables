@@ -6,9 +6,9 @@ import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.quattage.mechano.MechanoClient;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorEntry;
+import com.quattage.mechano.foundation.block.anchor.AnchorEntry;
+import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
 import com.simibubi.create.content.equipment.goggles.GogglesItem;
 import com.simibubi.create.foundation.gui.RemovedGuiUtils;
 import com.simibubi.create.foundation.gui.Theme;

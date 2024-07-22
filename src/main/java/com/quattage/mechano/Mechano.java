@@ -45,7 +45,9 @@ public class Mechano {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
+        MechanoSounds.add();
         REGISTRATE.registerEventListeners(modBus);
+
         CAPABILITIES.registerTo(forgeBus);
         MechanoSettings.init(modBus);
         MechanoBlocks.register(modBus);
@@ -53,7 +55,6 @@ public class Mechano {
         MechanoBlockEntities.register(modBus);
         
         MechanoRecipes.register(modBus);
-        MechanoSounds.register(modBus);
         MechanoGroups.register(modBus);
         MechanoMenus.register(modBus);
         GlobalTransferGridDispatcher.initTasks();

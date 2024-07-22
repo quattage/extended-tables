@@ -1,27 +1,27 @@
 package com.quattage.mechano;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import com.simibubi.create.AllSoundEvents;
+import com.simibubi.create.AllSoundEvents.SoundEntry;
+
+import net.minecraft.sounds.SoundSource;
 
 public class MechanoSounds {
-    public static final DeferredRegister<SoundEvent> SOUNDS =
-        DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Mechano.MOD_ID);
-    
-    public static final RegistryObject<SoundEvent>
-        CABLE_CREATE = create("cable_create");
 
-    
+    public static final SoundEntry
+        CABLE_CREATE = AllSoundEvents.create(Mechano.asResource("cable_create"))
+            .category(SoundSource.BLOCKS)
+            .build(),
+        CONNECTOR_CLICK_UP = AllSoundEvents.create(Mechano.asResource("connector_click_up"))
+            .category(SoundSource.BLOCKS)
+            .build(),
+        CONNECTOR_CLICK_DOWN = AllSoundEvents.create(Mechano.asResource("connector_click_down"))
+            .category(SoundSource.BLOCKS)
+            .build();
 
-    private static RegistryObject<SoundEvent> create(String name) {
-        ResourceLocation id = Mechano.asResource(name);
-        return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(id));
+
+
+    public static void add() {
+        
     }
 
-    public static void register(IEventBus event) {
-        SOUNDS.register(event);
-    }
 }
