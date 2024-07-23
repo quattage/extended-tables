@@ -8,6 +8,7 @@ import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
 import net.minecraft.core.BlockPos;
 
 public class WattSendSummary {
+
     final WattBatteryHandler<?> destination;
     final BlockPos sourcePos;
     final BlockPos destinationPos;

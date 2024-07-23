@@ -16,5 +16,11 @@
         "sounds": [
             "mechano:connector_click_down"
         ]
+    },
+    "connector_click_deny": {
+        "subtitle": "sounds.mechano.connector_click",
+        "sounds": [
+            "mechano:connector_click_deny"
+        ]
     }
 }

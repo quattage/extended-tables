@@ -1,5 +1,6 @@
 package com.quattage.mechano.foundation.electricity;
 
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.block.orientation.CombinedOrientation;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
@@ -17,6 +18,7 @@ import com.quattage.mechano.foundation.network.WattModeSyncS2CPacket;
 import com.quattage.mechano.foundation.network.WattSyncS2CPacket;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
@@ -107,7 +109,7 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
         // TODO build this list with neighbor updates rather than every tick
         final List<OptionalWattOrFE> adjacents = new ArrayList<>();
         for(PowerJunction inter : interactions) {
-            OptionalWattOrFE opt = DirectionalWattProvidable.getFEOrWattsAt(target, inter.getDirection());
+            OptionalWattOrFE opt = inter.getConnectedCapability(target);
             if(opt.isPresent()) adjacents.add(opt);
         }
 
@@ -121,13 +123,14 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
      */
     public void distributeEnergyTo(final List<OptionalWattOrFE> batteries) {
 
-        if(batteries.isEmpty()) return;
+        if(batteries == null || batteries.isEmpty()) return;
 
         float totalDemand = 0;
         final float[] demands = new float[batteries.size()];
 
         for(int x = 0; x < batteries.size(); x++) {
             OptionalWattOrFE acceptorOpt = batteries.get(x);
+
             if(acceptorOpt.getFECap() != null) {
                 demands[x] = WattUnitConversions.toWattsSimple(acceptorOpt.getFECap().receiveEnergy(Integer.MAX_VALUE, true));
                 totalDemand = Math.min(totalDemand + demands[x], Float.MAX_VALUE);
@@ -138,13 +141,14 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
         }
 
         if(totalDemand == 0) return;
-        // Gets the total power to distribute by pretending that all batteries are one big battery 
         final float wattsToDistribute = Math.min(Math.min(battery.getMaxDischarge(), battery.getStoredWatts()), totalDemand);
 
         for(int x = 0; x < batteries.size(); x++) {
 
             if(demands[x] <= 0) continue;
             OptionalWattOrFE acceptorOpt = batteries.get(x);
+
+            Mechano.log("distributing " + demands[x] + " to " + acceptorOpt.getBlockPos());
 
             // Watts added to this iteration's energy store are multiplied by the distribution ratio
             float wattsToAccept = wattsToDistribute * ((float)demands[x] / totalDemand);
@@ -164,7 +168,7 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
     /**
      * Emits energy (specifically in this case, only Watts) to the destination handlers contained within a list
      * of {@link WattSendSummary} objects. Used to send energy across traversed paths.
-     * Prioritizes even distribution of energy to all destinations evenly whenever possible
+     * Prioritizes even distribution of energy to all destinations whenever possible
      * @param sends List of <code>WattSendSummary</code> objects containing paths to send across.
      */
     public synchronized void distributeWattsTo(final List<WattSendSummary> sends) {
@@ -185,7 +189,6 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
         }
 
         if(totalDemand == 0) return;
-        // Gets the total power to distribute by pretending that all batteries are one big battery 
         final float wattsToDistribute = Math.min(Math.min(battery.getMaxDischarge(), battery.getStoredWatts()), totalDemand);
 
         x = 0;
@@ -214,9 +217,10 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
      * Awards "free" Watts to the specified destination handlers. <p>
      * In this case, by "free" we're simply refering to an arbitrary amount of watts.
      * These watts do not have to be extracted from any pre-existing energy store in order
-     * to be properly sent.
-     * <p>
-     * Prioritizes even distribution of energy to all destinations evenly whenever possible
+     * to be properly sent. Energy sources (such as generators) can use this to effectively generate
+     * power. An array of WattSendSummary objects should be kept up-to-date throughout the lifespan of 
+     * the implementing BlockEntity. Prioritizes even distribution of energy to all destinations whenever possible.
+     * 
      * @param sends List of <code>WattSendSummary</code> objects containing paths to send across.
      */
     public static synchronized void awardWattsTo(final WattUnit wattsToAward, final NullSortedArray<WattSendSummary> sends) {
@@ -279,8 +283,8 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
     public void loadAndUpdate(BlockState state) {
         reflectStateChange(state);
         energyHandler = LazyOptional.of(() -> battery);
-        if(!canChangeMode && mode != ExternalInteractMode.NONE)
-            forceMode(mode);
+        if(!getWorld().isClientSide()) 
+            MechanoPackets.sendToAllClients(new WattModeSyncS2CPacket(target.getBlockPos(), mode));
     }
 
     /**
@@ -366,12 +370,12 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
 
         ExternalInteractMode oldMode = mode;
         if(!getInteractionStatus().isInteracting()) 
-            setMode(ExternalInteractMode.NONE);
+            setMode(ExternalInteractMode.NONE, false);
         else {
             if(mode == ExternalInteractMode.PULL_IN)
-                setMode(ExternalInteractMode.PUSH_OUT);
+                setMode(ExternalInteractMode.PUSH_OUT, false);
             else if(mode == ExternalInteractMode.PUSH_OUT)
-                setMode(ExternalInteractMode.PULL_IN);
+                setMode(ExternalInteractMode.PULL_IN, false);
         }
 
         if(oldMode != mode) {
@@ -380,36 +384,27 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
                     mode.playSound(target.getLevel(), target.getBlockPos());
             }
             return true;
-        }
+        } else if(oldMode.canInteract())
+            ExternalInteractMode.NONE.playSound(target.getLevel(), target.getBlockPos());
 
         return false;
-    }
-
-
-    /**
-     * Sets the ExternalInteractMode of this WattBatteryHandler
-     * and locks it, so it cannot be changed later.
-     */
-    public void forceMode(ExternalInteractMode mode) {
-        canChangeMode = true;
-        setMode(mode);
-        canChangeMode = false;
     }
 
     /**
      * Sets the mode of this WattBatteryHandler, which determines its ability to interact with
      * external energy producers/consumers.
      * @param mode Mode to set
-     */ void setMode(ExternalInteractMode mode) {
+     * @param force if <code>TRUE,</code> the mode will be locked once it's been set by this call
+     */ void setMode(ExternalInteractMode mode, boolean force) {
 
-        if(canChangeMode && this.mode != mode) {
+        if(force || canChangeMode && this.mode != mode) {
             this.mode = mode;
+            this.canChangeMode = !force;
             if(!(target instanceof WireAnchorBlockEntity wbe)) return;
             wbe.getAnchorBank().sync(target.getLevel());
             wbe.setChanged();
+            MechanoPackets.sendToAllClients(new WattModeSyncS2CPacket(target.getBlockPos(), mode));
         }
-
-        MechanoPackets.sendToAllClients(new WattModeSyncS2CPacket(target.getBlockPos(), mode));
     }
 
     /**
@@ -420,15 +415,14 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
      */
     public void setMode(ExternalInteractStatus status) {
 
-        if(canChangeMode && this.mode != status.toCoorespondingMode()) {
+        if(status.isLocked() || canChangeMode && this.mode != status.toCoorespondingMode()) {
             this.mode = status.toCoorespondingMode();
+            this.canChangeMode = !status.isLocked();
             if(!(target instanceof WireAnchorBlockEntity wbe)) return;
             wbe.getAnchorBank().sync(target.getLevel());
             wbe.setChanged();
+            MechanoPackets.sendToAllClients(new WattModeSyncS2CPacket(target.getBlockPos(), mode));
         }
-
-        MechanoPackets.sendToAllClients(new WattModeSyncS2CPacket(target.getBlockPos(), mode));
-        if(status.isLocked()) canChangeMode = false;
     }
 
     /**
@@ -438,6 +432,7 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
      * @param mode
      */
     public void setModeAsClient(ExternalInteractMode mode) {
+        target.onAwaitingModeChange();
         this.mode = mode;
     }
 

@@ -211,11 +211,18 @@ public abstract class WireAnchorBlockEntity extends ElectricBlockEntity {
     }
 
     public void resetChevronRotation() {
+        float mod = 0;
+        if(!battery.canChangeMode) mod = 0.2f;
         if(battery.getMode() == ExternalInteractMode.PULL_IN)
-            currentArrowRot = 1;
+            currentArrowRot = 0 + mod;
         else if(battery.getMode() == ExternalInteractMode.PUSH_OUT)
-            currentArrowRot = 0;
+            currentArrowRot = 1 - mod;
         prevArrowRot = currentArrowRot;
+    }
+
+    @Override
+    public void onAwaitingModeChange() {
+        resetChevronRotation();
     }
 
     public boolean hasRotation() {

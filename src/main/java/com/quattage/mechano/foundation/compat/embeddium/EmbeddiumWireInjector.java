@@ -21,8 +21,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -41,13 +39,12 @@ public class EmbeddiumWireInjector {
     @SubscribeEvent
     public static void onEmbeddiumMeshInject(ChunkMeshEvent event) {
 
-        // this bit of code here ensures that this event doesn't damage the integrity of Embeddium's optimization measures, 
-        // since Embeddium skips empty sections unless they have an appender present. (TODO <-- I THINK, BUT I MIGHT BE WRONG AND IM NOT ENTURELY SURE THIS IS NECESSARY IN THIS CONTEXT)
+
         if(event.getWorld() == null) return;
-        LevelChunk chunk = event.getWorld().getChunk(event.getSectionOrigin().x(), event.getSectionOrigin().z());
-        LevelChunkSection verticalSlice = chunk.getSection(chunk.getSectionIndexFromSectionY(event.getSectionOrigin().y()));
-        if(verticalSlice == null || verticalSlice.hasOnlyAir()) return;
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        SectionPos s = event.getSectionOrigin();
+        // LevelChunk verticalSlice = event.getWorld().getChunk(s.x(), s.z());
+        // LevelChunkSection chunkSection = verticalSlice.getSection(verticalSlice.getSectionIndexFromSectionY(event.getSectionOrigin().y()));
+        // if(chunkSection == null || chunkSection.hasOnlyAir()) return;
         
         final GridClientCache wires = GridClientCache.of(event.getWorld());
         List<GridClientEdge> edges = wires.getEdgeCache().get(event.getSectionOrigin());
@@ -56,7 +53,6 @@ public class EmbeddiumWireInjector {
 
         event.addMeshAppender(context -> {
 
-            SectionPos s = context.sectionOrigin();
             BlockAndTintGetter accessor = context.blockRenderView();
             VertexConsumer builder = context.vertexConsumerProvider().apply(RenderType.cutout());
 

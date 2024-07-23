@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -36,7 +35,7 @@ import net.minecraft.world.level.Level;
  * For clarification: 
  *    - GridVertex -> Connector, or a wire source/destination
  *    - GridEdge -> The wire itself
- *    - GridPath -> A chain of wires connecting a power source to a power consumer
+ *    - GridPath -> A chain of wires connecting a power creator to a power consumer
  * <p>
  * This object stores GridVertex objects in a Map. This structure defines a 
  * (sort of) simple implementation of an undirected graph defined by a hashed adjacency list.

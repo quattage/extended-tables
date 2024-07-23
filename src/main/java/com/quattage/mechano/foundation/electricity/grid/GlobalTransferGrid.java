@@ -1,3 +1,4 @@
+
 package com.quattage.mechano.foundation.electricity.grid;
 
 import java.util.ArrayList;

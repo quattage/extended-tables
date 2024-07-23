@@ -163,9 +163,12 @@ public interface DirectionalWattProvidable {
         }
 
         public String toString() {
-            if(isFE()) return "FE: [" + feBattery.getEnergyStored() + " / " + feBattery.getMaxEnergyStored() + "]";
-            if(isWatt()) return "Watts: [" + wattBattery.getStoredWatts() + " / " + wattBattery.getCapacity() + "]";
-            return "NO FE/WATT CAP";
+
+            String target = targetBE == null ? "No target" : targetBE.getClass().getSimpleName();
+
+            if(isFE()) return "FE: [" + feBattery.getEnergyStored() + " / " + feBattery.getMaxEnergyStored() + "] -> " + target;
+            if(isWatt()) return "Watts: [" + wattBattery.getStoredWatts() + " / " + wattBattery.getCapacity() + "] -> " + target;
+            return "No energy capabilities";
         }
     }
 }

@@ -16,6 +16,9 @@ public class MechanoSounds {
             .build(),
         CONNECTOR_CLICK_DOWN = AllSoundEvents.create(Mechano.asResource("connector_click_down"))
             .category(SoundSource.BLOCKS)
+            .build(),
+        CONNECTOR_CLICK_DENY = AllSoundEvents.create(Mechano.asResource("connector_click_deny"))
+            .category(SoundSource.BLOCKS)
             .build();
 
 

@@ -6,6 +6,7 @@ import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.WattBatteryHandler;
+import com.quattage.mechano.foundation.electricity.watt.AnonymousWattProducable;
 import com.quattage.mechano.foundation.electricity.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.watt.unit.WattUnitConversions;
@@ -31,7 +32,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-public class SlipRingShaftBlockEntity extends KineticBlockEntity {
+public class SlipRingShaftBlockEntity extends KineticBlockEntity implements AnonymousWattProducable {
 
     private SlipRingShaftStatus status = SlipRingShaftStatus.NONE;
 
@@ -285,24 +286,18 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
 
         if(!this.status.canControl && opposingPos != null && getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
             if(srbe.isBuilt) {
-                if(!isPlayerSneaking)
-                    return buildStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, this.status);
-                else return buildPredictedStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true);
+                return buildStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true);
             } else { 
-                if(!isPlayerSneaking)
-                    return buildAssemblyChecklistTooltip(tooltip, srbe.length, srbe.potentialPowerScore, srbe.currentPowerScore, this.status);
-                else return buildPredictedStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, false);
+                if(!isPlayerSneaking) return buildAssemblyChecklistTooltip(tooltip, srbe.length, srbe.potentialPowerScore, srbe.currentPowerScore, this.status);
+                else return buildStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, false);
             }
         }
 
         if(isBuilt) {
-            if(!isPlayerSneaking)
-                return buildStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, status);
-                else return buildPredictedStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true);
+            return buildStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true);
         } else { 
-            if(!isPlayerSneaking)
-            return buildAssemblyChecklistTooltip(tooltip, length, currentPowerScore, potentialPowerScore, status);
-            else return buildPredictedStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, false);
+            if(!isPlayerSneaking) return buildAssemblyChecklistTooltip(tooltip, length, currentPowerScore, potentialPowerScore, status);
+            else return buildStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, false);
         }
     }
 
@@ -334,7 +329,7 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
         return true;
     }
 
-    private boolean buildPredictedStatsTooltip(List<Component> tooltip, int len, int cScore, int pScore, float cStress, float mStress, SlipRingShaftStatus status, boolean detail) {
+    private boolean buildStatsTooltip(List<Component> tooltip, int len, int cScore, int pScore, float cStress, float mStress, SlipRingShaftStatus status, boolean detail) {
         lang().text("§7§l☳ §9§l").translate("gui.alternator.status.detailedTitle").style(ChatFormatting.BLUE).style(ChatFormatting.BOLD).text(" ")
             .forGoggles(tooltip);
 
@@ -406,35 +401,6 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity {
         
         if(cWatts >= mWatts && isBuilt && !WattUnit.hasNoPotential(cWatts))
             lang().text("§b§l>> §r§8(").translate("gui.slipring.state.perfect").text(")").style(ChatFormatting.DARK_GRAY).forGoggles(tooltip);
-
-        return true;
-    }
-
-    // TODO are these utf8 or nah lol
-    // ✔ ❌    §    https://hypixel.net/attachments/colorcodes-png.2694223/
-    private boolean buildStatsTooltip(List<Component> tooltip, int len, int cScore, int pScore, SlipRingShaftStatus status) {
-
-        if(status == SlipRingShaftStatus.NONE) return false;
-        final boolean hasOpposite = status != SlipRingShaftStatus.ROTORED_NO_OPPOSITE;
-        final int sPercent = Math.round(getStatorPercent());
-
-        lang().translate("gui.alternator.status.title")
-			.forGoggles(tooltip);
-
-        lang().text("§9§l————— §7§l⚡§9§l Status —————").style(ChatFormatting.GRAY).forGoggles(tooltip);
-        lang().text(cScore + "/" + pScore + " stators").forGoggles(tooltip);
-
-        lang().text("stress: " + currentStress * Math.abs(getTheoreticalSpeed()) + " / " + maximumStress).forGoggles(tooltip);
-        WattUnit power = WattUnitConversions.toWatts(currentStress * getTheoreticalSpeed(), getTheoreticalSpeed());
-        lang().text("Output: " + power).forGoggles(tooltip);
-        lang().text("FE Equivalent: " + WattUnitConversions.toFE(power)).forGoggles(tooltip);
-        lang().text("Valid? " + isBuilt).forGoggles(tooltip);
-
-
-        if(status == SlipRingShaftStatus.ROTORED_CHILD)
-            lang().text("♠ Child").style(ChatFormatting.GRAY).forGoggles(tooltip);
-        else if(status == SlipRingShaftStatus.ROTORED_PARENT)
-            lang().text("⌂ Parent").style(ChatFormatting.GRAY).forGoggles(tooltip);
 
         return true;
     }

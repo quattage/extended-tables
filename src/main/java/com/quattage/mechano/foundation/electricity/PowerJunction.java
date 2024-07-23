@@ -6,7 +6,6 @@ import com.quattage.mechano.foundation.block.orientation.RelativeDirection;
 import com.quattage.mechano.foundation.electricity.WattBatteryHandlable.ExternalInteractMode;
 import com.quattage.mechano.foundation.electricity.watt.AnonymousWattProducable;
 import com.quattage.mechano.foundation.electricity.watt.DirectionalWattProvidable;
-import com.quattage.mechano.foundation.electricity.watt.WattStorable;
 import com.quattage.mechano.foundation.electricity.watt.DirectionalWattProvidable.OptionalWattOrFE;
 
 import net.minecraft.core.Direction;
@@ -132,7 +131,7 @@ public class PowerJunction {
         if(battery.getFECap() != null)
             return battery.getFECap().getEnergyStored() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;
         if(battery.getWattCap() != null) //TODO figure out if this is wrong or not
-            return battery.getWattCap().getStoredWatts() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;;
+            return battery.getWattCap().getStoredWatts() > 0 ? ExternalInteractStatus.HAS_POWER : ExternalInteractStatus.HAS_EMPTY;
 
         return ExternalInteractStatus.NONE;
     }
@@ -158,18 +157,6 @@ public class PowerJunction {
 
         return false;
     }
-
-    // public float getSendRate(BlockEntity parent, WattStorable source) {
-    //     if((!isInput && !isOutput) || parent.getLevel() == null) 
-    //         return 0;
-
-    //     OptionalWattOrFE destination = getConnectedCapability(parent);
-    //     if(destination.isFE()) {
-    //         return destination.getFECap().receiveEnergy(source.toRealFeEquivalent().extractEnergy(Integer.MAX_VALUE, true), true);
-    //     }
-
-    //     return destination.getWattCap().receiveWatts(source.extractWatts(WattUnit.INFINITY, true), true).getWatts();
-    // }
 
     public OptionalWattOrFE getConnectedCapability(BlockEntity parent) {
         return DirectionalWattProvidable.getFEOrWattsAt(
@@ -199,7 +186,7 @@ public class PowerJunction {
         NONE(ExternalInteractMode.NONE, false),
         HAS_EMPTY(ExternalInteractMode.PUSH_OUT, false),
         HAS_POWER(ExternalInteractMode.PULL_IN, false),
-        HAS_ANONYMOUS(ExternalInteractMode.PULL_IN, false);
+        HAS_ANONYMOUS(ExternalInteractMode.PULL_IN, true);
 
         private final ExternalInteractMode cooresponding;
         private final boolean isLocked;

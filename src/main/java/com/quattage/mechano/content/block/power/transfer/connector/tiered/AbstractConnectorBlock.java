@@ -13,7 +13,6 @@ import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.electricity.watt.DirectionalWattProvidable;
 import com.quattage.mechano.foundation.electricity.EBEWrenchable;
 import com.quattage.mechano.foundation.electricity.WattBatteryHandlable;
-import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.simibubi.create.AllBlocks;
 
 import net.minecraft.core.BlockPos;
@@ -87,13 +86,6 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
 
         BlockState out = defaultBlockState().setValue(ORIENTATION, 
             SimpleOrientation.combine(orientation, followingDir.getAxis()));
-
-        // if(context.getPlayer().isCrouching()) {
-        //     BlockState opposite = defaultBlockState().setValue(ORIENTATION, 
-        //         SimpleOrientation.combine(orientation.getOpposite(), followingDir.getAxis()));
-        //     if(opposite.getBlock().canSurvive(opposite, context.getLevel(), context.getClickedPos()));
-        //         out = opposite;
-        // }
 
         BlockPos under = context.getClickedPos().relative(out.getValue(ORIENTATION).getCardinal().getOpposite());
         BlockState underState = context.getLevel().getBlockState(under);
