@@ -225,7 +225,7 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         BlockEntity be = world.getBlockEntity(pos);
         if(be instanceof AbstractRotorBlockEntity arbe) return arbe;
         if(be instanceof RotorReferable ref)
-            if(ref.getRotorBE() instanceof AbstractRotorBlockEntity arbe) return arbe;
+            return ref.getRotorBE();
         return null;
     }
 }
