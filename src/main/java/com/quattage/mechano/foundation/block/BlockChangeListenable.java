@@ -8,12 +8,25 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * A very basic callback framework for hooking into level changes
- * <strong>after they happen.</strong> <p>
- * Intended to be implemented by a Block class.
- * <p>
+ * both <strong>before and after</strong> they happen.
+ * 
+ * This interface is intended to be implemented by a Block class.
  * You can approximate this behavior with methods in the block class, 
  * but I really, <strong>really</strong> do not like the way that this
- * has to be done, so I made my own. This code is invoked by {@link com.quattage.mechano.foundation.mixin.BlockUpdateMixin BlockUpdateMixin}
+ * has to be done. <p>
+ * 
+ * The methods in this interface are invoked by
+ * {@link com.quattage.mechano.foundation.mixin.BlockUpdateMixin BlockUpdateMixin}.
+ * Provided this mixin is maintained, this approach is far more reliable for 
+ * accurrately detecting block changes regardless of source. For my purposes,
+ * the traditional approach leaves all kinds of edge-cases that will result
+ * in broken states and bad BlockEntity data. This is because methods in the
+ * Block class (as well as Forge's own BlockEvents) are only called after 
+ * blocks are placed/broken specifically and only by a <strong>player</strong>. <p>
+ * 
+ * This approach does not suffer the same pitfalls. Since the mixin hooks directly
+ * into <code>Level.setBlock()</code>, any change, regardless of its cause,
+ * will always be detected.
  */
 public interface BlockChangeListenable {
 
@@ -25,8 +38,7 @@ public interface BlockChangeListenable {
     }
 
     /**
-     * Called by both the logical client and server before this block is broken, 
-     * whether that be by a player, an explosion, or the level.
+     * Called by both the logical client and server before this block is broken
      * <p>
      * Called <strong>BEFORE</strong> the modification is pushed to the world.
      * Does not get called by chunk load/unload events.
@@ -39,7 +51,6 @@ public interface BlockChangeListenable {
 
     /**
      * Called by both the logical client and server before this block is placed.
-     * whether that be by a player or any other entity (like an Enderman)
      * <p>
      * Called <strong>BEFORE</strong> the modification is pushed to the world.
      * Does not get called by chunk load/unload events.

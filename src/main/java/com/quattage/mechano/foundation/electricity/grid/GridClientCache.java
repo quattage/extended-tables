@@ -14,15 +14,15 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.quattage.mechano.Mechano;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GIDPair;
+import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
-import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer;
-import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer.BakedModelHashKey;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
+import com.quattage.mechano.foundation.electricity.rendering.WirePipeline;
+import com.quattage.mechano.foundation.electricity.rendering.WirePipeline.BakedModelHashKey;
 import com.quattage.mechano.foundation.mixin.client.RenderChunkInvoker;
 import com.simibubi.create.foundation.utility.Pair;
 
@@ -41,6 +41,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -58,14 +59,14 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 public class GridClientCache {
 
     private final Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>> 
-        edgeCache = new Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>>();;
+        edgeCache = new Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>>();
 
     private final Object2ObjectOpenHashMap<GIDPair, GridClientEdge> 
-    newEdgeCache = new Object2ObjectOpenHashMap<GIDPair, GridClientEdge>();;
+    newEdgeCache = new Object2ObjectOpenHashMap<GIDPair, GridClientEdge>();
     
     // if this system ever becomes truly watertight, this will not be necessary
     private final Object2ObjectOpenHashMap<GIDPair, GID[]>
-        pathCache  = new Object2ObjectOpenHashMap<>();;
+        pathCache  = new Object2ObjectOpenHashMap<>();
 
     private final ClientLevel world;
 
@@ -204,8 +205,8 @@ public class GridClientCache {
                 float angleY = -(float)Math.atan2(wireOrigin.z(), wireOrigin.x());
                 matrixStack.mulPose(new Quaternionf().rotateXYZ(0, angleY, 0));
 
-                int[] lightmap = WireModelRenderer.deriveLightmap(world, startPos, endPos);
-                WireModelRenderer.INSTANCE.renderStatic(
+                int[] lightmap = WirePipeline.deriveLightmap(world, startPos, endPos);
+                WirePipeline.INSTANCE.renderStatic(
                     new BakedModelHashKey(startPos, endPos), 
                     builder, matrixStack, wireOrigin, 
                     lightmap[0], lightmap[1], lightmap[2], lightmap[3], 
@@ -226,6 +227,10 @@ public class GridClientCache {
 
     public boolean containsPos(SectionPos pos) {
         return edgeCache.containsKey(pos);
+    }
+
+    public Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>> getEdgeCache() {
+        return edgeCache;
     }
 
     public static void markChunksChanged(ClientLevel world, GridEdge edge) {
@@ -298,6 +303,20 @@ public class GridClientCache {
         }
 
         lastTime = time;
+    }
+
+    public static List<GridClientEdge> getEdgesIn(Level world, SectionPos at) {
+        return GridClientCache.of(world).getEdgeCache().get(at);
+    }
+
+    @SubscribeEvent
+    @SuppressWarnings("resource")
+    public static void onLeave(ClientPlayerNetworkEvent.LoggingOut event) {
+        Level world = Minecraft.getInstance().level;
+        if(world != null) {
+            GridClientCache.of(world).clearAll();
+            Mechano.LOGGER.info("Clearing all cached wire geometry");
+        }
     }
 
     public void clearAll() {

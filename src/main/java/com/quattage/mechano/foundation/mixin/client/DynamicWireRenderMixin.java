@@ -1,3 +1,4 @@
+
 package com.quattage.mechano.foundation.mixin.client;
 
 import org.joml.Quaternionf;
@@ -9,10 +10,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
-import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
+import com.quattage.mechano.foundation.electricity.rendering.WireAnchorBlockRenderer;
+import com.quattage.mechano.foundation.electricity.rendering.WirePipeline;
+import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -29,8 +33,8 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(PlayerRenderer.class)
 public abstract class DynamicWireRenderMixin {
 
-    @Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = {@At(value = "TAIL")}, cancellable = true)
-    public void mechano_renderWireThirdPerson(AbstractClientPlayer player, float yaw, float pTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight, CallbackInfo info) { 
+    @Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = {@At(value = "TAIL")}, cancellable = true, remap = false)
+    public void renderWireThirdPerson(AbstractClientPlayer player, float yaw, float pTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight, CallbackInfo info) { 
         ItemStack spool = WireSpool.getHeldByPlayer(player);
         if(spool == null) return;
         CompoundTag spoolTag = spool.getOrCreateTag();
@@ -39,11 +43,13 @@ public abstract class DynamicWireRenderMixin {
         ClientLevel world = player.clientLevel;
         GID connectID = GID.of(spoolTag);
 
-        Vec3 wireFrom = AnchorPoint.getAnchorAt(world, connectID).getFirst().getPos();
+        Pair<AnchorPoint, WireAnchorBlockEntity> anchor = AnchorPoint.getAnchorAt(world, connectID);
+        if(!WireAnchorBlockRenderer.isValidPair(anchor)) return;
+        
         Vec3 wireTo = player.getPosition(pTicks);
         Vec3 leashOffset = player.getRopeHoldPosition(pTicks);
 ;        
-        renderWire(world, leashOffset, wireFrom, wireTo, (WireSpool)spool.getItem(), pTicks, matrixStack, bufferSource);
+        renderWire(world, leashOffset, anchor.getFirst().getPos(), wireTo, (WireSpool)spool.getItem(), pTicks, matrixStack, bufferSource);
     }
 
     private void renderWire(ClientLevel world, Vec3 entityHoldPos, Vec3 fromPos, Vec3 toPos, WireSpool type, float pTicks, PoseStack matrixStack, MultiBufferSource bufferSource) {
@@ -53,8 +59,8 @@ public abstract class DynamicWireRenderMixin {
 
         VertexConsumer buffer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(type.asResource()));
 
-        Vector3f offset = WireModelRenderer.getWireOffset(fromPos, toPos);
-        int[] lightmap = WireModelRenderer.deriveLightmap(world, fromPos, toPos);
+        Vector3f offset = WirePipeline.getWireOffset(fromPos, toPos);
+        int[] lightmap = WirePipeline.deriveLightmap(world, fromPos, toPos);
         matrixStack.translate(offset.x(), 0, offset.z());
         
         Vec3 entityLeashOffset = entityHoldPos.subtract(toPos);
@@ -66,7 +72,7 @@ public abstract class DynamicWireRenderMixin {
         float angleY = -(float)Math.atan2(wireOrigin.z(), wireOrigin.x());
         matrixStack.mulPose(new Quaternionf().rotateXYZ(0, angleY, 0));
 
-        WireModelRenderer.INSTANCE.renderDynamic(buffer, matrixStack, wireOrigin, lightmap[0], lightmap[1], lightmap[2], lightmap[3]);
+        WirePipeline.INSTANCE.renderDynamic(buffer, matrixStack, wireOrigin, lightmap[0], lightmap[1], lightmap[2], lightmap[3]);
         matrixStack.popPose();
     }
 }

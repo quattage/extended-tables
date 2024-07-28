@@ -4,12 +4,12 @@ import java.util.function.Supplier;
 
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorEntry;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorVertexData;
+import com.quattage.mechano.foundation.block.anchor.AnchorEntry;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorVertexData;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;

@@ -14,13 +14,13 @@ public class MechanoSettings {
     public static short FE2W_RATE = 64; 
     public static short FE2W_VOLTAGE = 128;
 
-    // 1 Watt = (SU2W_RATE) * StressUnits
-    public static float SU2W_RATE = 0.008f;
+    // Modify the total SU2W rate by an arbitrary value
+    public static int SU2W_DIVIDEND = 2;
     
     // RPM to voltage exponent
     public static float RPM_VOLTAGE = 1.0247183464f;
 
-    // size of AnchorPoint hitboxes
+    // size of AnchorPoint hitboxes`
     public static byte ANCHOR_SELECT_SIZE = 40;
     public static byte ANCHOR_NORMAL_SIZE = 20;
 

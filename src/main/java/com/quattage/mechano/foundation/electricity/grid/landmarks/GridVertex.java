@@ -8,11 +8,11 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.DirectionalWattProvidable.ExternalInteractMode;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.electricity.WattBatteryHandlable.ExternalInteractMode;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.core.BlockPos;

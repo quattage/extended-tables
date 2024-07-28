@@ -3,7 +3,7 @@ package com.quattage.mechano.foundation.network;
 import java.util.function.Supplier;
 
 import com.quattage.mechano.MechanoClient;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorVertexData;
+import com.quattage.mechano.foundation.block.anchor.AnchorVertexData;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;

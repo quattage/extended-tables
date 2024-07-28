@@ -1,9 +1,28 @@
 
 {
 
-    "mechano.generic.unit.watts": "w",
+
+    "mechano.generic.unit.pertick": "/t",
+
+    "mechano.generic.unit.watts": "W",
+    "mechano.generic.unit.kilowatts": "kW",
+    "mechano.generic.unit.gigawatts": "GW",
+
+    "mechano.generic.unit.watthours": "Wh",
+    "mechano.generic.unit.kilowatthours": "kWh",
+    "mechano.generic.unit.gigawatthours": "GWh",
+
+
+    "mechano.gui.connector.mode": "Connector Mode",
+    "mechano.gui.connector.mode.pull_in": "⯇",
+    "mechano.gui.connector.mode.push_out": "⯈",
+
+    "mechano.gui.generic.converting": "Converting",
     "mechano.gui.generic.consuming": "Consuming",
     "mechano.gui.generic.producing": "Producing",
+    "mechano.gui.generic.into": "into",
+
+    "mechano.gui.generic.moreinfo": "Sneak for more info...",
 
 	"mechano.gui.alternator.status.title": "Alternator Information:",
 
@@ -30,6 +49,7 @@
 
     "mechano.gui.alternator.status.prediction.in": "in: ",
     "mechano.gui.alternator.status.prediction.out": "out: ",
+    "mechano.gui.alternator.status.headroom": "Headroom:",
 
     "mechano.gui.alternator.status.badCoverage": "Insufficient coverage",
     "mechano.gui.alternator.status.decentCoverage": "Passable coverage",

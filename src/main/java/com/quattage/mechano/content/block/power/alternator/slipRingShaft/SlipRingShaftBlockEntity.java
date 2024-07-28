@@ -8,11 +8,12 @@ import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.electricity.WattBatteryHandler;
-import com.quattage.mechano.foundation.electricity.core.AnonymousWattProducable;
-import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnitConversions;
+import com.quattage.mechano.foundation.electricity.watt.AnonymousWattProducable;
+import com.quattage.mechano.foundation.electricity.watt.WattSendSummary;
+import com.quattage.mechano.foundation.electricity.watt.unit.WattUnit;
+import com.quattage.mechano.foundation.electricity.watt.unit.WattUnitConversions;
 import com.quattage.mechano.foundation.helper.NullSortedArray;
+import com.simibubi.create.content.equipment.goggles.GogglesItem;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate.StressImpact;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
@@ -22,6 +23,7 @@ import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.LangBuilder;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -134,8 +136,6 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
      */
     public void evaluateAlternatorStructure() {
 
-        Mechano.log("EVAL");
-
         // reset all values to zero
         this.length = 0;
         this.currentPowerScore = 0;
@@ -237,7 +237,7 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
         if(opposingPos == null) return;
         if(!(getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe)) 
             return;    
-        //throw new NullPointerException("Error copying SlipRingShaftBlockEntity stats from parent to child - No child Slip Ring could be found at " + opposingPos);
+
         srbe.length = this.length;
         srbe.potentialPowerScore = this.potentialPowerScore;
         srbe.currentPowerScore = this.currentPowerScore;
@@ -251,18 +251,18 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
     @Override
     public void onSpeedChanged(float previousSpeed) {
-        super.onSpeedChanged(previousSpeed);
-    
+        if(!getLevel().isClientSide()) {
+            super.onSpeedChanged(previousSpeed);
+            MechanoPackets.sendToAllClients(new SlipRingUpdateS2CPacket(worldPosition));
+        }
+
         updateAlternatorSpeed();
-        
-        if(!getLevel().isClientSide())
-            MechanoPackets.sendToAllClients(new SlipRingShaftSpeedUpdateS2CPacket(worldPosition));
     }
 
     public void updateAlternatorSpeed() {
-
-        
-        // copyStatsToChild();
+        // this can be removed without immediately causing issues
+        // it'll stay for now just because it might be useful later
+        copyStatsToChild();
     }
 
     public boolean canControl() {
@@ -274,21 +274,40 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
         if(!this.status.canControl && opposingPos != null && getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
             if(srbe.isBuilt) {
-                return buildPredictedStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true);
-            } else { 
                 if(!isPlayerSneaking)
-                    return buildAssemblyChecklistTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, this.status);
-                else return buildPredictedStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, false);
+                    return buildSimpleStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true, true);
+                return buildStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true);
             }
+
+            if(!isPlayerSneaking)
+                return buildAssemblyChecklistTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, this.status);
+            return buildStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, false);
         }
 
         if(isBuilt) {
-            return buildPredictedStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true);
-        } else { 
             if(!isPlayerSneaking)
-            return buildAssemblyChecklistTooltip(tooltip, length, currentPowerScore, potentialPowerScore, status);
-            else return buildPredictedStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, false);
+                return buildSimpleStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true, true);
+            return buildStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true);
         }
+        if(!isPlayerSneaking)
+            return buildAssemblyChecklistTooltip(tooltip, length, currentPowerScore, potentialPowerScore, status);
+        return buildStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, false);
+    }
+
+    @Override
+    @SuppressWarnings("resource")
+    public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+
+        boolean isWearingGoggles = GogglesItem.isWearingGoggles(Minecraft.getInstance().player);
+        if(isWearingGoggles) return false;
+
+        if(!this.status.canControl && opposingPos != null && getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
+            if(srbe.isBuilt)
+                return buildSimpleStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true, isWearingGoggles);
+        } else if(isBuilt)
+            return buildSimpleStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true, isWearingGoggles);
+
+        return false;
     }
 
     private boolean buildAssemblyChecklistTooltip(List<Component> tooltip, int len, int cScore, int pScore, SlipRingShaftStatus status) {
@@ -319,7 +338,26 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
         return true;
     }
 
-    private boolean buildPredictedStatsTooltip(List<Component> tooltip, int len, int cScore, int pScore, float cStress, float mStress, SlipRingShaftStatus status, boolean detail) {
+
+    private boolean buildSimpleStatsTooltip(List<Component> tooltip, int len, int cScore, int pScore, float cStress, float mStress, SlipRingShaftStatus status, boolean detail, boolean isWearingGoggles) {
+        lang().translate("gui.alternator.status.title").forGoggles(tooltip);
+
+        LangBuilder su = Lang.translate("generic.unit.stress").style(ChatFormatting.DARK_GRAY);
+        LangBuilder stress = Lang.number(mStress).style(ChatFormatting.DARK_GRAY);
+        LangBuilder watts = energyProduced.format(ChatFormatting.AQUA, ChatFormatting.AQUA);
+
+        lang().translate("gui.generic.converting").style(ChatFormatting.GRAY).space().add(stress).add(su).forGoggles(tooltip);
+        lang().translate("gui.generic.into").style(ChatFormatting.GRAY).space().add(watts).forGoggles(tooltip);
+
+        if(isWearingGoggles) {
+            lang().text("").forGoggles(tooltip);
+            lang().translate("gui.generic.moreinfo").style(ChatFormatting.DARK_GRAY).forGoggles(tooltip);
+        }
+
+        return true;
+    }
+
+    private boolean buildStatsTooltip(List<Component> tooltip, int len, int cScore, int pScore, float cStress, float mStress, SlipRingShaftStatus status, boolean detail) {
         lang().text("§7§l☳ §9§l").translate("gui.alternator.status.detailedTitle").style(ChatFormatting.BLUE).style(ChatFormatting.BOLD).text(" ")
             .forGoggles(tooltip);
 
@@ -372,7 +410,7 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
         lang().text("").forGoggles(tooltip);
         lang().text("§7§l⚡ §9§l").translate("gui.alternator.status.predictiveTitle").style(ChatFormatting.BLUE).style(ChatFormatting.BOLD).text(" ")
             .forGoggles(tooltip);
-        
+
         float cWatts = energyProduced.getWatts();
         float mWatts = maxEnergyProduced.getWatts();
         float wPercent = 1 - (cWatts / mWatts);
@@ -384,13 +422,16 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
         LangBuilder w = lang().translate("generic.unit.watts").style(ChatFormatting.DARK_GRAY);
         LangBuilder watts = Lang.number(cWatts).style(filledColor).text(ChatFormatting.GRAY, " / ").add(Lang.number(mWatts).style(ChatFormatting.DARK_GRAY));
+        LangBuilder pertick = lang().translate("generic.unit.pertick").style(ChatFormatting.DARK_GRAY);
+        LangBuilder headroom = Lang.number(Math.round(wPercent * 100)).text("%").style(filledColor);
 
+        lang().translate("gui.alternator.status.headroom").style(ChatFormatting.GRAY).space().add(headroom).forGoggles(tooltip);
         lang().translate("gui.alternator.status.predictiveSubtitle").style(ChatFormatting.GRAY).forGoggles(tooltip);
         lang().space().space().add(stress).add(su).forGoggles(tooltip);
-        lang().space().space().add(watts).add(w).forGoggles(tooltip);
+        lang().space().space().add(watts).add(w).add(pertick).forGoggles(tooltip);
         
-        if(cWatts >= mWatts && isBuilt && !WattUnit.hasNoPotential(cWatts))
-            lang().text("§b§l>> §r§8(").translate("gui.slipring.state.perfect").text(")").style(ChatFormatting.DARK_GRAY).forGoggles(tooltip);
+        // if(cWatts >= mWatts && isBuilt && !WattUnit.hasNoPotential(cWatts))
+        //     lang().text("§b§l>> §r§8(").translate("gui.slipring.state.perfect").text(")").style(ChatFormatting.DARK_GRAY).forGoggles(tooltip);
 
         return true;
     }

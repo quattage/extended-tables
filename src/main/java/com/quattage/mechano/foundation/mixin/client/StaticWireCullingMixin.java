@@ -25,7 +25,7 @@ public abstract class StaticWireCullingMixin {
     // quick and dirty frustum culling patch so wires don't dissappear while in view
     // TODO more intelligent culling for better performance
     @Inject(method = "applyFrustum(Lnet/minecraft/client/renderer/culling/Frustum;)V", at = {@At(value = "TAIL")}, cancellable = true)
-    private void mechano_noCullOnWire(Frustum pFrustum, CallbackInfo info) {
+    private void applyFrustum(Frustum pFrustum, CallbackInfo info) {
         for(LevelRenderer.RenderChunkInfo levelrenderer$renderchunkinfo : (this.renderChunkStorage.get()).renderChunks) {
             if(GridClientCache.ofInstance().containsPos(SectionPos.of(levelrenderer$renderchunkinfo.chunk.getOrigin())))
                 renderChunksInFrustum.add(levelrenderer$renderchunkinfo);

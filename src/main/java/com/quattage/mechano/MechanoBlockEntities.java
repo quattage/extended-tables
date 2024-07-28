@@ -1,5 +1,6 @@
 package com.quattage.mechano;
 
+import com.quattage.mechano.content.block.integrated.toolStation.ToolStationBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.BigRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlockEntity;
@@ -8,7 +9,6 @@ import com.quattage.mechano.content.block.power.transfer.connector.tiered.Tiered
 import com.quattage.mechano.content.block.power.transfer.connector.tiered.ConnectorTier0BlockEntity;
 import com.quattage.mechano.content.block.power.transfer.connector.tiered.ConnectorTier1BlockEntity;
 import com.quattage.mechano.content.block.power.transfer.connector.tiered.ConnectorTier2BlockEntity;
-import com.quattage.mechano.content.block.integrated.toolStation.ToolStationBlockEntity;
 import com.quattage.mechano.content.block.power.transfer.test.TestBlockEntity;
 import com.quattage.mechano.content.block.power.transfer.test.TestBlockRenderer;
 import com.quattage.mechano.content.block.power.transfer.voltometer.VoltometerBlockEntity;

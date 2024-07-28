@@ -36,6 +36,10 @@ public class VectorHelper {
         return new Vec3(vec);
     }
 
+    public static Vec3 toVec(Vec3i vec) {
+        return new Vec3(vec.getX(), vec.getY(), vec.getZ());
+    }
+
     public static Vec3 getRandomVector(double dispersion) {
         return addRandomness(new Vec3(0, 0, 0), dispersion);
     }
@@ -61,10 +65,6 @@ public class VectorHelper {
         return out;
     }
 
-    public static Vec3 toVec(BlockPos pos) {
-        return new Vec3(pos.getX(), pos.getY(), pos.getZ());
-    }
-
     public static void setDiff(Vector3f root, Vector3f p0, Vector3f p1) {
         root.set(p0.x() - p1.x(), p0.y() - p1.y(), p0.z() - p1.z());
     }
@@ -75,6 +75,10 @@ public class VectorHelper {
 
     public static boolean isGreater(Vec3 a, Vec3 b) {
         return a.x > b.x && a.y > b.y && a.z > b.z();
+    }
+
+    public static float getGreatest(Vector3f a) {
+        return Math.max(a.x, Math.max(a.y, a.z));
     }
 
     /***

@@ -19,16 +19,12 @@ import com.quattage.mechano.content.block.power.transfer.connector.tiered.Abstra
 import com.quattage.mechano.content.block.power.transfer.test.TestBlock;
 import com.quattage.mechano.content.block.power.transfer.voltometer.VoltometerBlock;
 import com.quattage.mechano.content.block.simple.diagonalGirder.DiagonalGirderBlock;
-import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.orientation.DynamicStateGenerator;
 import com.simibubi.create.content.kinetics.BlockStressDefaults;
 import com.tterrag.registrate.util.entry.BlockEntry;
-
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraftforge.eventbus.api.IEventBus;
 
@@ -220,7 +216,6 @@ public class MechanoBlocks {
         public static Block soft() {
             return Blocks.WHITE_WOOL;
         }
-
 
         public static Block ductile() {
             return Blocks.COPPER_BLOCK;

@@ -19,7 +19,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -78,9 +80,11 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         circle.moveTo(getBlockPos()).setAxis(getBlockState().getValue(RotatedPillarBlock.AXIS)).evaluatePlacement(perimeterPos -> {
 
             if(visited.contains(perimeterPos)) return null;
-            BlockState perimeterState = getLevel().getBlockState(perimeterPos);
+
+            BlockState perimeterState = level.getBlockState(perimeterPos);
+
             if(perimeterState.getBlock() instanceof AbstractStatorBlock asb) {
-                if(asb.hasRotor(getLevel(), perimeterPos, perimeterState)) 
+                if(asb.hasRotor(level, perimeterPos, perimeterState))
                     statorCount++;
             }
 
@@ -93,7 +97,10 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         }
     }
 
+    
+
     public void incStatorCount() {
+
         statorCount++;
         if(statorCount > getStatorCircumference()) {
             statorCount = (byte)getStatorCircumference();
@@ -199,15 +206,26 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
     }
 
     @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        return super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+    public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        return false;
     }
 
-    public int getStatorCount() {
-        return (int)statorCount;
+    public byte getStatorCount() {
+        return statorCount;
     }
 
     public int getMultiplier() {
         return 1;
+    }
+
+    @Nullable
+    public static AbstractRotorBlockEntity get(Level world, @Nullable BlockPos pos) {
+
+        if(pos == null) return null;
+        BlockEntity be = world.getBlockEntity(pos);
+        if(be instanceof AbstractRotorBlockEntity arbe) return arbe;
+        if(be instanceof RotorReferable ref)
+            if(ref.getRotorBE() instanceof AbstractRotorBlockEntity arbe) return arbe;
+        return null;
     }
 }

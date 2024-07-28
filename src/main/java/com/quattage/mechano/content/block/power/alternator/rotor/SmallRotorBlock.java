@@ -1,3 +1,4 @@
+
 package com.quattage.mechano.content.block.power.alternator.rotor;
 
 import com.google.common.base.Predicate;

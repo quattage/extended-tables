@@ -1,9 +1,11 @@
+
 package com.quattage.mechano.content.block.power.alternator.stator;
 
 import java.util.Locale;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
@@ -31,7 +33,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class BigStatorBlock extends AbstractStatorBlock<BigStatorBlock.BigStatorModelType> implements CreativeTabExcludable {
+public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.content.block.power.alternator.stator.BigStatorBlock.BigStatorModelType> {
 
     public static final EnumProperty<BigStatorModelType> MODEL_TYPE = EnumProperty.create("model", BigStatorModelType.class);
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper(2));
@@ -186,8 +188,8 @@ public class BigStatorBlock extends AbstractStatorBlock<BigStatorBlock.BigStator
     public BlockPos getAttachedRotorPos(Level world, BlockPos pos, BlockState state) {
         BlockPos facing = pos.relative(state.getValue(ORIENTATION).getCardinal());
         if(world.getBlockState(facing).getBlock() instanceof BlockRotorable br)
-            return br.getParentPos(world, pos, state);
-        return facing;
+            return br.getParentPos(world, facing, state);
+        return null;
     }
 
     @Override

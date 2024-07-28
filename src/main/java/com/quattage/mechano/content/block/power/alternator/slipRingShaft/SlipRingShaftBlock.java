@@ -7,8 +7,8 @@ import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBl
 import com.quattage.mechano.content.block.power.alternator.rotor.SmallRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlockEntity.SlipRingShaftStatus;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.watt.WattSendSummary;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
+import com.quattage.mechano.foundation.electricity.watt.WattSendSummary;
 import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
@@ -32,6 +32,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -136,13 +137,14 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
     @Override
     @SuppressWarnings("deprecation")
     public void neighborChanged(BlockState state, Level world, BlockPos pos, Block pBlock, BlockPos pFromPos, boolean pIsMoving) {
+        
         super.neighborChanged(state, world, pos, pBlock, pFromPos, pIsMoving);
         if(state.getValue(MODEL_TYPE).isRotored()) {
-            if(!getRotoredType(world, pos, state).isRotored()) 
+            if(!getRotoredType(world, pos, state).isRotored()) {
                 world.destroyBlock(pos, true);
+            }
         }
         else updateRotorType(world, pos, state);
-
         evaluateNeighbor(world, pos, pFromPos);
     }
 

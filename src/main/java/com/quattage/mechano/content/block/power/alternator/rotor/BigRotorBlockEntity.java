@@ -8,7 +8,6 @@ public class BigRotorBlockEntity extends AbstractRotorBlockEntity {
 
     public BigRotorBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
-        //TODO Auto-generated constructor stub
     }
 
     @Override

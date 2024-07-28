@@ -3,11 +3,13 @@ package com.quattage.mechano.content.block.power.alternator.rotor;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.mojang.blaze3d.MethodsReturnNonnullByDefault;
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlock;
+import com.quattage.mechano.content.block.power.alternator.rotor.dummy.BigRotorDummyBlockEntity;
+import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
-import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
 import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
@@ -28,7 +30,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlockEntity>, CreativeTabExcludable {
+public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlockEntity> {
 
     public static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
 
@@ -42,56 +44,8 @@ public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlo
 	}
 
     @Override
-    public Class<BigRotorBlockEntity> getBlockEntityClass() {
-        return BigRotorBlockEntity.class;
-    }
-
-    @Override
-    public BlockEntityType<? extends BigRotorBlockEntity> getBlockEntityType() {
-        return MechanoBlockEntities.BIG_ROTOR.get();
-    }
-
-    @Override
     public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
         return canPlaceDummies(world, pos, state);
-    }
-
-    @Override
-    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
-        super.onPlace(state, world, pos, oldState, isMoving);
-        placeDummies(world, pos, state);
-    }
-
-    @Override
-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean pIsMoving) {
-
-        if(state.getBlock() != newState.getBlock())
-            removeDummies(world, pos, state);
-
-        super.onRemove(state, world, pos, newState, pIsMoving);
-    }
-
-    protected void placeDummies(Level world, BlockPos pos, BlockState state) {
-
-        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getPositiveCorners(pos, state.getValue(AXIS));
-
-        for(BlockPos vPos : BlockPos.betweenClosed(corners.getFirst(), corners.getSecond())) {
-            if(!(world.getBlockState(vPos).getBlock() instanceof BigRotorBlock)) {
-                BlockState dummy = MechanoBlocks.BIG_ROTOR_DUMMY.get().defaultBlockState();
-                dummy = dummy.setValue(AXIS, state.getValue(AXIS));
-                world.setBlock(vPos, dummy, 3);
-            }
-        }
-    }
-
-    protected void removeDummies(Level world, BlockPos pos, BlockState state) {
-
-        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getPositiveCorners(pos, state.getValue(AXIS));
-        BlockPos.betweenClosed(corners.getFirst(), corners.getSecond()).forEach(vPos -> {
-
-            if(world.getBlockState(vPos).getBlock() instanceof BigRotorDummyBlock)
-                world.setBlock(vPos, Blocks.AIR.defaultBlockState(), 3);
-        });
     }
 
     protected boolean canPlaceDummies(LevelReader world, BlockPos pos, BlockState state) {
@@ -105,12 +59,58 @@ public class BigRotorBlock extends AbstractRotorBlock implements IBE<BigRotorBlo
 
     @Override
     boolean isRotor(Block block) {
-        return block == MechanoBlocks.BIG_ROTOR.get();
+        return block instanceof BigRotorBlock;
     }
 
     @Override
     protected int getPlacementHelperId() {
         return placementHelperId;
+    }
+
+    @Override
+    public void onBeforeBlockPlaced(Level world, BlockPos pos, BlockState currentState, BlockState futureState) {
+        if(currentState.getBlock() != futureState.getBlock())
+            placeDummies(world, pos, futureState);
+    }
+
+
+    protected void placeDummies(Level world, BlockPos pos, BlockState state) {
+
+        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getPositiveCorners(pos, state.getValue(AXIS));
+
+        for(BlockPos vPos : BlockPos.betweenClosed(corners.getFirst(), corners.getSecond())) {
+            if(!(world.getBlockState(vPos).getBlock() instanceof BigRotorBlock)) {
+                BlockState dummy = MechanoBlocks.BIG_ROTOR_DUMMY.get().defaultBlockState();
+                dummy = dummy.setValue(AXIS, state.getValue(AXIS));
+                world.setBlock(vPos, dummy, 2);
+                ((BigRotorDummyBlockEntity)world.getBlockEntity(vPos)).setParentPos(pos);
+            }
+        }
+    }
+
+    @Override
+    public void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
+        if(pastState.getBlock() != currentState.getBlock())
+            removeDummies(world, pos, pastState);
+        super.onAfterBlockBroken(world, pos, pastState, currentState);
+    }
+
+    public void removeDummies(Level world, BlockPos pos, BlockState state) {
+        Pair<BlockPos, BlockPos> corners = DirectionTransformer.getPositiveCorners(pos, state.getValue(AXIS));
+        BlockPos.betweenClosed(corners.getFirst(), corners.getSecond()).forEach(vPos -> {
+            if(world.getBlockState(vPos).getBlock() instanceof BigRotorDummyBlock)
+                world.setBlock(vPos, Blocks.AIR.defaultBlockState(), 3);
+        });
+    }
+
+    @Override
+    public Class<BigRotorBlockEntity> getBlockEntityClass() {
+        return BigRotorBlockEntity.class;
+    }
+
+    @Override
+    public BlockEntityType<? extends BigRotorBlockEntity> getBlockEntityType() {
+        return MechanoBlockEntities.BIG_ROTOR.get();
     }
 
     @MethodsReturnNonnullByDefault

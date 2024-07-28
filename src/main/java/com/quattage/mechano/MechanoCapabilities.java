@@ -1,10 +1,10 @@
 package com.quattage.mechano;
 
-import com.quattage.mechano.foundation.electricity.core.watt.WattStorable;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridDispatcher;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCacheProvider;
+import com.quattage.mechano.foundation.electricity.watt.WattStorable;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.level.Level;

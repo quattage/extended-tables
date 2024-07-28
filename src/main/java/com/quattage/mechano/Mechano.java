@@ -45,7 +45,9 @@ public class Mechano {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
+        MechanoSounds.add();
         REGISTRATE.registerEventListeners(modBus);
+
         CAPABILITIES.registerTo(forgeBus);
         MechanoSettings.init(modBus);
         MechanoBlocks.register(modBus);
@@ -53,7 +55,6 @@ public class Mechano {
         MechanoBlockEntities.register(modBus);
         
         MechanoRecipes.register(modBus);
-        MechanoSounds.register(modBus);
         MechanoGroups.register(modBus);
         MechanoMenus.register(modBus);
         GlobalTransferGridDispatcher.initTasks();
@@ -79,6 +80,7 @@ public class Mechano {
     }
 
     public static void log(String message) {      
+        if(!isDevEnv()) return;
         String side = ESC + "[1;34m" + Thread.currentThread().getName() + ESC + "[1;35m";
 
         String time = LocalTime.now(ZoneId.of("America/Montreal")).truncatedTo(ChronoUnit.MILLIS).toString();
@@ -92,7 +94,7 @@ public class Mechano {
     }
 
     public static void logReg(String message) {
-        if(isDevEnv()) log("Registering " + MOD_ID + " " + message);
+        log("Registering " + MOD_ID + " " + message);
     }
 
     public static boolean isDevEnv() {

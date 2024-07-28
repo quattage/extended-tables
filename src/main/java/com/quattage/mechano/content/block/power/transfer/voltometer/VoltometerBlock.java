@@ -2,12 +2,10 @@ package com.quattage.mechano.content.block.power.transfer.voltometer;
 
 import java.util.Locale;
 
-import com.quattage.mechano.MechanoBlockEntities;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
-import com.simibubi.create.foundation.block.IBE;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +14,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;

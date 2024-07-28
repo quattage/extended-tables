@@ -8,8 +8,7 @@ import java.util.Set;
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.behavior.GridEdgeDebugBehavior;
-import com.quattage.mechano.foundation.electricity.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
 import com.quattage.mechano.foundation.electricity.grid.TransferPathManager;
@@ -17,6 +16,7 @@ import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 import com.quattage.mechano.foundation.electricity.grid.network.GridPathUpdateSyncS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.network.GridSyncPacketType;
+import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;

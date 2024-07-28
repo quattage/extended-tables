@@ -52,6 +52,8 @@ public class ConnectorTier2Block extends AbstractConnectorBlock implements IBE<C
 
     @Override
     public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        InteractionResult out = super.use(state, world, pos, player, hand, hit);
+        if(out.consumesAction()) return out;
         return onUpgradeInitiated(world, pos, state, player, hand);
     }
 

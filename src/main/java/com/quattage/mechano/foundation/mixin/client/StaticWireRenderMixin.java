@@ -16,10 +16,12 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 
 
-// When chunk geometry is built, this mixin injects additional geometry to render Mechano's wires.
-// The geometry to inject is based on the GridClientCache's ledger of active edges, received from
-// the GridSyncDirector.
-// TODO Sodium derivatives need custom implementation for this to function. 
+/**
+ * This mixin manually injects Mechano's wire rendering workflow directly into Minecraft's chunk meshing system.
+ * I was surprised to find that forge just doesn't have a native way to do this - this way of doing things is very hacky and brittle.
+ * With Embeddium present, {@link com.quattage.mechano.foundation.compat.embeddium.EmbeddiumWireCompat EmbeddiumWireInjector}
+ * is used instead, which is much more straightforward and much less prone to breaking.
+ */
 @Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask")
 public abstract class StaticWireRenderMixin {
 
@@ -34,7 +36,7 @@ public abstract class StaticWireRenderMixin {
 	}
 
     @Inject(method = "compile", at = @At(value = "INVOKE", target = "Ljava/util/Set;iterator()Ljava/util/Iterator;"))
-    public void mechano_injectWireGeometry(float pX, float pY, float pZ, ChunkBufferBuilderPack buffer, CallbackInfoReturnable<?> cir) {
+    public void injectEdgeRendering(float pX, float pY, float pZ, ChunkBufferBuilderPack buffer, CallbackInfoReturnable<?> cir) {
         GridClientCache.ofInstance().renderConnectionsInChunk(this$1, mechano$chunkRenderTypes, buffer, this$1.getOrigin());
 		this.mechano$chunkRenderTypes = null;
 	}

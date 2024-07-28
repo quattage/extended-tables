@@ -1,8 +1,8 @@
 package com.quattage.mechano.content.item.spool;
 
 import com.quattage.mechano.MechanoItems;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
+import com.quattage.mechano.foundation.electricity.WireSpool;
+import com.quattage.mechano.foundation.electricity.watt.unit.Voltage;
 
 import net.minecraft.world.item.Item;
 

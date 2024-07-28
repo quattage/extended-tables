@@ -2,9 +2,9 @@ package com.quattage.mechano.foundation.network;
 
 import java.util.function.Supplier;
 
-import com.quattage.mechano.foundation.electricity.core.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
+import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;

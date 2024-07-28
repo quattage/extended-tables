@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 
 import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
+import com.quattage.mechano.foundation.helper.VoxelShapeBuilder;
 
 import java.util.List;
 import java.util.Locale;

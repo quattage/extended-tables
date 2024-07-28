@@ -9,8 +9,8 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 import com.quattage.mechano.Mechano;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridDispatcher;
+import com.quattage.mechano.foundation.electricity.watt.unit.WattUnit;
 import com.simibubi.create.foundation.utility.Pair;
 
 /**

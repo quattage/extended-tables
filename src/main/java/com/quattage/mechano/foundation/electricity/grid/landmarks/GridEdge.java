@@ -5,13 +5,12 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.foundation.electricity.core.watt.unit.Voltage;
-import com.quattage.mechano.foundation.electricity.core.watt.unit.WattUnit;
+import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.LocalTransferGrid;
-import com.quattage.mechano.foundation.electricity.grid.landmarks.client.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.grid.network.GridSyncHelper;
 import com.quattage.mechano.foundation.electricity.grid.network.GridSyncPacketType;
-import com.quattage.mechano.foundation.electricity.spool.WireSpool;
+import com.quattage.mechano.foundation.electricity.watt.unit.Voltage;
+import com.quattage.mechano.foundation.electricity.watt.unit.WattUnit;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

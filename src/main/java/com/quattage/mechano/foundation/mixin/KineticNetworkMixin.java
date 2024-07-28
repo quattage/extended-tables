@@ -15,11 +15,11 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 @Mixin(KineticNetwork.class)
 public abstract class KineticNetworkMixin {
 
-    @Shadow(remap = false)
+    @Shadow(remap = false) 
     private Map<KineticBlockEntity, Float> members;
     
     @Inject(method = "getActualStressOf", at = {@At(value = "HEAD")}, cancellable = true, remap = false)
-    private void mechano_getActualStressOf(KineticBlockEntity be, CallbackInfoReturnable<Float> cir) {
+    private void getActualStressOf(KineticBlockEntity be, CallbackInfoReturnable<Float> cir) {
         if(be instanceof AbstractRotorBlockEntity arbe) {
             cir.setReturnValue(members.get(be) * arbe.getWeightedSpeed());
         }
