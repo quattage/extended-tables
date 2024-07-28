@@ -5,12 +5,10 @@
 	"compatibilityLevel": "JAVA_17",
 	"refmap": "mechano.refmap.json",
 	"mixins": [
-		
+		"KineticNetworkMixin",
+		"BlockUpdateMixin"
 	],
 	"client": [
-		"KineticNetworkMixin",
-		"BlockUpdateMixin",
-		"BlockPreUpdateMixin",
 		"client.DynamicWireRenderMixin",
 		"client.StaticWireRenderMixin",
 		"client.StaticWireCullingMixin",

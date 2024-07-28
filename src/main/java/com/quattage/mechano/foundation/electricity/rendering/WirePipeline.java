@@ -2,16 +2,18 @@
 
 package com.quattage.mechano.foundation.electricity.rendering;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import javax.annotation.Nullable;
 
 import org.joml.Vector3f;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.helper.VectorHelper;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+// import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -23,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
 /***
  * Populates a given PoseStack with a dynamically generated WireModel
  */
-public class WireModelRenderer {
+public class WirePipeline {
 
     /***
      * Overall scale, or "thickness" of the wire
@@ -58,11 +60,9 @@ public class WireModelRenderer {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-
-            BakedModelHashKey key = (BakedModelHashKey) obj;
-            return hash == key.hash;
+            if(!(obj instanceof BakedModelHashKey that)) 
+                return false;
+            return this.hash == that.hash;
         }
 
         @Override
@@ -82,8 +82,8 @@ public class WireModelRenderer {
     // It has been adapted in some subtle (rather distinct) ways, but it still remains 
     // extremely similar. This approach is really nice and I probably wouldn't have been
     // able to figure this out without direct reference from this mod.
-    private final Object2ObjectOpenHashMap<BakedModelHashKey, WireModel> modelCache = new Object2ObjectOpenHashMap<>(256);
-    public static final WireModelRenderer INSTANCE = new WireModelRenderer();
+    public static final Map<BakedModelHashKey, WireModel> modelCache = new ConcurrentHashMap<>(256);
+    public static final WirePipeline INSTANCE = new WirePipeline();
 
     /***
      * Renders a static wire. Builds this wire once. All successive calls use the Hashkey provided, 
@@ -105,7 +105,7 @@ public class WireModelRenderer {
             model = modelCache.get(key);
         else {
             model = buildWireModel(1f, origin, true);
-            modelCache.put(key, model);
+            modelCache.putIfAbsent(key, model);
         }
         model.render(buffer, matrix, fromBlockLight, toBlockLight, fromSkyLight, toSkyLight, sprite);
     }

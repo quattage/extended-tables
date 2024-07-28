@@ -19,14 +19,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
 
     private final ShapeGetter circle = ShapeGetter.ofShape(CircleGetter.class).withRadius(getStatorRadius()).build();
-
     private byte statorCount = 0;
 
     @Nullable
@@ -70,18 +71,20 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         super.write(nbt, clientPacket);
     }
 
-    protected void findConnectedStators(boolean notifyIfChanged) {
+    public void findConnectedStators(boolean notifyIfChanged) {
 
         final Set<BlockPos> visited = new HashSet<>();
 
         int oldCount = statorCount;
         statorCount = 0;
         circle.moveTo(getBlockPos()).setAxis(getBlockState().getValue(RotatedPillarBlock.AXIS)).evaluatePlacement(perimeterPos -> {
-            
+
             if(visited.contains(perimeterPos)) return null;
-            BlockState perimeterState = getLevel().getBlockState(perimeterPos);
+
+            BlockState perimeterState = level.getBlockState(perimeterPos);
+
             if(perimeterState.getBlock() instanceof AbstractStatorBlock asb) {
-                if(asb.hasRotor(getLevel(), perimeterPos, perimeterState))
+                if(asb.hasRotor(level, perimeterPos, perimeterState))
                     statorCount++;
             }
 
@@ -94,7 +97,10 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         }
     }
 
+    
+
     public void incStatorCount() {
+
         statorCount++;
         if(statorCount > getStatorCircumference()) {
             statorCount = (byte)getStatorCircumference();
@@ -200,8 +206,8 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
     }
 
     @Override
-    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-        return super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+    public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        return false;
     }
 
     public byte getStatorCount() {
@@ -210,5 +216,16 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
 
     public int getMultiplier() {
         return 1;
+    }
+
+    @Nullable
+    public static AbstractRotorBlockEntity get(Level world, @Nullable BlockPos pos) {
+
+        if(pos == null) return null;
+        BlockEntity be = world.getBlockEntity(pos);
+        if(be instanceof AbstractRotorBlockEntity arbe) return arbe;
+        if(be instanceof RotorReferable ref)
+            if(ref.getRotorBE() instanceof AbstractRotorBlockEntity arbe) return arbe;
+        return null;
     }
 }

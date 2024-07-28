@@ -1,9 +1,11 @@
+
 package com.quattage.mechano.content.block.power.alternator.stator;
 
 import java.util.Locale;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
@@ -186,8 +188,8 @@ public class BigStatorBlock extends AbstractStatorBlock<com.quattage.mechano.con
     public BlockPos getAttachedRotorPos(Level world, BlockPos pos, BlockState state) {
         BlockPos facing = pos.relative(state.getValue(ORIENTATION).getCardinal());
         if(world.getBlockState(facing).getBlock() instanceof BlockRotorable br)
-            return br.getParentPos(world, pos, state);
-        return facing;
+            return br.getParentPos(world, facing, state);
+        return null;
     }
 
     @Override

@@ -101,8 +101,8 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
             matrixStack.translate(fromOffset.x, fromOffset.y, fromOffset.z);
             VertexConsumer buffer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(WireSpool.ofType(edge.getTypeID()).asResource()));
 
-            Vector3f offset = WireModelRenderer.getWireOffset(fromPos, toPos);
-            int[] lightmap = WireModelRenderer.deriveLightmap(cache.getWorld(), fromPos, toPos);
+            Vector3f offset = WirePipeline.getWireOffset(fromPos, toPos);
+            int[] lightmap = WirePipeline.deriveLightmap(cache.getWorld(), fromPos, toPos);
 
             matrixStack.translate(offset.x(), 0, offset.z());
             
@@ -113,7 +113,7 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
             float angleY = -(float)Math.atan2(wireOrigin.z(), wireOrigin.x());
             matrixStack.mulPose(new Quaternionf().rotateXYZ(0, angleY, 0));
 
-            WireModelRenderer.INSTANCE.renderDynamic(buffer, matrixStack, wireOrigin, sagOverride, lightmap[0], lightmap[1], lightmap[2], lightmap[3]);
+            WirePipeline.INSTANCE.renderDynamic(buffer, matrixStack, wireOrigin, sagOverride, lightmap[0], lightmap[1], lightmap[2], lightmap[3]);
             matrixStack.popPose();
         }
     }
@@ -168,7 +168,7 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
         matrixStack.translate(fromOffset.x, fromOffset.y, fromOffset.z);
         VertexConsumer buffer = bufferSource.getBuffer(MechanoRenderTypes.getWireTranslucent(((WireSpool)spool.getItem()).asResource()));
 
-        Vector3f offset = WireModelRenderer.getWireOffset(fromPos, toPos);
+        Vector3f offset = WirePipeline.getWireOffset(fromPos, toPos);
         matrixStack.translate(offset.x(), 0, offset.z());
         
         Vec3 startPos = fromPos.add(offset.x(), 0, offset.z());
@@ -178,13 +178,13 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
         float angleY = -(float)Math.atan2(wireOrigin.z(), wireOrigin.x());
         matrixStack.mulPose(new Quaternionf().rotateXYZ(0, angleY, 0));
 
-        WireModelRenderer.INSTANCE.renderDynamic(buffer, matrixStack, wireOrigin, 1, 15, 4, 15, !isAnchored, (int)((Math.sin(timeTick * 3.1) * 89f) + 60f));
+        WirePipeline.INSTANCE.renderDynamic(buffer, matrixStack, wireOrigin, 1, 15, 4, 15, !isAnchored, (int)((Math.sin(timeTick * 3.1) * 89f) + 60f));
         matrixStack.popPose();
 
         oldToPos = toPos;
     }
 
-    private boolean isValidPair(Pair<?, ?> pair) {
+    public static boolean isValidPair(Pair<?, ?> pair) {
         if(pair == null) return false;
         if(pair.getFirst() == null) return false;
         if(pair.getSecond() == null) return false;
@@ -193,7 +193,6 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
 
     private void drawChevron(T be, float pTicks, PoseStack matrixStack, MultiBufferSource bufferSource) {
 
-        // TODO store this BE side so it doesn't have to be called constantly
         if(!be.getWattBatteryHandler().getInteractionStatus().isInteracting()) return;
 
         CombinedOrientation orient = DirectionTransformer.extract(be.getBlockState());

@@ -80,6 +80,7 @@ public class Mechano {
     }
 
     public static void log(String message) {      
+        if(!isDevEnv()) return;
         String side = ESC + "[1;34m" + Thread.currentThread().getName() + ESC + "[1;35m";
 
         String time = LocalTime.now(ZoneId.of("America/Montreal")).truncatedTo(ChronoUnit.MILLIS).toString();
@@ -93,7 +94,7 @@ public class Mechano {
     }
 
     public static void logReg(String message) {
-        if(isDevEnv()) log("Registering " + MOD_ID + " " + message);
+        log("Registering " + MOD_ID + " " + message);
     }
 
     public static boolean isDevEnv() {

@@ -2,6 +2,8 @@ package com.quattage.mechano.content.block.power.alternator.slipRingShaft;
 
 import static com.quattage.mechano.Mechano.lang;
 
+import com.quattage.mechano.Mechano;
+import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
@@ -11,6 +13,7 @@ import com.quattage.mechano.foundation.electricity.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.watt.unit.WattUnitConversions;
 import com.quattage.mechano.foundation.helper.NullSortedArray;
+import com.simibubi.create.content.equipment.goggles.GogglesItem;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate.StressImpact;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
@@ -20,6 +23,7 @@ import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.LangBuilder;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -100,18 +104,14 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
     @Override
     public void tick() {
-        super.tick();
         energyProduced = WattUnitConversions.toWatts(currentStress * getTheoreticalSpeed(), getTheoreticalSpeed());
         if(energyProduced.getWatts() < 8)
             energyProduced = WattUnit.EMPTY;
 
-        if(canControl() && (!getLevel().isClientSide())) {
-            if(!sends.isEmpty())
-                WattBatteryHandler.awardWattsTo(energyProduced, sends);
-        }
+        if(canControl() && (!getLevel().isClientSide()))
+            WattBatteryHandler.awardWattsTo(energyProduced, sends);
 
         super.tick();
-
     }
 
     @Override
@@ -125,6 +125,10 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
         Direction facing = getBlockState().getValue(DirectionalKineticBlock.FACING);
         for(BlockPos adjacent : DirectionTransformer.getAllAdjacent(getBlockPos(), facing.getAxis()))
             ((SlipRingShaftBlock)getBlockState().getBlock()).evaluateNeighbor(getLevel(), getBlockPos(), adjacent);
+    }
+
+    public SlipRingShaftStatus getStatus() {
+        return this.status;
     }
 
     /**
@@ -152,6 +156,9 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
             // if the iterated block is a connected rotor, increment all relevent values
             if(thisEntity instanceof AbstractRotorBlockEntity arbe && isConnected(arbe, dir)) {
+
+                arbe.findConnectedStators(true);
+
                 this.status = SlipRingShaftStatus.ROTORED_NO_OPPOSITE;
                 this.length++;
                 this.potentialPowerScore += arbe.getStatorCircumference();
@@ -160,18 +167,19 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
                 this.currentStress += arbe.calculateStressApplied();
                 arbe.setControllerPos(getBlockPos(), false);
 
-                if(x == MechanoSettings.ALTERNATOR_MAX_LENGTH) {
+                if(x == MechanoSettings.ALTERNATOR_MAX_LENGTH)
                     this.status = SlipRingShaftStatus.ROTORED_TOO_LONG;
-                }
 
                 continue;
             }
 
             // if the iterated block is a connected slip ring shaft, copy values over to it
             if(thisEntity instanceof SlipRingShaftBlockEntity srbe && isConnected(srbe, dir)) {
+
                 this.status = SlipRingShaftStatus.ROTORED_PARENT;
                 this.opposingPos = srbe.getBlockPos();
-                
+                this.maxEnergyProduced = WattUnitConversions.toWatts(maximumStress, 256);
+
                 srbe.opposingPos = getBlockPos();
                 srbe.status = SlipRingShaftStatus.ROTORED_CHILD;
                 srbe.length = this.length;
@@ -179,25 +187,16 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
                 srbe.currentPowerScore = this.currentPowerScore;
                 srbe.maximumStress = this.maximumStress;
                 srbe.currentStress = this.currentStress;
-                
-
-                this.maxEnergyProduced = WattUnitConversions.toWatts(maximumStress, 256);
                 srbe.maxEnergyProduced = this.maxEnergyProduced;
-
-                continue;
             }
 
             break;
         }
 
-        // if the status has changed after the execution of the loop, evaluate the validity of this alternator's structure
-        // and call notifyUpdate();
-
         this.isBuilt = status.hasComplementary && getStatorPercent() >= MechanoSettings.ALTERNATOR_MINIMUM_PERCENT;
-        notifyUpdate();
-
         if(!this.status.canControl) forgetAlternatorStructure(dir);
-        else copyStatsToChild();
+        copyStatsToChild();
+        notifyUpdate();
     }
 
     /////////////////////////// helpers for evaluateAlternatorStructure() //////////////////////////
@@ -217,24 +216,13 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
      * @param dir Direction that this slip ring is facing
      */
     public void forgetAlternatorStructure(Direction dir) {
-
-        boolean forgotOpposite = false;
-        if(opposingPos != null) {
-            forgotOpposite = true;
-            if(getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
-                srbe.status = SlipRingShaftStatus.ROTORED_NO_OPPOSITE;
-                srbe.isBuilt = false;
-                opposingPos = null;
-            }
-        }
-
         for(int x = 0; x < MechanoSettings.ALTERNATOR_MAX_LENGTH; x++) {
             BlockPos pos = getBlockPos().relative(dir, x + 1);
             if(getLevel().getBlockEntity(pos) instanceof AbstractRotorBlockEntity arbe)
                 arbe.setControllerPos(null, false);
-            else if(!forgotOpposite && getLevel().getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe) {
+            else if(getLevel().getBlockEntity(pos) instanceof SlipRingShaftBlockEntity srbe) {
                 srbe.status = SlipRingShaftStatus.ROTORED_NO_OPPOSITE;
-                srbe.isBuilt = false;
+                srbe.evaluateAlternatorStructure();
                 srbe.opposingPos = null;
             }
             else break;
@@ -245,10 +233,11 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
      * Copies all data from parent to child. If this is called by a child slip ring, it'll just be ignored.
      */
     private void copyStatsToChild() {
+        if(!status.canControl) return;
         if(opposingPos == null) return;
         if(!(getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe)) 
             return;    
-        //throw new NullPointerException("Error copying SlipRingShaftBlockEntity stats from parent to child - No child Slip Ring could be found at " + opposingPos);
+
         srbe.length = this.length;
         srbe.potentialPowerScore = this.potentialPowerScore;
         srbe.currentPowerScore = this.currentPowerScore;
@@ -262,18 +251,17 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
     @Override
     public void onSpeedChanged(float previousSpeed) {
-        Direction dir = getBlockState().getValue(DirectionalKineticBlock.FACING);
-        if(this.status != SlipRingShaftStatus.ROTORED_CHILD) {
-
-            currentStress = 0;
-            for(int x = 0; x < length; x++) {
-                BlockEntity thisEntity = getLevel().getBlockEntity(getBlockPos().relative(dir, x + 1));
-                if(!(thisEntity instanceof AbstractRotorBlockEntity arbe))
-                    break;
-                this.currentStress += arbe.calculateStressApplied();
-            }
+        if(!getLevel().isClientSide()) {
+            super.onSpeedChanged(previousSpeed);
+            MechanoPackets.sendToAllClients(new SlipRingUpdateS2CPacket(worldPosition));
         }
 
+        updateAlternatorSpeed();
+    }
+
+    public void updateAlternatorSpeed() {
+        // this can be removed without immediately causing issues
+        // it'll stay for now just because it might be useful later
         copyStatsToChild();
     }
 
@@ -286,26 +274,47 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
         if(!this.status.canControl && opposingPos != null && getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
             if(srbe.isBuilt) {
+                if(!isPlayerSneaking)
+                    return buildSimpleStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true, true);
                 return buildStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true);
-            } else { 
-                if(!isPlayerSneaking) return buildAssemblyChecklistTooltip(tooltip, srbe.length, srbe.potentialPowerScore, srbe.currentPowerScore, this.status);
-                else return buildStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, false);
             }
+
+            if(!isPlayerSneaking)
+                return buildAssemblyChecklistTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, this.status);
+            return buildStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, false);
         }
 
         if(isBuilt) {
+            if(!isPlayerSneaking)
+                return buildSimpleStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true, true);
             return buildStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true);
-        } else { 
-            if(!isPlayerSneaking) return buildAssemblyChecklistTooltip(tooltip, length, currentPowerScore, potentialPowerScore, status);
-            else return buildStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, false);
         }
+        if(!isPlayerSneaking)
+            return buildAssemblyChecklistTooltip(tooltip, length, currentPowerScore, potentialPowerScore, status);
+        return buildStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, false);
+    }
+
+    @Override
+    @SuppressWarnings("resource")
+    public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+
+        boolean isWearingGoggles = GogglesItem.isWearingGoggles(Minecraft.getInstance().player);
+        if(isWearingGoggles) return false;
+
+        if(!this.status.canControl && opposingPos != null && getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
+            if(srbe.isBuilt)
+                return buildSimpleStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true, isWearingGoggles);
+        } else if(isBuilt)
+            return buildSimpleStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true, isWearingGoggles);
+
+        return false;
     }
 
     private boolean buildAssemblyChecklistTooltip(List<Component> tooltip, int len, int cScore, int pScore, SlipRingShaftStatus status) {
 
         if(status == SlipRingShaftStatus.NONE) return false;
         final boolean hasOpposite = status != SlipRingShaftStatus.ROTORED_NO_OPPOSITE;
-        final int sPercent = Math.round(getStatorPercent());
+        final float sPercent = Math.round(getStatorPercent());
 
         lang().text("§7§l🔧§9§l ").translate("gui.alternator.status.unfinishedTitle")
             .forGoggles(tooltip);
@@ -325,6 +334,25 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
         }
             
         else lang().text("  §c§l❌ ").translate("gui.alternator.status.badCoverage").text(" (§l§c" + cScore + " / " + (int)(pScore * ((float)MechanoSettings.ALTERNATOR_MINIMUM_PERCENT / 100f) + 1)  + "§r)").style(ChatFormatting.GRAY).forGoggles(tooltip);
+
+        return true;
+    }
+
+
+    private boolean buildSimpleStatsTooltip(List<Component> tooltip, int len, int cScore, int pScore, float cStress, float mStress, SlipRingShaftStatus status, boolean detail, boolean isWearingGoggles) {
+        lang().translate("gui.alternator.status.title").forGoggles(tooltip);
+
+        LangBuilder su = Lang.translate("generic.unit.stress").style(ChatFormatting.DARK_GRAY);
+        LangBuilder stress = Lang.number(mStress).style(ChatFormatting.DARK_GRAY);
+        LangBuilder watts = energyProduced.format(ChatFormatting.AQUA, ChatFormatting.AQUA);
+
+        lang().translate("gui.generic.converting").style(ChatFormatting.GRAY).space().add(stress).add(su).forGoggles(tooltip);
+        lang().translate("gui.generic.into").style(ChatFormatting.GRAY).space().add(watts).forGoggles(tooltip);
+
+        if(isWearingGoggles) {
+            lang().text("").forGoggles(tooltip);
+            lang().translate("gui.generic.moreinfo").style(ChatFormatting.DARK_GRAY).forGoggles(tooltip);
+        }
 
         return true;
     }
@@ -382,7 +410,7 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
         lang().text("").forGoggles(tooltip);
         lang().text("§7§l⚡ §9§l").translate("gui.alternator.status.predictiveTitle").style(ChatFormatting.BLUE).style(ChatFormatting.BOLD).text(" ")
             .forGoggles(tooltip);
-        
+
         float cWatts = energyProduced.getWatts();
         float mWatts = maxEnergyProduced.getWatts();
         float wPercent = 1 - (cWatts / mWatts);
@@ -394,13 +422,16 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
         LangBuilder w = lang().translate("generic.unit.watts").style(ChatFormatting.DARK_GRAY);
         LangBuilder watts = Lang.number(cWatts).style(filledColor).text(ChatFormatting.GRAY, " / ").add(Lang.number(mWatts).style(ChatFormatting.DARK_GRAY));
+        LangBuilder pertick = lang().translate("generic.unit.pertick").style(ChatFormatting.DARK_GRAY);
+        LangBuilder headroom = Lang.number(Math.round(wPercent * 100)).text("%").style(filledColor);
 
+        lang().translate("gui.alternator.status.headroom").style(ChatFormatting.GRAY).space().add(headroom).forGoggles(tooltip);
         lang().translate("gui.alternator.status.predictiveSubtitle").style(ChatFormatting.GRAY).forGoggles(tooltip);
         lang().space().space().add(stress).add(su).forGoggles(tooltip);
-        lang().space().space().add(watts).add(w).forGoggles(tooltip);
+        lang().space().space().add(watts).add(w).add(pertick).forGoggles(tooltip);
         
-        if(cWatts >= mWatts && isBuilt && !WattUnit.hasNoPotential(cWatts))
-            lang().text("§b§l>> §r§8(").translate("gui.slipring.state.perfect").text(")").style(ChatFormatting.DARK_GRAY).forGoggles(tooltip);
+        // if(cWatts >= mWatts && isBuilt && !WattUnit.hasNoPotential(cWatts))
+        //     lang().text("§b§l>> §r§8(").translate("gui.slipring.state.perfect").text(")").style(ChatFormatting.DARK_GRAY).forGoggles(tooltip);
 
         return true;
     }
@@ -409,7 +440,7 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
         return 100 * ((float)currentPowerScore / (float)potentialPowerScore);
     }
 
-    private static enum SlipRingShaftStatus {
+    public static enum SlipRingShaftStatus {
         ROTORED_PARENT(true, true),
         ROTORED_CHILD(false, true),
         ROTORED_TOO_LONG(false, false),

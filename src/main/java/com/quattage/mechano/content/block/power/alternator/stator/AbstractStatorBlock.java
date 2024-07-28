@@ -2,6 +2,8 @@ package com.quattage.mechano.content.block.power.alternator.stator;
 
 import javax.annotation.Nullable;
 
+import com.quattage.mechano.Mechano;
+import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock;
 import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
 import com.quattage.mechano.foundation.block.BlockChangeListenable;
@@ -73,8 +75,6 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
             }
         }
 
-        
-
         return getAlignedModelState(world, rotorAxis, pos, state, state, planePositions);
     }
 
@@ -98,17 +98,8 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-
-        boolean hasRotorBefore = hasRotor(context.getLevel(), context.getClickedPos(), state);
-        InteractionResult result = super.onWrenched(state, context);
-        boolean hasRotorAfter = hasRotor(context.getLevel(), context.getClickedPos(), context.getLevel().getBlockState(context.getClickedPos()));
-
-        if(hasRotorBefore != hasRotorAfter) {
-            BlockPos rotorPos = updateAttachedRotor(context.getLevel(), context.getClickedPos(), state, hasRotorAfter);
-            // TODO SYNC ON WRENCHED
-        }
-
-        return result;
+        // TODO wrench logic
+        return InteractionResult.FAIL;
     }
 
     @Override
@@ -180,8 +171,14 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
     public abstract BlockPos getAttachedRotorPos(Level world, BlockPos pos, BlockState state);
 
     public boolean hasRotor(Level world, BlockPos pos, BlockState state) {
-        BlockState rotorState = world.getBlockState(getAttachedRotorPos(world, pos, state));
-        if(!isRotor(rotorState)) return false;
+
+        BlockPos rotorPos = getAttachedRotorPos(world, pos, state);
+        if(rotorPos == null) return false;
+        BlockState rotorState = world.getBlockState(rotorPos);
+        if(!(rotorState.getBlock() instanceof AbstractRotorBlock)) return false;
+
+
+
         return rotorState.getValue(RotatedPillarKineticBlock.AXIS) == state.getValue(SimpleOrientedBlock.ORIENTATION).getOrient();
     }
 
@@ -214,16 +211,26 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
         IPlacementHelper helper = PlacementHelpers.get(getPlacementHelperId());
 
         ItemStack heldItem = player.getItemInHand(hand);
-		if (helper.matchesItem(heldItem))
+		if(helper.matchesItem(heldItem))
 			return helper.getOffset(player, world, state, pos, ray)
-				.placeInWorld(world, (BlockItem) heldItem.getItem(), player, hand, ray);
+				.placeInWorld(world, (BlockItem)heldItem.getItem(), player, hand, ray);
 
 		return InteractionResult.PASS;
 	}
 
     @Override
+    public void onBeforeBlockBroken(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {
+        
+    }
+
+    @Override
     public void onAfterBlockBroken(Level world, BlockPos pos, BlockState pastState, BlockState currentState) {
-        updateAttachedRotor(world, pos, currentState, false);
+        updateAttachedRotor(world, pos, pastState, false);
+    }
+
+    @Override
+    public void onBeforeBlockPlaced(Level world, BlockPos pos, BlockState currentState, BlockState destinedState) {
+        
     }
 
     @Override
@@ -233,19 +240,16 @@ public abstract class AbstractStatorBlock<T extends Enum<T> & StringRepresentabl
 
     @Nullable 
     private BlockPos updateAttachedRotor(Level world, BlockPos pos, BlockState state, boolean inc) {
-        if(world.getBlockEntity(getAttachedRotorPos(world, pos, state)) instanceof AbstractRotorBlockEntity arbe) {
+        
+        AbstractRotorBlockEntity arbe = AbstractRotorBlockEntity.get(world, getAttachedRotorPos(world, pos, state));
 
-            boolean attached = 
-                state.getValue(SimpleOrientedBlock.ORIENTATION).getOrient()
+        if(arbe != null) {
+            boolean attached = state.getValue(SimpleOrientedBlock.ORIENTATION).getOrient()
                     .equals(arbe.getBlockState().getValue(RotatedPillarKineticBlock.AXIS));
 
-            if(inc && attached) {
-                arbe.incStatorCount(); 
-                return arbe.getBlockPos();
-            }
-
             if(attached) {
-                arbe.decStatorCount();
+                if(inc) arbe.incStatorCount(); 
+                else arbe.decStatorCount();
                 return arbe.getBlockPos();
             }
         }

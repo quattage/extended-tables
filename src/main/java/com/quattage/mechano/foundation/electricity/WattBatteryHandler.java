@@ -18,7 +18,6 @@ import com.quattage.mechano.foundation.network.WattModeSyncS2CPacket;
 import com.quattage.mechano.foundation.network.WattSyncS2CPacket;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
@@ -147,8 +146,6 @@ public class WattBatteryHandler<T extends SmartBlockEntity & WattBatteryHandlabl
 
             if(demands[x] <= 0) continue;
             OptionalWattOrFE acceptorOpt = batteries.get(x);
-
-            Mechano.log("distributing " + demands[x] + " to " + acceptorOpt.getBlockPos());
 
             // Watts added to this iteration's energy store are multiplied by the distribution ratio
             float wattsToAccept = wattsToDistribute * ((float)demands[x] / totalDemand);

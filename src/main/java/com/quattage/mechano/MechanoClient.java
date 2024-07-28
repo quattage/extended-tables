@@ -2,17 +2,20 @@
 package com.quattage.mechano;
 
 import net.minecraft.client.Minecraft;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModList;
 
 import com.jozufozu.flywheel.core.PartialModel;
 import com.quattage.mechano.foundation.block.hitbox.HitboxCache;
 import com.quattage.mechano.foundation.block.hitbox.HitboxProvider;
+import com.quattage.mechano.foundation.compat.embeddium.EmbeddiumWireCompat;
 import com.quattage.mechano.foundation.electricity.grid.WireAnchorSelectionManager;
 import com.quattage.mechano.foundation.electricity.rendering.WireTextureProvider;
 import com.quattage.mechano.foundation.ui.MechanoIconAtlas;
 
-
-
+@OnlyIn(Dist.CLIENT)
 public class MechanoClient {
 
     public static final WireTextureProvider WIRE_TEXTURE_PROVIDER = new WireTextureProvider();
@@ -38,6 +41,7 @@ public class MechanoClient {
 	}
 
     protected static void init(IEventBus modBus, IEventBus forgeBus) {
-        
+        if(ModList.get().isLoaded("embeddium"))
+            EmbeddiumWireCompat.registerCompatModule(forgeBus);
     }
 }

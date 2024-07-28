@@ -81,8 +81,7 @@ public class WattUnitConversions {
         float rModifier = 1;
 
         Voltage volts = toVolts(RPMA);
-        
-        WattUnit out = WattUnit.of(volts, Math.max(Math.abs(SU / 1024f) * rModifier, 1));
+        WattUnit out = WattUnit.of(volts, (Math.max(Math.abs(SU / 1024f) * rModifier, 1)) / MechanoSettings.SU2W_DIVIDEND);
         return out;
     }
 
@@ -120,7 +119,7 @@ public class WattUnitConversions {
      */
     public static int toFE(WattUnit watts) {
         return Math.round((watts.getWatts() * (float)MechanoSettings.FE2W_RATE));
-    } 
+    }
 
     /**
      * Converts total watts into ForgeEnergy

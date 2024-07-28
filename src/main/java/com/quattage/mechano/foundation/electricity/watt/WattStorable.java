@@ -80,23 +80,15 @@ public interface WattStorable {
     Voltage getFlux();
 
     /**
-     * <li><code>SOFT_DENY:</code> The incoming watt-tick is simply denied, nothing happens, this energy store receives nothing.
-     * <li><code>HARD_LIMIT:</code> The incoming watt-tick is chopped off at the maximum voltage tolerance value, energy is lost.
-     * Implementations can make use of whatever sort of efficiency losses they'd like to here.
-     * <li><code>TRANSFORM_IMPLICIT:</code> The incoming watt-tick is automatically converted (as if this energy store has a 
-     * built-in voltage transformer) and recieved in full by this energy store.
-     * <p>
-     * A good rule of thumb, even if it isn't generally needed for your use case, is to implement all 3 modes. It is a
-     * designed feature of this interface that the OvervoltBehavior is expected to change at runtime. 
-     * 
-     * @return an OvervoltBehavior describing how this energy store should react when 
+     * @return an {@link OvervoltBehavior} describing how this energy store should react when 
      * it receives energy at a voltage greater than it is designed to handle.
      */
     @Nullable
     OvervoltBehavior getOvervoltBehavior();
 
     /**
-     * Sets the OvervoltBehavior in this energy store. 
+     * Sets the {@link OvervoltBehavior} in this energy store. 
+     * If your overvolt behavior cannot change, this will simply do nothing.
      */
     void setOvervoltBehavior(OvervoltBehavior overvoltBehavior);
 

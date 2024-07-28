@@ -4,7 +4,6 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.electricity.watt.unit.Voltage;
 import com.quattage.mechano.foundation.electricity.watt.unit.WattUnit;
 

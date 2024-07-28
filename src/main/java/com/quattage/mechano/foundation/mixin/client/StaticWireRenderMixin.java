@@ -19,7 +19,7 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 /**
  * This mixin manually injects Mechano's wire rendering workflow directly into Minecraft's chunk meshing system.
  * I was surprised to find that forge just doesn't have a native way to do this - this way of doing things is very hacky and brittle.
- * With Embeddium present, {@link com.quattage.mechano.foundation.compat.embeddium.EmbeddiumWireInjector EmbeddiumWireInjector}
+ * With Embeddium present, {@link com.quattage.mechano.foundation.compat.embeddium.EmbeddiumWireCompat EmbeddiumWireInjector}
  * is used instead, which is much more straightforward and much less prone to breaking.
  */
 @Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask")

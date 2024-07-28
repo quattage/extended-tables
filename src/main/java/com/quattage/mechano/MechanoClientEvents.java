@@ -3,11 +3,9 @@ package com.quattage.mechano;
 import com.quattage.mechano.content.block.simple.diagonalGirder.DiagonalGirderWrenchBehavior;
 import com.quattage.mechano.foundation.behavior.ClientBehavior;
 import com.quattage.mechano.foundation.behavior.GridEdgeDebugBehavior;
-import com.quattage.mechano.foundation.electricity.grid.WireAnchorSelectionManager;
 import com.quattage.mechano.foundation.electricity.rendering.AnchorOverlayRenderer;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;

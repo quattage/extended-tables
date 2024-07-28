@@ -8,24 +8,26 @@ import org.joml.Vector3f;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
 import com.quattage.mechano.foundation.electricity.WireSpool;
 import com.quattage.mechano.foundation.electricity.grid.GridClientCache;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge;
 import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
-import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer;
-import com.quattage.mechano.foundation.electricity.rendering.WireModelRenderer.BakedModelHashKey;
+import com.quattage.mechano.foundation.electricity.rendering.WirePipeline;
+import com.quattage.mechano.foundation.electricity.rendering.WirePipeline.BakedModelHashKey;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.eventbus.api.IEventBus;
 
 /**
  * In vanilla, this injection code is usually done by {@link com.quattage.mechano.foundation.mixin.client.StaticWireRenderMixin StaticWireRenderMixin},
@@ -33,22 +35,23 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
  * In NeoForge, this event is built directly into the loader itself and is supported natively without any Embeddium-specific implementation required.
  */
 @OnlyIn(Dist.CLIENT)
-@EventBusSubscriber(Dist.CLIENT)
-public class EmbeddiumWireInjector {
+public class EmbeddiumWireCompat {
 
-    @SubscribeEvent
+    public static void registerCompatModule(IEventBus forgeBus) {
+        Mechano.LOGGER.info("Embeddium is detected! Compatability features enabled.");
+        forgeBus.addListener(EmbeddiumWireCompat::onEmbeddiumMeshInject);
+    }
+
     public static void onEmbeddiumMeshInject(ChunkMeshEvent event) {
-
 
         if(event.getWorld() == null) return;
         SectionPos s = event.getSectionOrigin();
-        // LevelChunk verticalSlice = event.getWorld().getChunk(s.x(), s.z());
-        // LevelChunkSection chunkSection = verticalSlice.getSection(verticalSlice.getSectionIndexFromSectionY(event.getSectionOrigin().y()));
-        // if(chunkSection == null || chunkSection.hasOnlyAir()) return;
-        
-        final GridClientCache wires = GridClientCache.of(event.getWorld());
-        List<GridClientEdge> edges = wires.getEdgeCache().get(event.getSectionOrigin());
 
+        LevelChunk verticalSlice = event.getWorld().getChunk(s.x(), s.z());
+        LevelChunkSection chunkSection = verticalSlice.getSection(verticalSlice.getSectionIndexFromSectionY(event.getSectionOrigin().y()));
+        if(chunkSection == null || chunkSection.hasOnlyAir()) return;
+
+        final List<GridClientEdge> edges = GridClientCache.getEdgesIn(event.getWorld(), event.getSectionOrigin());
         if(edges == null || edges.isEmpty()) return;
 
         event.addMeshAppender(context -> {
@@ -80,6 +83,7 @@ public class EmbeddiumWireInjector {
                 Vec3 startOffset = fromAnchor.getFirst().getLocalOffset();
                 matrixStack.translate(
                     chunkCorner.getX() + startOffset.x, 
+
                     chunkCorner.getY() + startOffset.y, 
                     chunkCorner.getZ() + startOffset.z
                 );
@@ -87,7 +91,7 @@ public class EmbeddiumWireInjector {
                 Vec3 startPos = fromAnchor.getFirst().getPos();
                 Vec3 endPos = toAnchor.getFirst().getPos();
                 Vector3f wireOrigin = new Vector3f(
-                    (float)(endPos.x - startPos.x), 
+                    (float)(endPos.x - startPos.x),
                     (float)(endPos.y - startPos.y), 
                     (float)(endPos.z - startPos.z)
                 );
@@ -95,8 +99,8 @@ public class EmbeddiumWireInjector {
                 float angleY = -(float)Math.atan2(wireOrigin.z(), wireOrigin.x());
                 matrixStack.mulPose(new Quaternionf().rotateXYZ(0, angleY, 0));
 
-                int[] lightmap = WireModelRenderer.deriveLightmap(accessor, startPos, endPos);
-                WireModelRenderer.INSTANCE.renderStatic(
+                int[] lightmap = WirePipeline.deriveLightmap(accessor, startPos, endPos);
+                WirePipeline.INSTANCE.renderStatic(
                     new BakedModelHashKey(startPos, endPos), 
                     builder, matrixStack, wireOrigin, 
                     lightmap[0], lightmap[1], lightmap[2], lightmap[3], 
