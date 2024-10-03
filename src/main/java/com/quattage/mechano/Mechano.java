@@ -1,6 +1,8 @@
 package com.quattage.mechano;
 
 import com.mojang.logging.LogUtils;
+import com.quattage.mechano.foundation.block.hitbox.HitboxCache;
+import com.quattage.mechano.foundation.block.hitbox.HitboxProvider;
 import com.quattage.mechano.foundation.block.upgradable.UpgradeCache;
 import com.quattage.mechano.foundation.electricity.grid.GlobalTransferGridDispatcher;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -36,16 +38,20 @@ public class Mechano {
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(Mechano.MOD_ID);
     public static final MechanoCapabilities CAPABILITIES = new MechanoCapabilities();
     public static final UpgradeCache UPGRADES = new UpgradeCache();
+
+    public static final HitboxCache HITBOXES = new HitboxCache();
+    
     
     public static boolean isLoaded = false;
     public static boolean IS_DEV_ENV;
+
 
     public Mechano() {
         Mechano.LOGGER.info("loading mechano");
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
-        MechanoSounds.add();
+        MechanoSounds.register();
         REGISTRATE.registerEventListeners(modBus);
 
         CAPABILITIES.registerTo(forgeBus);
@@ -71,9 +77,11 @@ public class Mechano {
             Mechano.LOGGER.warn("IDE detected - Mechano development features enabled.");
     }
 
-    public void onCommonSetup(final FMLCommonSetupEvent event) {
+    public void onCommonSetup(FMLCommonSetupEvent event) {
+        Mechano.CAPABILITIES.HITBOX_PROVIDER.loadHitboxes();
         MechanoPackets.register();
     }
+
 
     public static LangBuilder lang() {
         return new LangBuilder(MOD_ID);

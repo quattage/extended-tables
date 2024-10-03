@@ -9,6 +9,9 @@ import com.quattage.mechano.foundation.electricity.watt.WattStorable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 public class WattModeSyncS2CPacket implements Packetable {
@@ -38,13 +41,16 @@ public class WattModeSyncS2CPacket implements Packetable {
     }
 
     @Override
-    @SuppressWarnings("resource")
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> {
-            if(Minecraft.getInstance().level.getBlockEntity(target) instanceof ElectricBlockEntity ebe)
-                ebe.getWattBatteryHandler().setModeAsClient(ExternalInteractMode.values()[mode]);
-        });
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> handleAsClient(target, mode)));
         return true;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SuppressWarnings("resource")
+    public static void handleAsClient(BlockPos target, byte mode) {
+        if(Minecraft.getInstance().level.getBlockEntity(target) instanceof ElectricBlockEntity ebe)
+            ebe.getWattBatteryHandler().setModeAsClient(ExternalInteractMode.values()[mode]);
     }
 }

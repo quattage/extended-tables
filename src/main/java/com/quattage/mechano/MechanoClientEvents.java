@@ -1,3 +1,4 @@
+
 package com.quattage.mechano;
 
 import com.quattage.mechano.content.block.simple.diagonalGirder.DiagonalGirderWrenchBehavior;
@@ -7,6 +8,7 @@ import com.quattage.mechano.foundation.electricity.rendering.AnchorOverlayRender
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
@@ -14,6 +16,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
+@OnlyIn(Dist.CLIENT)
 @EventBusSubscriber(Dist.CLIENT)
 public class MechanoClientEvents {
 
@@ -41,7 +44,7 @@ public class MechanoClientEvents {
         @SubscribeEvent
         public static void onReisterReloadListener(RegisterClientReloadListenersEvent event) {
             event.registerReloadListener(MechanoClient.WIRE_TEXTURE_PROVIDER);
-            event.registerReloadListener(MechanoClient.HITBOX_PROVIDER);
+            event.registerReloadListener(Mechano.CAPABILITIES.HITBOX_PROVIDER);
         }
 
         @SubscribeEvent

@@ -3,26 +3,24 @@ package com.quattage.mechano;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import com.jozufozu.flywheel.core.PartialModel;
-import com.quattage.mechano.foundation.block.hitbox.HitboxCache;
 import com.quattage.mechano.foundation.block.hitbox.HitboxProvider;
 import com.quattage.mechano.foundation.compat.embeddium.EmbeddiumWireCompat;
 import com.quattage.mechano.foundation.electricity.grid.WireAnchorSelectionManager;
 import com.quattage.mechano.foundation.electricity.rendering.WireTextureProvider;
 import com.quattage.mechano.foundation.ui.MechanoIconAtlas;
 
-@OnlyIn(Dist.CLIENT)
+
 public class MechanoClient {
 
     public static final WireTextureProvider WIRE_TEXTURE_PROVIDER = new WireTextureProvider();
     public static final MechanoIconAtlas ICONS = new MechanoIconAtlas(Mechano.asResource("textures/gui/icons.png"), 128);
     public static final WireAnchorSelectionManager ANCHOR_SELECTOR = new WireAnchorSelectionManager(Minecraft.getInstance());
-    public static final HitboxCache HITBOXES = new HitboxCache();
-    protected static final HitboxProvider HITBOX_PROVIDER = new HitboxProvider();
+    
 
     public static final PartialModel 
         PART_DIAGIRDER_SDF = newPartial("diagonal_girder/partials/short_down_flat"),
@@ -41,7 +39,8 @@ public class MechanoClient {
 	}
 
     protected static void init(IEventBus modBus, IEventBus forgeBus) {
-        if(ModList.get().isLoaded("embeddium"))
+        Mechano.logReg("client");
+        if(ModList.get().isLoaded("embeddium") && FMLEnvironment.dist == Dist.CLIENT)
             EmbeddiumWireCompat.registerCompatModule(forgeBus);
     }
 }

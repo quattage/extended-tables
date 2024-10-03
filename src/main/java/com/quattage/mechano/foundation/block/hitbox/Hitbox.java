@@ -24,9 +24,24 @@ public class Hitbox<R extends Enum<R> & StringRepresentable> {
     public <T extends Enum<T> & StringRepresentable & HitboxNameable> RotatableHitboxShape<R> get(T type) {
         RotatableHitboxShape<R> shape = hitboxes.get(type.getHitboxName());
         if(shape == null) {
-            throw new NullPointerException("Error getting RotatableHitbox from Hitbox - '" 
-            + type.getHitboxName() + "' does not exist in this hitbox!");
+            throw new NullPointerException("Exception getting Hitbox BlockState from the provided hitbox! - '" 
+            + type.getHitboxName() + "' does not exist in {" + this + "}");
         }
         return shape;
+    }
+
+    public String toString() {
+
+        String out = "";
+        boolean first = true;
+        for(String name : hitboxes.keySet()) {
+            if(first) {
+                out += name;
+                first = false;
+            }
+            out += ", " + name;
+        }
+
+        return out;
     }
 }

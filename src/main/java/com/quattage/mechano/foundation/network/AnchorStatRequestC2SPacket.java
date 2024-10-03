@@ -2,7 +2,6 @@ package com.quattage.mechano.foundation.network;
 
 import java.util.function.Supplier;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.foundation.block.anchor.AnchorEntry;
 import com.quattage.mechano.foundation.block.anchor.AnchorPoint;
@@ -43,7 +42,6 @@ public class AnchorStatRequestC2SPacket implements Packetable {
         context.enqueueWork(() -> {
 
             if(!(context.getSender().level() instanceof ServerLevel world)) return;
-            
             if(!(world.getBlockEntity(target.getBlockPos()) instanceof WireAnchorBlockEntity wbe)) return;
 
             AnchorPoint serverAnchor = wbe.getAnchorBank().get(target.getSubIndex());

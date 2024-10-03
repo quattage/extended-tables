@@ -12,15 +12,13 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+
 
 /***
  * A lightweight alternative to GridEdge <p>
  * Can be written to and from a buffer to
  * send to the client. <p>
  */
-@OnlyIn(Dist.CLIENT)
 public class GridClientEdge {
 
     private final GID sideA;
@@ -121,7 +119,8 @@ public class GridClientEdge {
     }
 
     public void tickAge(long delta) {
-        this.age = (float)(this.age - (1l * (delta * 0.000001d)));
+        this.age -=  1l * (delta * 0.0000008d);
+        if(age < 0) age = 0;
     }
 
     public void setAge(int age) {

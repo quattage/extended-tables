@@ -30,10 +30,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 @OnlyIn(Dist.CLIENT)
-@EventBusSubscriber(modid = Mechano.MOD_ID)
+@EventBusSubscriber(Dist.CLIENT)
 public class WireAnchorSelectionManager {
 
     private final Minecraft instance;
@@ -62,37 +64,40 @@ public class WireAnchorSelectionManager {
      * @param wbe
      */
     public void tickAnchorsBelongingTo(WireAnchorBlockEntity wbe) {
+        if(!canTick()) return;
 
-        double delta = wbe.getTimeSinceLastTick();
-        for(AnchorPoint anchor : wbe.getAnchorBank().getAll()) {
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            double delta = wbe.getTimeSinceLastTick();
+            for(AnchorPoint anchor : wbe.getAnchorBank().getAll()) {
 
-            if(anchor == null) continue;
-            AnchorEntry entry = new AnchorEntry(wbe, anchor, instance.player);
-            if(!AnchorEntry.isValid(entry)) continue;
+                if(anchor == null) continue;
+                AnchorEntry entry = new AnchorEntry(wbe, anchor, instance.player);
+                if(!AnchorEntry.isValid(entry)) continue;
 
-            if(entry.getDistance() < 11) {
+                if(entry.getDistance() < 11) {
 
-                if(!nearbyAnchors.add(entry)) {
-                    nearbyAnchors.remove(entry);
-                    nearbyAnchors.add(entry);
-                }
-
-                if(WireSpool.getHeldByPlayer(instance.player) != null) {
-                    if(isAnchorSelected(anchor))
-                        anchor.increaseToSize(MechanoSettings.ANCHOR_SELECT_SIZE, delta * 0.2f);
-                    else {
-                        if(anchor.getSize() > MechanoSettings.ANCHOR_NORMAL_SIZE)
-                            anchor.decreaseToSize(MechanoSettings.ANCHOR_NORMAL_SIZE, delta * 0.2f);
-                        else if(anchor.getSize() < MechanoSettings.ANCHOR_NORMAL_SIZE)
-                            anchor.increaseToSize(MechanoSettings.ANCHOR_NORMAL_SIZE, delta * 0.2f);
+                    if(!nearbyAnchors.add(entry)) {
+                        nearbyAnchors.remove(entry);
+                        nearbyAnchors.add(entry);
                     }
-                    
-                } else anchor.decreaseToSize(0, delta * 0.2f);
-            } else {
-                nearbyAnchors.remove(entry);
-                anchor.decreaseToSize(0, delta * 0.2f);
+
+                    if(WireSpool.getHeldByPlayer(instance.player) != null) {
+                        if(isAnchorSelected(anchor))
+                            anchor.increaseToSize(MechanoSettings.ANCHOR_SELECT_SIZE, delta * 0.2f);
+                        else {
+                            if(anchor.getSize() > MechanoSettings.ANCHOR_NORMAL_SIZE)
+                                anchor.decreaseToSize(MechanoSettings.ANCHOR_NORMAL_SIZE, delta * 0.2f);
+                            else if(anchor.getSize() < MechanoSettings.ANCHOR_NORMAL_SIZE)
+                                anchor.increaseToSize(MechanoSettings.ANCHOR_NORMAL_SIZE, delta * 0.2f);
+                        }
+                        
+                    } else anchor.decreaseToSize(0, delta * 0.2f);
+                } else {
+                    nearbyAnchors.remove(entry);
+                    anchor.decreaseToSize(0, delta * 0.2f);
+                }
             }
-        }
+        });
     }
 
     public boolean isAnchorSelected(AnchorEntry entry) {
@@ -123,6 +128,7 @@ public class WireAnchorSelectionManager {
     
 
     @SubscribeEvent
+    @OnlyIn(Dist.CLIENT)
     public static void tick(ViewportEvent event) {
 
         Minecraft instance = Minecraft.getInstance();
@@ -222,5 +228,11 @@ public class WireAnchorSelectionManager {
 
     public AnchorVertexData getAnchorData() {
         return selectedVertex;
+    }
+
+    public boolean canTick() {
+        if(instance.level != null)
+            return instance.level.isClientSide();
+        return false;
     }
 }

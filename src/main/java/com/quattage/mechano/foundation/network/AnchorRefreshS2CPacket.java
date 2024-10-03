@@ -3,11 +3,13 @@ package com.quattage.mechano.foundation.network;
 import java.util.function.Supplier;
 
 import com.quattage.mechano.foundation.electricity.grid.network.GridSyncHelper;
-import com.quattage.mechano.foundation.electricity.impl.ElectricBlockEntity;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 public class AnchorRefreshS2CPacket implements Packetable {
@@ -27,12 +29,15 @@ public class AnchorRefreshS2CPacket implements Packetable {
     }
 
     @Override
-    @SuppressWarnings("resource")
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> {
-            GridSyncHelper.markChunksChanged(Minecraft.getInstance().level, target);
-        });
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> handleAsClient(target)));
         return true;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SuppressWarnings("resource")
+    public static void handleAsClient(BlockPos target) {
+        GridSyncHelper.markChunksChanged(Minecraft.getInstance().level, target);
     }
 }

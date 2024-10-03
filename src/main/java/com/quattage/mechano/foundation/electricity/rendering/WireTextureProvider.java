@@ -14,10 +14,15 @@ import com.quattage.mechano.foundation.electricity.WireSpool;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 
 public class WireTextureProvider extends SimplePreparableReloadListener<Map<ResourceLocation, WireTextureProvider.JsonModel>> {
@@ -70,6 +75,12 @@ public class WireTextureProvider extends SimplePreparableReloadListener<Map<Reso
         ResourceLocation key = modelFromSpool(spoolType);
         if(textureCache.containsKey(key)) return textureCache.get(key);
         return MISSING;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SuppressWarnings("deprecation")
+    public static TextureAtlasSprite getWireSprite(WireSpool spool) {
+        return Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(new ResourceLocation("mechano:block/wire/" + spool.getName()));
     }
 
     @Override

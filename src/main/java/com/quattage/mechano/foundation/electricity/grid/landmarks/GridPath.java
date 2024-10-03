@@ -35,7 +35,8 @@ public class GridPath {
     }
 
     /**
-     * Unwinds a Map, where key-value pairs represent links, into a <code>GridPath</code> and returns it.
+     * Unwinds a Map, where key-value pairs represent links, into a <code>GridPath</code> and returns it. <p>
+     * For example, a map containing <code> A : B,  B : C,  C: D,  D: E </code> will return a GridPath structured as <code> A, B, C, D, E </code> 
      * @param path Map of GridVertices describing a path
      * @param start The starting GridVertex, used to establish insertion order of the resulting GridPath
      * @param lowestWatts The slowest wattage rate encountered during each leap <code>path</code>, used to describe the maximum possible rate of the resulting GridPath.
@@ -52,21 +53,27 @@ public class GridPath {
 
         int x = 0;
         int max = path.size() * 2 + 1;
-        if(edge == null) throw new NullPointerException("Error unwinding GridPath at iteration " + x + ": No link exists between " + start + " and " + leap + " from the supplied path: " + path);
+        if(edge == null) {
+            throw new NullPointerException("Error unwinding GridPath at iteration " + x 
+            + ": No link exists between " + start + " and " + leap + " from the supplied path: " + path);
+        }
         edgeList.add(start.getLinkTo(leap));
 
         while(leap != null) {
 
             x++;
-            if(x > max)
-                throw new UnboundGridPathException("Error unwinding GridPath - The supplied path (" + path + ") has no bounding terminus! (Loop in children)");
+            if(x > max) {
+                throw new UnboundGridPathException("Error unwinding GridPath - The supplied path (" 
+                    + path + ") has no bounding terminus! (Loop in children)");
+            }
 
             GridVertex next = path.get(leap);
             GridEdge nextEdge = leap.getLinkTo(next);
             leap = next;
             if(nextEdge == null) {
                 if(leap == null) break;
-                throw new NullPointerException("Error unwinding GridPath at iteration " + x + ": No link exists between " + leap + " and " + next + " from the supplied path: " + path);
+                throw new NullPointerException("Error unwinding GridPath at iteration " + x 
+                    + ": No link exists between " + leap + " and " + next + " from the supplied path: " + path);
             }
             edgeList.add(nextEdge);
         }

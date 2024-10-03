@@ -23,14 +23,14 @@ public class RotatableHitboxShape<T extends Enum<T> & StringRepresentable> {
     private final String typeName;
 
     @SuppressWarnings("unchecked")
-    protected RotatableHitboxShape(String typeName, EnumProperty<T> group, List<List<Double>> deserialized) {
+    protected RotatableHitboxShape(String typeName, EnumProperty<T> group, List<List<Float>> deserialized) {
     
         this.propertyGroup = group;
         this.shapes = new HashMap<>();
         this.typeName = typeName;
 
         VoxelShapeBuilder shape = new VoxelShapeBuilder();
-        for(List<Double> c : deserialized)
+        for(List<Float> c : deserialized)
             shape.addBox(c.get(0), c.get(1), c.get(2), c.get(3), c.get(4), c.get(5));
 
         if(!shape.hasFeatures()) {

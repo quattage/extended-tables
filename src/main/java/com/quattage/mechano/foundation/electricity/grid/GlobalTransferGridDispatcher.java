@@ -119,6 +119,7 @@ public class GlobalTransferGridDispatcher implements ICapabilityProvider, INBTSe
 
     @SuppressWarnings("unused")
     public static void initTasks() {
+        Mechano.logReg("grid tasks");
         GridAsyncTask pathResetter = new GridAsyncTask(
             "Reset GridPaths",
             () -> {

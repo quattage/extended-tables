@@ -13,6 +13,7 @@ import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
 import com.quattage.mechano.foundation.block.upgradable.BlockUpgradable;
 import com.quattage.mechano.foundation.helper.CreativeTabExcludable;
+import com.quattage.mechano.foundation.helper.VoxelShapeBuilder;
 import com.simibubi.create.foundation.block.IBE;
 
 import net.minecraft.core.BlockPos;
@@ -64,7 +65,7 @@ public class ConnectorTier2Block extends AbstractConnectorBlock implements IBE<C
 
     @Override
     VoxelShape getHitbox(BlockState state) {
-        hitbox = MechanoClient.HITBOXES.get(ORIENTATION, state.getValue(MODEL_TYPE), this);
+        hitbox = Mechano.HITBOXES.get(ORIENTATION, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(ORIENTATION));
     }
 

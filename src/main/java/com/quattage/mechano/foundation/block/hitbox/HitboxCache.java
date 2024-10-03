@@ -30,7 +30,6 @@ public class HitboxCache {
         RotatableHitboxShape<R> get(EnumProperty<R> group, @Nullable T type, Block block) {
 
         RotatableHitboxShape<?> check = null;
-
         if(type != null) {
             check = hitboxes.getOrDefault(
                 ForgeRegistries.BLOCKS.getKey(block).withSuffix("/" + type.getHitboxName()), 
@@ -66,7 +65,7 @@ public class HitboxCache {
 
 
     public <B extends Block, P, T extends Enum<T> & HitboxNameable & StringRepresentable, R extends Enum<R> & StringRepresentable> 
-        NonNullUnaryOperator<BlockBuilder<B, P>> flag(String sub, EnumProperty<T> typeStates, EnumProperty<R> orientStates) {
+        NonNullUnaryOperator<BlockBuilder<B, P>> flag(String sub, @Nullable EnumProperty<T> typeStates, EnumProperty<R> orientStates) {
         if(typeStates == null) {
             return b -> {
                 UnbuiltHitbox<R> key = 
@@ -125,7 +124,13 @@ public class HitboxCache {
         return unbuiltCache;
     }
 
-    protected <T extends Enum<T> & StringRepresentable> void putNew(UnbuiltHitbox<T> unbuilt, List<List<Double>> boxes) {
+    /**
+     * Turns the given UnbuiltHitbox into an actual hitbox
+     * @param <T> 
+     * @param unbuilt
+     * @param boxes
+     */
+    protected <T extends Enum<T> & StringRepresentable> void putNew(UnbuiltHitbox<T> unbuilt, List<List<Float>> boxes) {
         hitboxes.put(unbuilt.getSerializedLocation(), new RotatableHitboxShape<T>(unbuilt.getType(), unbuilt.getOrientStates(), boxes));
     }
 
@@ -155,8 +160,12 @@ public class HitboxCache {
             return loc.withSuffix("/" + hitboxType);
         }
 
-        protected ResourceLocation getRawPath() {
+        protected ResourceLocation getResourceLocation() {
             return path;
+        }
+
+        protected String getRawPath() {
+            return "assets/" + path.getNamespace() + "/" + path.getPath();
         }
 
         public int hashCode() {

@@ -16,6 +16,7 @@ import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge
 import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.rendering.WirePipeline;
 import com.quattage.mechano.foundation.electricity.rendering.WirePipeline.BakedModelHashKey;
+import com.quattage.mechano.foundation.electricity.rendering.WireTextureProvider;
 import com.simibubi.create.foundation.utility.Pair;
 
 import net.minecraft.client.renderer.RenderType;
@@ -104,7 +105,7 @@ public class EmbeddiumWireCompat {
                     new BakedModelHashKey(startPos, endPos), 
                     builder, matrixStack, wireOrigin, 
                     lightmap[0], lightmap[1], lightmap[2], lightmap[3], 
-                    WireSpool.ofType(edge.getTypeID()).getWireSprite()
+                    WireTextureProvider.getWireSprite(WireSpool.ofType(edge.getTypeID()))
                 );
 
                 matrixStack.popPose();

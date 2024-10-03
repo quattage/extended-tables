@@ -28,13 +28,12 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 
-// This is where TileEntities get regisrered.
 public class MechanoGroups {
     
     private static final DeferredRegister<CreativeModeTab> TAB_REGISTER =
 		DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Mechano.MOD_ID);
 
-    public static final RegistryObject<CreativeModeTab> MAIN_TAB = newTab(() -> MechanoBlocks.SMALL_ROTOR.asStack(), "main");
+    public static final RegistryObject<CreativeModeTab> MAIN_TAB = newTab(() -> MechanoBlocks.SMALL_STATOR.asStack(), "main");
 
     public static RegistryObject<CreativeModeTab> newTab(Supplier<ItemStack> icon, String name) {
         return TAB_REGISTER.register(name,

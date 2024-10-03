@@ -2,25 +2,19 @@
 package com.quattage.mechano.content.block.power.alternator.rotor;
 
 import java.util.Locale;
-import java.util.function.Supplier;
 
-import com.quattage.mechano.Mechano;
-import com.quattage.mechano.MechanoPackets;
 import com.quattage.mechano.MechanoSettings;
 import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlockEntity;
 import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
-import com.quattage.mechano.foundation.network.Packetable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 import com.simibubi.create.foundation.placement.IPlacementHelper;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -37,8 +31,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkEvent.Context;
 
 @SuppressWarnings("deprecation")
 public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock implements BlockRotorable, BlockChangeListenable {
@@ -100,7 +92,7 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
     }
 
 
-    private void setModel(Level world, BlockPos pos, BlockState state, RotorModelType bType) {
+    protected void setModel(Level world, BlockPos pos, BlockState state, RotorModelType bType) {
         world.setBlock(pos, state.setValue(MODEL_TYPE, bType), 2);
     }
 
@@ -234,40 +226,4 @@ public abstract class AbstractRotorBlock extends RotatedPillarKineticBlock imple
     }
 
     protected abstract int getPlacementHelperId();
-
-    public static class ARSetS2CPacket implements Packetable {
-
-        private final BlockPos target;
-        private final RotorModelType type;
-
-        public ARSetS2CPacket(BlockPos target, RotorModelType type) {
-            this.target = target;
-            this.type = type;
-        }
-
-        public ARSetS2CPacket(FriendlyByteBuf buf) {
-            this.target = buf.readBlockPos();
-            this.type = RotorModelType.values()[buf.readByte()];
-        }
-
-
-        @Override
-        public void toBytes(FriendlyByteBuf buf) {
-            buf.writeBlockPos(target);
-            buf.writeByte((byte)type.ordinal());
-        }
-
-        @Override
-        @SuppressWarnings("resource")
-        public boolean handle(Supplier<Context> supplier) {
-            NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> {
-            Level world = Minecraft.getInstance().level;
-            BlockState state = world.getBlockState(target);
-            if(state.getBlock() instanceof AbstractRotorBlock arb)
-                arb.setModel(world, target, state, type);
-        });
-        return true;
-        }
-    }
 }

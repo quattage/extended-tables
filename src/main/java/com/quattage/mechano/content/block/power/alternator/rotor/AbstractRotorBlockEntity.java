@@ -6,11 +6,11 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingShaftBlockEntity;
 import com.quattage.mechano.content.block.power.alternator.stator.AbstractStatorBlock;
 import com.quattage.mechano.foundation.helper.shape.CircleGetter;
 import com.quattage.mechano.foundation.helper.shape.ShapeGetter;
+import com.quattage.mechano.foundation.mixin.KineticNetworkMixin.CustomStressable;
 import com.simibubi.create.content.kinetics.BlockStressValues;
 import com.simibubi.create.content.kinetics.KineticNetwork;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
@@ -18,7 +18,6 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -125,13 +124,15 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
     private void getAndRefreshController() {
 
         if(hasNetwork()) {
+            onSpeedChanged(speed);
             KineticNetwork parent = getOrCreateNetwork();
-            parent.updateStressFor(this, calculateStressApplied());
+            parent.updateStressFor(this, calculateStressWithStators());
             parent.sync();
         }
 
         if(controllerPos != null && getLevel().getBlockEntity(controllerPos) instanceof SlipRingShaftBlockEntity srbe) {
             srbe.evaluateAlternatorStructure();
+            srbe.onSpeedChanged(speed);
             return;
         }
 
@@ -175,12 +176,15 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
 
     @Override
     public float calculateStressApplied() {
-        float impact = calculateStressWithStators((float) BlockStressValues.getImpact(getStressConfigKey()), false);
-		this.lastStressApplied = impact;
-		return impact;
+		this.lastStressApplied = calculateStressWithStators();
+		return lastStressApplied;
     }
 
-    private float calculateStressWithStators(float mul, boolean max) {
+    public float calculateStressWithStators() {
+        return getRampedStress((float) BlockStressValues.getImpact(getStressConfigKey()), false);
+    }
+
+    private float getRampedStress(float mul, boolean max) {
         float sP = (float)statorCount / (float)getStatorCircumference(); 
         if(max)
             return toNearest4((float)(0.00196f * Math.pow(262144, 1))) * mul;
@@ -192,17 +196,12 @@ public abstract class AbstractRotorBlockEntity extends KineticBlockEntity {
         return Math.max(1, remainder < 4 ? in - remainder : in + (4 - remainder));
     }
 
-    public float getWeightedSpeed() {
-        float out = (float)Mth.clamp((float)0.0039f * Math.pow(1.0218971487f, 2f * Math.abs(getTheoreticalSpeed())), 0f, 256f);
-        return out >= 0.1 ? out : 0;
-    }
-
     public float getMaximumRotaryStress() {
-        return toNearest4(calculateStressWithStators((float)BlockStressValues.getImpact(getStressConfigKey()), false) * 256);
+        return toNearest4(calculateStressWithStators() * 256);
     }
 
     public float getMaximumPossibleStress() {
-        return toNearest4(calculateStressWithStators((float)BlockStressValues.getImpact(getStressConfigKey()), true) * 256);
+        return toNearest4(calculateStressWithStators() * 256);
     }
 
     @Override

@@ -13,6 +13,7 @@ import com.quattage.mechano.foundation.electricity.watt.WattSendSummary;
 import com.quattage.mechano.foundation.electricity.watt.unit.WattUnit;
 import com.quattage.mechano.foundation.electricity.watt.unit.WattUnitConversions;
 import com.quattage.mechano.foundation.helper.NullSortedArray;
+import com.quattage.mechano.foundation.helper.StupidWrapper;
 import com.simibubi.create.content.equipment.goggles.GogglesItem;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate.StressImpact;
@@ -31,9 +32,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 
 import java.util.List;
-
 import javax.annotation.Nullable;
 
 public class SlipRingShaftBlockEntity extends KineticBlockEntity implements AnonymousWattProducable {
@@ -164,7 +166,7 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
                 this.potentialPowerScore += arbe.getStatorCircumference();
                 this.currentPowerScore += arbe.getStatorCount();
                 this.maximumStress += arbe.getMaximumPossibleStress();
-                this.currentStress += arbe.calculateStressApplied();
+                this.currentStress += arbe.calculateStressWithStators();
                 arbe.setControllerPos(getBlockPos(), false);
 
                 if(x == MechanoSettings.ALTERNATOR_MAX_LENGTH)
@@ -260,9 +262,8 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
     }
 
     public void updateAlternatorSpeed() {
-        // this can be removed without immediately causing issues
-        // it'll stay for now just because it might be useful later
         copyStatsToChild();
+
     }
 
     public boolean canControl() {
@@ -271,7 +272,6 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
 
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-
         if(!this.status.canControl && opposingPos != null && getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
             if(srbe.isBuilt) {
                 if(!isPlayerSneaking)
@@ -297,17 +297,22 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
     @Override
     @SuppressWarnings("resource")
     public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-
-        boolean isWearingGoggles = GogglesItem.isWearingGoggles(Minecraft.getInstance().player);
-        if(isWearingGoggles) return false;
-
-        if(!this.status.canControl && opposingPos != null && getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
-            if(srbe.isBuilt)
-                return buildSimpleStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true, isWearingGoggles);
-        } else if(isBuilt)
-            return buildSimpleStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true, isWearingGoggles);
-
         return false;
+        // final StupidWrapper<Boolean> out = new StupidWrapper<>();
+        // DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        //     out.set(Boolean.valueOf(GogglesItem.isWearingGoggles(Minecraft.getInstance().player)));
+        // });
+
+        // boolean isWearingGoggles = false;
+        // if(isWearingGoggles) return false;
+
+        // if(!this.status.canControl && opposingPos != null && getLevel().getBlockEntity(opposingPos) instanceof SlipRingShaftBlockEntity srbe) {
+        //     if(srbe.isBuilt)
+        //         return buildSimpleStatsTooltip(tooltip, srbe.length, srbe.currentPowerScore, srbe.potentialPowerScore, srbe.currentStress, srbe.maximumStress, this.status, true, isWearingGoggles);
+        // } else if(isBuilt)
+        //     return buildSimpleStatsTooltip(tooltip, length, currentPowerScore, potentialPowerScore, currentStress, maximumStress, this.status, true, isWearingGoggles);
+
+        // return false;
     }
 
     private boolean buildAssemblyChecklistTooltip(List<Component> tooltip, int len, int cScore, int pScore, SlipRingShaftStatus status) {
@@ -343,7 +348,7 @@ public class SlipRingShaftBlockEntity extends KineticBlockEntity implements Anon
         lang().translate("gui.alternator.status.title").forGoggles(tooltip);
 
         LangBuilder su = Lang.translate("generic.unit.stress").style(ChatFormatting.DARK_GRAY);
-        LangBuilder stress = Lang.number(mStress).style(ChatFormatting.DARK_GRAY);
+        LangBuilder stress = Lang.number(cStress * Math.abs(getTheoreticalSpeed())).style(ChatFormatting.DARK_GRAY);
         LangBuilder watts = energyProduced.format(ChatFormatting.AQUA, ChatFormatting.AQUA);
 
         lang().translate("gui.generic.converting").style(ChatFormatting.GRAY).space().add(stress).add(su).forGoggles(tooltip);
