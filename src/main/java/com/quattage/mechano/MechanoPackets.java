@@ -5,7 +5,7 @@ import com.quattage.mechano.foundation.network.WattModeSyncS2CPacket;
 import com.quattage.mechano.foundation.network.GridPathViewMaskS2CPacket;
 import com.quattage.mechano.foundation.network.AnchorStatRequestC2SPacket;
 import com.quattage.mechano.foundation.network.AnchorVertexDataSyncS2CPacket;
-import com.quattage.mechano.content.block.power.alternator.rotor.AbstractRotorBlock.ARSetS2CPacket;
+import com.quattage.mechano.content.block.power.alternator.rotor.ARSetS2CPacket;
 import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRingUpdateS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.network.GridEdgeUpdateSyncS2CPacket;
 import com.quattage.mechano.foundation.electricity.grid.network.GridPathUpdateSyncS2CPacket;
@@ -35,6 +35,7 @@ public class MechanoPackets {
         NETWORK = net;
 
         registerPackets();
+        Mechano.logReg("packets");
     }
 
     public static void registerPackets() {  

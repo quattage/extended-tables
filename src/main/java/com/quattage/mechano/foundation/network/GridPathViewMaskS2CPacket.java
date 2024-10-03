@@ -6,13 +6,15 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import com.quattage.mechano.Mechano;
 import com.quattage.mechano.foundation.behavior.GridEdgeDebugBehavior;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GID;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 public class GridPathViewMaskS2CPacket implements Packetable {
@@ -53,12 +55,15 @@ public class GridPathViewMaskS2CPacket implements Packetable {
     }
 
     @Override
-    @SuppressWarnings("resource")
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> {
-            GridEdgeDebugBehavior.setMask(Minecraft.getInstance().level, mask, null);
-        });
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> handleAsClient(mask)));
         return true;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SuppressWarnings("resource")
+    public static void handleAsClient(Set<GID> mask) {
+        GridEdgeDebugBehavior.setMask(Minecraft.getInstance().level, mask, null);
     }
 }

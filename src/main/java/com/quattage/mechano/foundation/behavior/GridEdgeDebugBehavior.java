@@ -14,6 +14,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.DistExecutor;
 
 import java.util.Map;
 import java.util.Random;
@@ -108,8 +111,14 @@ public class GridEdgeDebugBehavior extends ClientBehavior {
         }
 
         mask = ids;
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> handleAsClient(ids));
+    }
 
+    @OnlyIn(Dist.CLIENT)
+    @SuppressWarnings("resource")
+    private static void handleAsClient(Set<GID> ids) {
         LocalPlayer lp = Minecraft.getInstance().player;
+        Level world = Minecraft.getInstance().level;
         if(ids == null) lp.displayClientMessage(Component.literal("§7Cleared edge mask"), true);
         else {
             lp.displayClientMessage(Component.literal("§7Edge mask: Only displaying edges involving §b" + ids), true);

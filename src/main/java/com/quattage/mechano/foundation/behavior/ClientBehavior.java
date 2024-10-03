@@ -19,6 +19,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
  * Basic behavoir template which exposes useful values to be accessed by subclasses. Behaviors are used to render client-side
  * effects such as AABB highlights for wrenching or particle effects.
  */
+@OnlyIn(Dist.CLIENT)
 public abstract class ClientBehavior {
     protected Minecraft instance = null;
     public final String name;

@@ -9,6 +9,7 @@ import com.quattage.mechano.content.block.power.alternator.slipRingShaft.SlipRin
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.watt.WattSendSummary;
+import com.quattage.mechano.foundation.helper.VoxelShapeBuilder;
 import com.quattage.mechano.foundation.block.BlockChangeListenable;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
@@ -119,7 +120,7 @@ public class SlipRingShaftBlock extends DirectionalKineticBlock implements IBE<S
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
+        hitbox = Mechano.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(FACING));
     }
 

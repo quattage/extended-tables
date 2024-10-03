@@ -23,7 +23,7 @@ public class MechanoSounds {
 
 
 
-    public static void add() {
+    public static void register() {
         
     }
 

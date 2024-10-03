@@ -8,6 +8,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 public class SlipRingUpdateS2CPacket implements Packetable {
@@ -27,16 +30,18 @@ public class SlipRingUpdateS2CPacket implements Packetable {
         buf.writeBlockPos(target);
     }
 
-    
     @Override
-    @SuppressWarnings("resource")
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> {
-            Level world = Minecraft.getInstance().level;
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> handleAsClient(target)));
+        return true;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SuppressWarnings("resource")
+    public static void handleAsClient(BlockPos target) {
+        Level world = Minecraft.getInstance().level;
             if(world.isLoaded(target) && world.getBlockEntity(target) instanceof SlipRingShaftBlockEntity srbe) 
                 srbe.onSpeedChanged(Float.MIN_VALUE); 
-        });
-        return true;
     }
 }

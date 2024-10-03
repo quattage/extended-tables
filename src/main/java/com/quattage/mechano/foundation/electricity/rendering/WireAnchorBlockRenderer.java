@@ -39,7 +39,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
+@OnlyIn(Dist.CLIENT)
 public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements BlockEntityRenderer<T> {
 
     private static Vec3 oldToPos = new Vec3(0, 0, 0);
@@ -57,17 +60,16 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
 
         if(!be.hasLevel() || be.getBlockState().getBlock() == Blocks.AIR) return;
 
-        drawWireProgress(Minecraft.getInstance().player, 
+        drawWireProgress(
+            Minecraft.getInstance().player, 
             be, partialTicks, 
             matrixStack, bufferSource, 
             ((WireAnchorBlockEntity)be).getTimeSinceLastRender()
         );
 
         MechanoClient.ANCHOR_SELECTOR.tickAnchorsBelongingTo(be);
-
         if(cache == null) cache = GridClientCache.ofInstance();
         else drawWigglyWires(be, partialTicks, cache, matrixStack, bufferSource);
-
         drawChevron(be, partialTicks, matrixStack, bufferSource);
     }
 
@@ -83,9 +85,9 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
             if(!edge.getSideA().getBlockPos().equals(be.getBlockPos())) continue;
 
             float age = edge.getAge();
-            if(age == 0) continue;
-            float percent = 1f - (age / (float)edge.getInitialAge());
-            float sagOverride = scalarToSag(Mth.lerp(percent, (float)Math.sin(age / 20f) * 5, 10f));
+            
+            float percent = 1 - (age / (float)edge.getInitialAge());
+            float sagOverride = scalarToSag(percent);
 
             Pair<AnchorPoint, WireAnchorBlockEntity> fromAnchor = AnchorPoint.getAnchorAt(cache.getWorld(), edge.getSideA());
             if(!isValidPair(fromAnchor)) continue;
@@ -118,10 +120,9 @@ public class WireAnchorBlockRenderer<T extends WireAnchorBlockEntity> implements
         }
     }
 
-    // converts a scalar (-1 to 1) to an arbitrary sag value used in the wire rendering pipeline
-    private float scalarToSag(float scalar) {
-        if(scalar == 0) return 10f;
-        return (10 * (1f / Math.abs(scalar))) * Math.signum(scalar);
+    private float scalarToSag(float x) {
+        float c4 = (2f * (float)Math.PI) / 3f;
+        return x == 0 ? 0 : x == 1 ? 1 : (float)Math.pow(2f, -10f * x) * (float)Math.sin((x * 10f - 0.75f) * c4) + 1;
     }
 
     @SuppressWarnings("resource")

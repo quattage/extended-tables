@@ -30,6 +30,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 /***
  * A WireSpool object is both a Minecraft Item as well as a logical representation
@@ -126,11 +128,6 @@ public abstract class WireSpool extends Item {
 
     public final ResourceLocation asResource() {
         return MechanoClient.WIRE_TEXTURE_PROVIDER.get(this);
-    }
-
-    @SuppressWarnings("deprecation")
-    public final TextureAtlasSprite getWireSprite() {
-        return Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(new ResourceLocation("mechano:block/wire/" + getName()));
     }
 
     public String getName() {

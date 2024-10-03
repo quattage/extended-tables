@@ -17,7 +17,6 @@ import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridPath;
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridVertex;
 
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -32,7 +31,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
- * The GridSyncDirector does a few things: <p>
+ * The GridSyncHelper does a few things: <p>
  * - Contains helper methods for marking chunks and sending packets<p>
  * - Maintains a Hashmap of chunks and what players are looking at them<p>
  * - Automatically sends packets to players when they look at chunks containing Grid info<p>
@@ -57,7 +56,7 @@ public class GridSyncHelper {
     }
 
 
-    public static void markChunksChanged(ClientLevel world, BlockPos pos) {
+    public static void markChunksChanged(Level world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         world.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL_IMMEDIATE);
     }

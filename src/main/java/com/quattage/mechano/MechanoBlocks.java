@@ -30,8 +30,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 
 import static com.quattage.mechano.Mechano.REGISTRATE;
 import static com.quattage.mechano.Mechano.UPGRADES;
-import static com.quattage.mechano.MechanoClient.HITBOXES;
-import static com.quattage.mechano.Mechano.defer;
+import static com.quattage.mechano.Mechano.HITBOXES;
 import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 

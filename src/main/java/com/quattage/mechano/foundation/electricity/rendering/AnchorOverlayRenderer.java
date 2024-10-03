@@ -23,6 +23,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.GameType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
@@ -36,6 +38,7 @@ import net.minecraftforge.client.gui.overlay.IGuiOverlay;
  * Copying it here was just to simplify the process of manually invoking this code in a custom context
  * for my purposes, without having to write a very unfriendly and bloated mixin.
  */
+@OnlyIn(Dist.CLIENT)
 public class AnchorOverlayRenderer {
 
 	public static final IGuiOverlay FUNC_INSTANCE = AnchorOverlayRenderer::renderOverlay;
@@ -52,6 +55,7 @@ public class AnchorOverlayRenderer {
 		// no special behaviors are needed during the sanity check phase since we're already keeping 
 		// the selected anchor up to date in the WireAnchorSelectionManager.
 		AnchorEntry entry = MechanoClient.ANCHOR_SELECTOR.getSelectedEntry();
+
 		if(!AnchorEntry.isValid(entry)) {
 			hoverTicks = 0;
 			return;

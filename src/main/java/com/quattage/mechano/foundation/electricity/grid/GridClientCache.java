@@ -22,6 +22,7 @@ import com.quattage.mechano.foundation.electricity.grid.landmarks.GridClientEdge
 import com.quattage.mechano.foundation.electricity.grid.landmarks.GridEdge;
 import com.quattage.mechano.foundation.electricity.impl.WireAnchorBlockEntity;
 import com.quattage.mechano.foundation.electricity.rendering.WirePipeline;
+import com.quattage.mechano.foundation.electricity.rendering.WireTextureProvider;
 import com.quattage.mechano.foundation.electricity.rendering.WirePipeline.BakedModelHashKey;
 import com.quattage.mechano.foundation.mixin.client.RenderChunkInvoker;
 import com.simibubi.create.foundation.utility.Pair;
@@ -30,6 +31,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
@@ -48,13 +50,13 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 
-@OnlyIn(Dist.CLIENT)
 /**
  * The GridClientCache is responsible for receiving edges from the GridSyncDirector via packets,
  * and managing a cache of those edges to reliably and quickly associate edges with their chunk positions
  * in-world. The cache is used as a basis for finding edges within targeted chunks and rendering them
  * as a part of that chunk.
  */
+@OnlyIn(Dist.CLIENT)
 @EventBusSubscriber(Dist.CLIENT)
 public class GridClientCache {
 
@@ -111,6 +113,7 @@ public class GridClientCache {
         }
 
         newEdgeCache.put(edge.toHashable(), edge);
+        Mechano.log("NEC: " + newEdgeCache);
     }
 
     public Object2ObjectOpenHashMap<SectionPos, List<GridClientEdge>> getRenderQueue() {
@@ -210,7 +213,7 @@ public class GridClientCache {
                     new BakedModelHashKey(startPos, endPos), 
                     builder, matrixStack, wireOrigin, 
                     lightmap[0], lightmap[1], lightmap[2], lightmap[3], 
-                    WireSpool.ofType(edge.getTypeID()).getWireSprite()
+                    WireTextureProvider.getWireSprite(WireSpool.ofType(edge.getTypeID()))
                 );
 
                 matrixStack.popPose();
@@ -312,11 +315,15 @@ public class GridClientCache {
     @SubscribeEvent
     @SuppressWarnings("resource")
     public static void onLeave(ClientPlayerNetworkEvent.LoggingOut event) {
-        Level world = Minecraft.getInstance().level;
-        if(world != null) {
-            GridClientCache.of(world).clearAll();
-            Mechano.LOGGER.info("Clearing all cached wire geometry");
-        }
+        
+        LocalPlayer player = event.getPlayer();
+        if(player == null) return;
+
+        Level world = player.level();
+        if(world == null) return;
+
+        GridClientCache.of(world).clearAll();
+        Mechano.LOGGER.info("Clearing all cached wire geometry");
     }
 
     public void clearAll() {

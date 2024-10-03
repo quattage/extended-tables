@@ -9,6 +9,9 @@ import com.quattage.mechano.foundation.electricity.watt.WattStorable.OvervoltBeh
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 public class WattSyncS2CPacket implements Packetable {
@@ -42,13 +45,17 @@ public class WattSyncS2CPacket implements Packetable {
     }
 
     @Override
-    @SuppressWarnings("resource")
+
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> {
-            if(Minecraft.getInstance().level.getBlockEntity(target) instanceof ElectricBlockEntity ebe)
-                ebe.battery.getEnergyHolder().setStoredWatts(watts, false);
-        });
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> handleAsClient(watts, target, ovb)));
         return true;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SuppressWarnings("resource")
+    public static void handleAsClient(float watts, BlockPos target, byte ovb) {
+        if(Minecraft.getInstance().level.getBlockEntity(target) instanceof ElectricBlockEntity ebe)
+                ebe.battery.getEnergyHolder().setStoredWatts(watts, false);
     }
 }

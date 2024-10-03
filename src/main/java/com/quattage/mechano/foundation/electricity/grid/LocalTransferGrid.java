@@ -389,12 +389,10 @@ public class LocalTransferGrid {
      */
     @Nullable
     private GridPath astar(GridVertex start, GridVertex goal) {
-        final Queue<GridVertex> openVerts = new PriorityQueue<>(11, GridVertex.GUIDANCE_COMPARATOR);
-        final Map<GridVertex, GridVertex> path = new HashMap<>();
 
-        // All vertices that are addressed in the A* operation are contained here.
-        // Their A* guidance variables must be reset in order to function properly in subsequent calls to this method.
-        final Set<GridVertex> outdatedVertices = new HashSet<>();
+        final Queue<GridVertex> openVerts = new PriorityQueue<>(11, GridVertex.GUIDANCE_COMPARATOR);
+        final Map<GridVertex, GridVertex> outputPath = new HashMap<>();
+        final Set<GridVertex> addressedVertices = new HashSet<>();
 
         float resultingTransferRate = Float.MAX_VALUE;
 
@@ -407,45 +405,39 @@ public class LocalTransferGrid {
 
             // loop terminates here if successful
             if(local.equals(goal)) {
-                resetPathData(outdatedVertices);
-                return GridPath.ofUnwound(path, goal, resultingTransferRate);
+                resetPathData(addressedVertices);
+                return GridPath.ofUnwound(outputPath, goal, resultingTransferRate);
             }
 
-            // mark this edge as visited
             local.markVisited();
 
             for(GridEdge potentialTraverse : local.links) {
 
                 if(!potentialTraverse.canTransfer()) continue;
-
                 GridVertex neighbor = potentialTraverse.getDestinationVertex();
-
-                // if we've already addressed this vertex the iteration can be skipped
                 if(neighbor.hasBeenVisited()) continue;
 
-                // As the path is traversed, calculate the lowest transfer rate of every adge addressed.
+                // As the path is traversed, calculate the lowest transfer rate of every adge addressed,
+                // and store heuristics in the currently addressed edge
                 resultingTransferRate = Math.min(resultingTransferRate, potentialTraverse.getMaximumWatts());
-
-                // calculate the tentative A* value and store the heuristic in the current edge
                 float tentative = local.getAndStoreFastHeuristic(potentialTraverse) + local.getCumulative();
-                outdatedVertices.add(local);
+                addressedVertices.add(local);
 
                 // if the tentative is less than the cumulative (that is, if we have points to spend here) address this path
-                // TODO take transfer rate into accout when calculating heuristic to prioritize quicker edges
+                // TODO take transfer rate into accout when calculating heuristic to prioritize edges with less resistance
                 if(tentative < neighbor.getCumulative()) {
 
                     neighbor.setCumulative(tentative);
                     neighbor.getAndStoreFastHeuristic(potentialTraverse);
-                    outdatedVertices.add(neighbor);
-                    
-                    // add this vertex to the resulting path and open its neighbor
-                    path.put(neighbor, local);
+                    addressedVertices.add(neighbor);
+
+                    outputPath.put(neighbor, local);
                     if(!openVerts.contains(neighbor)) 
                         openVerts.add(neighbor);
                 }
             }
         }
-        resetPathData(outdatedVertices);
+        resetPathData(addressedVertices);
         return null;
     }
 

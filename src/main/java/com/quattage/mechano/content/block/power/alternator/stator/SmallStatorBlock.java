@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoBlocks;
 import com.quattage.mechano.MechanoClient;
 import com.quattage.mechano.content.block.power.alternator.rotor.BlockRotorable;
@@ -12,6 +13,7 @@ import com.quattage.mechano.foundation.block.hitbox.Hitbox;
 import com.quattage.mechano.foundation.block.hitbox.HitboxNameable;
 import com.quattage.mechano.foundation.block.orientation.DirectionTransformer;
 import com.quattage.mechano.foundation.block.orientation.SimpleOrientation;
+import com.quattage.mechano.foundation.helper.VoxelShapeBuilder;
 import com.simibubi.create.foundation.placement.PlacementHelpers;
 import com.simibubi.create.foundation.placement.PlacementOffset;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -102,7 +104,7 @@ public class SmallStatorBlock extends AbstractStatorBlock<com.quattage.mechano.c
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if(hitbox.needsBuilt()) hitbox = MechanoClient.HITBOXES.collectAllOfType(this);
+        if(hitbox.needsBuilt()) hitbox = Mechano.HITBOXES.collectAllOfType(this);
         return hitbox.get(state.getValue(getTypeProperty())).getRotated(state.getValue(ORIENTATION));
     }
 

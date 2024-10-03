@@ -31,6 +31,7 @@ public abstract class GoggleOverlayRendererMixin {
     private static void renderOverlay(ForgeGui gui, GuiGraphics graphics, float partialTicks, int width, int height, CallbackInfo info) {
 
         if(hoverTicks == 0)
+            hoverTicks = 0;
             MechanoClient.ANCHOR_SELECTOR.tenaciousTerriblyTemporaryTickingTracker.reset();
 
         if(MechanoClient.ANCHOR_SELECTOR.getSelectedEntry() != null) {

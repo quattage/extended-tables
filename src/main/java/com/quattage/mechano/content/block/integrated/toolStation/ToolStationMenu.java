@@ -12,6 +12,8 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class ToolStationMenu extends MenuBase<ToolStationBlockEntity> {
 
@@ -29,6 +31,7 @@ public class ToolStationMenu extends MenuBase<ToolStationBlockEntity> {
 
 	@Override
 	@SuppressWarnings("resource")
+	@OnlyIn(Dist.CLIENT)
     protected ToolStationBlockEntity createOnClient(FriendlyByteBuf extraData) {
         
 		ClientLevel world = Minecraft.getInstance().level;

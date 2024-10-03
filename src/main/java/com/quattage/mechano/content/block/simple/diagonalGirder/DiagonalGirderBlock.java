@@ -5,11 +5,8 @@ import java.util.List;
 import java.util.Locale;
 
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.mojang.blaze3d.MethodsReturnNonnullByDefault;
-import com.quattage.mechano.MechanoBlockEntities;
-import com.quattage.mechano.MechanoBlocks;
-import com.quattage.mechano.MechanoClient;
+import com.quattage.mechano.Mechano;
 import com.quattage.mechano.MechanoClientEvents;
 import com.quattage.mechano.foundation.block.hitbox.RotatableHitboxShape;
 import com.quattage.mechano.foundation.helper.VoxelShapeBuilder;
@@ -112,7 +109,7 @@ public class DiagonalGirderBlock extends DirectionalBlock implements IBE<Diagona
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-         hitbox = MechanoClient.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
+        hitbox = Mechano.HITBOXES.get(FACING, state.getValue(MODEL_TYPE), this);
         return hitbox.getRotated(state.getValue(FACING));
     }
 
