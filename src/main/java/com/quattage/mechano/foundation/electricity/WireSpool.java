@@ -237,7 +237,9 @@ public abstract class WireSpool extends Item {
             CompoundTag nbt = stack.getOrCreateTag();
             if(GID.isValidTag(nbt)) {
                 aP = AnchorPoint.getAnchorAt(world, GID.of(nbt));
-                if(isSelected) {
+
+                ItemStack offhandStack = player.getOffhandItem();
+                if(isSelected | (offhandStack != null && offhandStack.getItem() instanceof WireSpool)) {
                     MutableComponent message = Component.translatable("actionbar.mechano.connection.linking");
                     message.append(" §r§7[§r§l§a§l" + nbt.getInt("x") + "§r§2, §r§a§l" + nbt.getInt("y") + "§r§2, §r§a§l" + nbt.getInt("z") + "§r§7]");
                     player.displayClientMessage(message, true);

@@ -47,6 +47,12 @@ public abstract class ElectricBlockEntity extends SmartBlockEntity implements Wa
     }
 
     @Override
+    public void setChanged() {
+        this.reOrient(this.getBlockState());
+        super.setChanged();
+    }
+
+    @Override
     public void tick() {
         super.tick();
         if(getLevel().isClientSide()) return;
