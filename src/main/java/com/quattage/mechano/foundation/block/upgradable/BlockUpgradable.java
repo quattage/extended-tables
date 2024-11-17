@@ -8,6 +8,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -66,10 +67,9 @@ public interface BlockUpgradable {
             playUpgradeSound(world, pos, upgrade.getStepNumber());
             if(downgrade) {
                 if(!player.isCreative()) {
-                    Block.getDrops(state, (ServerLevel) world, pos, world.getBlockEntity(pos), player, heldItem)
-					.forEach(itemStack -> {
-						player.getInventory().placeItemBackInInventory(itemStack);
-					});
+                    Item upgradeItem = ForgeRegistries.ITEMS.getValue(upgrade.getItem());
+                    if(upgradeItem != null)
+						player.getInventory().placeItemBackInInventory(new ItemStack(upgradeItem));
                 }
             } else
                 subtractFromHand(player, hand, heldItem, 1);

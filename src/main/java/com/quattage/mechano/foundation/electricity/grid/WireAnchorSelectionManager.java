@@ -23,6 +23,7 @@ import com.simibubi.create.AllSpecialTextures;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.foundation.utility.Color;
 
+import com.simibubi.create.foundation.utility.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -137,7 +138,8 @@ public class WireAnchorSelectionManager {
         final List<AnchorEntry> outdated = new ArrayList<>();
         for(AnchorEntry near : MechanoClient.ANCHOR_SELECTOR.allNearbyEntries()) {
             if(near == null || near.get() == null) continue;
-            if(AnchorPoint.getAnchorAt(instance.level, near.get().getID()) == null) {
+            Pair<AnchorPoint, WireAnchorBlockEntity> nullTest = AnchorPoint.getAnchorAt(instance.level, near.get().getID());
+            if(nullTest == null || nullTest.getFirst() == null) {
                 outdated.add(near);
                 if(near.equals(MechanoClient.ANCHOR_SELECTOR.selectedAnchor))
                     MechanoClient.ANCHOR_SELECTOR.selectedAnchor = null;

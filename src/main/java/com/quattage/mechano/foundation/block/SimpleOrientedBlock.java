@@ -10,6 +10,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
@@ -32,7 +33,7 @@ public class SimpleOrientedBlock extends Block implements IWrenchable {
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
         Level world = context.getLevel();
-		SimpleOrientation rotatedOrient = SimpleOrientation.cycle(state.getValue(ORIENTATION));
+		SimpleOrientation rotatedOrient = SimpleOrientation.cycleOrient(state.getValue(ORIENTATION));
         BlockState rotated = state.setValue(ORIENTATION, rotatedOrient);
 
         if(!rotated.canSurvive(world, context.getClickedPos()))
@@ -41,6 +42,10 @@ public class SimpleOrientedBlock extends Block implements IWrenchable {
         context.getLevel().setBlockAndUpdate(context.getClickedPos(),  
             Block.updateFromNeighbourShapes(rotated, context.getLevel(), 
                 context.getClickedPos()));
+
+        BlockEntity blockEntity = world.getBlockEntity(context.getClickedPos());
+        blockEntity.setBlockState(blockEntity.getBlockState().setValue(ORIENTATION, rotatedOrient));
+        blockEntity.setChanged();
 
         if(world.getBlockState(context.getClickedPos()) != state)
 			playRotateSound(world, context.getClickedPos());

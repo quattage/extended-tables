@@ -71,16 +71,6 @@ public class ConnectorTier0Block extends AbstractConnectorBlock implements IBE<C
     }
 
     @Override
-    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-        
-        InteractionResult out = super.onWrenched(state, context);
-        SimpleOrientation orient = context.getLevel().getBlockState(context.getClickedPos()).getValue(SimpleOrientedBlock.ORIENTATION);
-        swapPoleStates(context.getLevel(), context.getClickedPos(), orient, true);
-
-        return out;
-    }
-
-    @Override
     public Builder defineDrops(Builder table, net.minecraft.world.level.storage.loot.LootPool.Builder pool) {
         pool.add(LootItem.lootTableItem(this));
         table.withPool(pool.setRolls(ConstantValue.exactly(1)));

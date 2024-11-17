@@ -23,6 +23,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -165,6 +166,16 @@ public abstract class AbstractConnectorBlock extends SimpleOrientedBlock impleme
                 syncEBE(world, thisPos);
             }
         }
+    }
+
+    @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+
+        InteractionResult out = super.onWrenched(state, context);
+        SimpleOrientation orient = context.getLevel().getBlockState(context.getClickedPos()).getValue(SimpleOrientedBlock.ORIENTATION);
+        swapPoleStates(context.getLevel(), context.getClickedPos(), orient, true);
+
+        return out;
     }
 
     protected boolean isAttached(LevelReader world, BlockPos pos, Direction dir, VoxelShape foundation) {
